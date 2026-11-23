@@ -42,6 +42,26 @@ export const projectsRouter = router({
   restore: publicProcedure
     .input(z.object({ id }))
     .mutation(({ ctx, input }) => ctx.services.projects.repo.restore(input.id)),
+  /** Where the project lives on disk and whether it is in step [T-01]. */
+  folder: publicProcedure
+    .input(z.object({ id }))
+    .query(({ ctx, input }) => ctx.projectFolders?.status(input.id) ?? null),
+  /** Writes / loads now (e.g. after the folder came back). */
+  syncFolder: publicProcedure
+    .input(z.object({ id }))
+    .mutation(({ ctx, input }) => ctx.projectFolders?.syncProject(input.id).status ?? null),
+  /** Opens an existing project folder chosen by the user (Git clone, network share) [O-11]. */
+  openFolder: publicProcedure
+    .input(z.object({ title: z.string().max(200) }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.projectFolders || !ctx.desktop) return null;
+      const dir = await ctx.desktop.pickFolder(input.title);
+      return dir ? ctx.projectFolders.open(dir) : null;
+    }),
+  revealFolder: publicProcedure.input(z.object({ id })).mutation(({ ctx, input }) => {
+    const path = ctx.services.projects.get(input.id).folderPath;
+    if (path) ctx.desktop?.openFolder(path);
+  }),
 });
 
 export const foldersRouter = router({

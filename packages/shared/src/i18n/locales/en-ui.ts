@@ -15,6 +15,20 @@ export const enUi = {
     toggleDetail: 'Show/hide detail panel',
     comingSoon: 'This screen comes in a later version.',
   },
+  projectFolder: {
+    open: 'Open project folder…',
+    pickTitle: 'Choose a Kiemi project folder',
+    reveal: 'Open the project folder',
+    savedIn: 'Saved in: {{path}}',
+    opened: 'Opened project “{{name}}”.',
+    missingSecrets:
+      'This computer does not have {{count}} secrets of the project yet (environments: {{envs}}). Enter them in Environments.',
+    missing: 'Project folder “{{path}}” was not found. Your changes are kept in the app.',
+    retry: 'Try again',
+    conflicts:
+      '{{count}} files were changed both in the app and on disk — Kiemi did not overwrite them.',
+    problems: '{{count}} files in the project folder are damaged and could not be read.',
+  },
   palette: {
     placeholder: 'Search tests, commands…',
     hint: 'Quick search (Ctrl/⌘ K)',
@@ -464,6 +478,8 @@ export const enUi = {
     NAME_TAKEN: 'This name is taken; choose another one.',
     SECRETS_UNAVAILABLE: 'This computer does not allow encrypting secrets with the system key.',
     IMPORT_FAILED: 'This file could not be imported.',
+    FOLDER_INVALID: 'This folder is not a Kiemi project, or its project file is damaged.',
+    PROJECT_ALREADY_OPEN: 'This project is already open from another folder.',
     SSH_FAILED: 'Could not connect to the SSH server.',
     unknown: 'Something went wrong. Please try again.',
   },

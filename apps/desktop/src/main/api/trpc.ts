@@ -1,6 +1,7 @@
 import type { Services } from '@kiemi/db';
 import { DbError } from '@kiemi/db';
 import { initTRPC, TRPCError } from '@trpc/server';
+import type { ProjectFolderManager } from '../projects/folder-manager';
 import type { RecorderManager } from '../record/recorder-manager';
 import type { RunManager } from '../run/run-manager';
 import type { UpdateService } from '../update/update-service';
@@ -25,6 +26,8 @@ export interface ApiContext {
   crashReports?: CrashReporter;
   /** Automatic updates (absent in development and tests) [N-12]. */
   updates?: UpdateService;
+  /** Project folders on disk, synced after every mutation [T-01] (absent in most tests). */
+  projectFolders?: ProjectFolderManager;
 }
 
 export interface CrashReporter {
@@ -39,6 +42,10 @@ export interface DesktopBridge {
   showInFolder(path: string): void;
   /** Opens an https link in the OS browser. */
   openExternal(url: string): void;
+  /** Opens a folder in Finder / Explorer. */
+  openFolder(path: string): void;
+  /** Native "choose a folder" dialog; `undefined` when cancelled. */
+  pickFolder(title: string): Promise<string | undefined>;
 }
 
 const DB_TO_TRPC = {
@@ -48,6 +55,8 @@ const DB_TO_TRPC = {
   NAME_TAKEN: 'CONFLICT',
   SECRETS_UNAVAILABLE: 'PRECONDITION_FAILED',
   IMPORT_FAILED: 'BAD_REQUEST',
+  FOLDER_INVALID: 'BAD_REQUEST',
+  PROJECT_ALREADY_OPEN: 'CONFLICT',
 } as const;
 
 const t = initTRPC.context<ApiContext>().create({
@@ -77,6 +86,13 @@ const dbErrors = t.middleware(async ({ next }) => {
   return res;
 });
 
+/** Every successful mutation may have changed project data: write the folders soon [T-01]. */
+const folderSync = t.middleware(async ({ ctx, type, next }) => {
+  const res = await next();
+  if (res.ok && type === 'mutation') ctx.projectFolders?.changed();
+  return res;
+});
+
 export const router = t.router;
-export const publicProcedure = t.procedure.use(dbErrors);
+export const publicProcedure = t.procedure.use(dbErrors).use(folderSync);
 export const createCallerFactory = t.createCallerFactory;

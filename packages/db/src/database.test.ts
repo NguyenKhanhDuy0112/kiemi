@@ -127,7 +127,12 @@ describe('opening the database after an app update [N-12]', () => {
     const dir = tmp();
     const path = join(dir, 'kiemi.db');
     const old = openDatabase({ path, migrations: MIGRATIONS.slice(0, -1) });
-    const seed = ensureDefaultWorkspace(old);
+    // Raw SQL: today's Drizzle tables may have columns the old schema lacks.
+    old.$client
+      .prepare(
+        "INSERT INTO projects (id, workspace_id, created_at, updated_at, name) VALUES ('p-old', 'w', 1, 1, 'Cũ')",
+      )
+      .run();
     old.$client.close();
 
     const backups = join(dir, 'backups');
@@ -142,7 +147,7 @@ describe('opening the database after an app update [N-12]', () => {
         .from(projects)
         .all()
         .map((p) => p.id),
-    ).toContain(seed.projectId);
+    ).toContain('p-old');
     // The backup is a working database at the old schema version.
     const copy = new Database(join(backups, files[0] ?? ''), { readonly: true });
     const ids = (copy.prepare('SELECT id FROM _kiemi_migrations').all() as { id: number }[]).length;

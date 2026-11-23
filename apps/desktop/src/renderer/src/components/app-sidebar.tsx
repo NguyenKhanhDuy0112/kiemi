@@ -4,6 +4,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@renderer/components/ui/dropdown-menu';
@@ -17,6 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@renderer/components/ui/sidebar';
+import { openProjectFolder, useProjectFolder } from '@renderer/features/projects/project-folder';
 import { errorMessage } from '@renderer/lib/errors';
 import { useAppStore, type View } from '@renderer/lib/store';
 import { trpc, trpcClient } from '@renderer/lib/trpc';
@@ -26,6 +28,8 @@ import {
   ChevronsUpDown,
   Crosshair,
   FileText,
+  FolderOpen,
+  FolderSearch,
   Globe,
   History,
   Plus,
@@ -55,6 +59,7 @@ export function AppSidebar() {
   const projects = useQuery(trpc.projects.list.queryOptions());
   const [dialog, setDialog] = useState<NameDialogState | null>(null);
   const current = projects.data?.find((p) => p.id === projectId);
+  const folder = useProjectFolder(projectId, tx);
 
   return (
     <Sidebar collapsible="icon">
@@ -102,6 +107,29 @@ export function AppSidebar() {
                 >
                   <Plus /> {tx('ui.nav.newProject')}
                 </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void openProjectFolder(qc, tx, setProject)}>
+                  <FolderSearch /> {tx('ui.projectFolder.open')}
+                </DropdownMenuItem>
+                {current && folder?.path ? (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        void trpcClient.projects.revealFolder
+                          .mutate({ id: current.id })
+                          .catch((err: unknown) => toast.error(errorMessage(err, tx)))
+                      }
+                    >
+                      <FolderOpen /> {tx('ui.projectFolder.reveal')}
+                    </DropdownMenuItem>
+                    <DropdownMenuLabel
+                      className="truncate text-xs font-normal text-muted-foreground"
+                      title={folder.path}
+                    >
+                      {tx('ui.projectFolder.savedIn', { path: folder.path })}
+                    </DropdownMenuLabel>
+                  </>
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>

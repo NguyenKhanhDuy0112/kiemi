@@ -1,4 +1,5 @@
 export * from './database';
+export * from './folder';
 export * from './io/bundle';
 export * from './io/csv';
 export * from './io/excel';

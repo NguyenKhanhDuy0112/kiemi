@@ -142,9 +142,12 @@ export class EnvironmentService {
     const cur = this.secrets.list(
       and(eq(secrets.environmentId, environmentId), eq(secrets.name, n.data)),
     )[0];
-    const row = cur
-      ? this.secrets.update(cur.id, { ciphertext })
-      : this.secrets.create({ environmentId, name: n.data, ciphertext });
+    const row = this.#ctx.db.transaction(() => {
+      this.#expect(environmentId, n.data, true);
+      return cur
+        ? this.secrets.update(cur.id, { ciphertext })
+        : this.secrets.create({ environmentId, name: n.data, ciphertext });
+    });
     return { id: row.id, name: row.name, updatedAt: row.updatedAt };
   }
 
@@ -154,7 +157,46 @@ export class EnvironmentService {
     )[0];
     if (!cur)
       throw new DbError('NOT_FOUND', `Secret ${name} not found`, { entity: 'secret', name });
-    this.secrets.remove(cur.id);
+    this.#ctx.db.transaction(() => {
+      this.#expect(environmentId, name, false);
+      this.secrets.remove(cur.id);
+    });
+  }
+
+  /**
+   * Names the environment expects (shared through the project folder), whether or
+   * not this machine has a value [O-11].
+   */
+  secretNames(environmentId: string): string[] {
+    const row = this.repo.get(environmentId);
+    const names = new Set([
+      ...(row.secretNames ?? []),
+      ...this.listSecrets(environmentId).map((s) => s.name),
+    ]);
+    return [...names].sort();
+  }
+
+  /** Expected secrets with no value on this machine (project opened elsewhere) [O-11]. */
+  missingSecrets(environmentId: string): string[] {
+    const have = new Set(this.listSecrets(environmentId).map((s) => s.name));
+    return this.secretNames(environmentId).filter((n) => !have.has(n));
+  }
+
+  /** Declares a secret name without a value (folder sync, bundle import). */
+  setSecretNames(environmentId: string, names: string[]): void {
+    const sorted = [...new Set(names)].sort();
+    const row = this.repo.get(environmentId);
+    if (JSON.stringify(row.secretNames ?? []) !== JSON.stringify(sorted))
+      this.repo.update(environmentId, { secretNames: sorted });
+  }
+
+  #expect(environmentId: string, name: string, present: boolean): void {
+    const row = this.repo.get(environmentId);
+    const names = new Set(row.secretNames ?? []);
+    if (names.has(name) === present) return;
+    if (present) names.add(name);
+    else names.delete(name);
+    this.repo.update(environmentId, { secretNames: [...names].sort() });
   }
 
   /**

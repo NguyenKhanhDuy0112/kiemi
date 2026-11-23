@@ -254,7 +254,7 @@ export function exportBundle(
       proxy: e.proxy,
       ssh: e.ssh,
       variables: services.environments.variables(e.id),
-      secretNames: services.environments.listSecrets(e.id).map((s) => s.name),
+      secretNames: services.environments.secretNames(e.id),
     })),
     sharedSteps: services.sharedSteps.forRun(projectId),
     elements: services.elements
@@ -426,6 +426,7 @@ export function importBundle(
       });
       ids.set(e.id, row.id);
       services.environments.setVariables(row.id, e.variables);
+      services.environments.setSecretNames(row.id, e.secretNames);
       if (e.secretNames.length)
         report.missingSecrets.push({ environment: e.name, names: e.secretNames });
     }

@@ -22,7 +22,13 @@ function caller(updates?: UpdateService, openExternal = vi.fn()) {
     defaultProjectId,
     runs: createTestRunManager(services),
     ...(updates ? { updates } : {}),
-    desktop: { openTrace: async () => undefined, showInFolder: () => undefined, openExternal },
+    desktop: {
+      openTrace: async () => undefined,
+      showInFolder: () => undefined,
+      openExternal,
+      openFolder: () => undefined,
+      pickFolder: async () => undefined,
+    },
   });
 }
 

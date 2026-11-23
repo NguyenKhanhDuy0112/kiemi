@@ -281,4 +281,11 @@ CREATE UNIQUE INDEX "settings_workspace_key_idx" ON "settings" ("workspace_id", 
 );
 CREATE INDEX "saved_logins_project_idx" ON "saved_logins" ("project_id");`,
   },
+  {
+    id: 5,
+    name: 'project-folders',
+    sql: `ALTER TABLE "projects" ADD COLUMN "folder_path" TEXT;
+ALTER TABLE "projects" ADD COLUMN "folder_state" TEXT;
+ALTER TABLE "environments" ADD COLUMN "secret_names" TEXT;`,
+  },
 ];

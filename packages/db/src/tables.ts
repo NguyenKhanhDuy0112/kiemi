@@ -44,6 +44,10 @@ export const projects = sqliteTable(
     ...base,
     name: text('name').notNull(),
     description: text('description'),
+    /** Project folder on disk — the shared source of truth [T-01, ADR 0018] (migration 5). */
+    folderPath: text('folder_path'),
+    /** `relative path → hash` at the last folder sync (three-way merge base). */
+    folderState: json<Record<string, string>>('folder_state'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );
@@ -143,6 +147,11 @@ export const environments = sqliteTable(
     proxy: json<ProxySettings>('proxy'),
     /** SSH tunnel settings [G-07] (migration 2). */
     ssh: json<SshSettings>('ssh'),
+    /**
+     * Secret names this environment expects, even without a value on this machine
+     * (project folder opened elsewhere) [O-11] (migration 5).
+     */
+    secretNames: json<string[]>('secret_names'),
     sortOrder: integer('sort_order').notNull().default(0),
   },
   (t) => [index('environments_project_idx').on(t.projectId)],

@@ -1,0 +1,256 @@
+import { CURRENT_SCHEMA_VERSION } from '@kiemi/schema';
+import { eq } from 'drizzle-orm';
+import { newId, type Repo } from '../repo';
+import type { Services } from '../services';
+import { secrets as secretsTable, testCases } from '../tables';
+import type { ProjectSnapshot } from './format';
+
+/** Reads what the project folder must contain from the database. */
+export function readSnapshot(services: Services, projectId: string): ProjectSnapshot {
+  const p = services.projects.get(projectId);
+  return {
+    project: { id: p.id, name: p.name, description: p.description ?? null },
+    folders: services.folders.list(projectId).map((f) => ({
+      id: f.id,
+      parentId: f.parentId,
+      name: f.name,
+      sortOrder: f.sortOrder,
+    })),
+    tests: services.testCases.repo
+      .list(eq(testCases.projectId, projectId))
+      .map((t) => ({ id: t.id, folderId: t.folderId, content: t.content })),
+    environments: services.environments.list(projectId).map((e) => ({
+      id: e.id,
+      name: e.name,
+      baseUrl: e.baseUrl,
+      proxy: e.proxy,
+      ssh: e.ssh,
+      variables: services.environments.variables(e.id),
+      secretNames: services.environments.secretNames(e.id),
+      sortOrder: e.sortOrder,
+    })),
+    elements: services.elements.list(projectId).map((e) => ({
+      id: e.id,
+      name: e.name,
+      locator: e.locator,
+      pageUrl: e.pageUrl,
+    })),
+    sharedSteps: services.sharedSteps.forRun(projectId),
+    datasets: services.datasets.list(projectId).map((d) => ({
+      id: d.id,
+      name: d.name,
+      columns: d.columns,
+      rows: d.rows,
+      source: d.source,
+    })),
+    suites: services.suites.list(projectId).map((s) => ({
+      id: s.id,
+      name: s.name,
+      description: s.description,
+      variables: s.variables,
+      environmentId: s.environmentId,
+      items: services.suites.listItems(s.id).map((i) => ({
+        testCaseId: i.testCaseId,
+        datasetId: i.datasetId,
+        enabled: i.enabled,
+      })),
+    })),
+  };
+}
+
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
+/** Replaces ids (deep) — used when a file brings an id already used by another project. */
+function remapIds(value: unknown, map: ReadonlyMap<string, string>): unknown {
+  if (map.size === 0) return value;
+  if (typeof value === 'string') return map.get(value) ?? value;
+  if (Array.isArray(value)) return value.map((v) => remapIds(v, map));
+  if (value === null || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, remapIds(v, map)]),
+  );
+}
+
+interface Row {
+  id: string;
+  projectId?: string;
+  deletedAt: Date | null;
+}
+
+/**
+ * Makes the database match the snapshot (ids kept): creates, updates, restores
+ * soft-deleted rows that came back, soft-deletes rows no longer in the files.
+ * Runs in one transaction. Ids taken by ANOTHER project get new ids.
+ */
+export function applySnapshot(services: Services, input: ProjectSnapshot): void {
+  const projectId = input.project.id;
+  const repos: Repo<never>[] = [
+    services.folders.repo,
+    services.testCases.repo,
+    services.environments.repo,
+    services.elements.repo,
+    services.sharedSteps.repo,
+    services.datasets.repo,
+    services.suites.repo,
+  ] as unknown as Repo<never>[];
+  const foreign = new Map<string, string>();
+  const all = [
+    ...input.folders,
+    ...input.tests,
+    ...input.environments,
+    ...input.elements,
+    ...input.sharedSteps,
+    ...input.datasets,
+    ...input.suites,
+  ];
+  for (const x of all) {
+    for (const repo of repos) {
+      const row = repo.find(x.id, true) as Row | undefined;
+      if (row && row.projectId !== projectId) foreign.set(x.id, newId());
+    }
+  }
+  const s = remapIds(input, foreign) as ProjectSnapshot;
+  // The project id itself is never remapped (checked by the caller).
+  s.project.id = projectId;
+
+  services.ctx.db.transaction(() => {
+    const project = services.projects.repo.get(projectId);
+    if (project.name !== s.project.name || (project.description ?? null) !== s.project.description)
+      services.projects.repo.update(projectId, {
+        name: s.project.name,
+        description: s.project.description,
+      });
+
+    /** Generic reconcile of one table. `values` = columns from the file. */
+    const reconcile = <V extends Record<string, unknown>>(
+      repo: Repo<never>,
+      existing: { id: string }[],
+      wanted: { id: string; values: V }[],
+      after?: (id: string, created: boolean) => void,
+    ) => {
+      const keep = new Set<string>();
+      for (const w of wanted) {
+        keep.add(w.id);
+        const row = repo.find(w.id, true) as (Row & Record<string, unknown>) | undefined;
+        if (!row) {
+          repo.create({ id: w.id, projectId, ...w.values } as never);
+          after?.(w.id, true);
+          continue;
+        }
+        if (row.deletedAt) repo.restore(w.id);
+        const changed = Object.entries(w.values).some(([k, v]) => !same(row[k] ?? null, v ?? null));
+        if (changed) repo.update(w.id, w.values as never);
+        after?.(w.id, false);
+      }
+      for (const e of existing) if (!keep.has(e.id)) repo.remove(e.id);
+    };
+
+    reconcile(
+      services.folders.repo as unknown as Repo<never>,
+      services.folders.list(projectId),
+      s.folders.map((f) => ({
+        id: f.id,
+        values: { parentId: f.parentId, name: f.name, sortOrder: f.sortOrder },
+      })),
+    );
+
+    const tests = services.testCases.repo;
+    reconcile(
+      tests as unknown as Repo<never>,
+      tests.list(eq(testCases.projectId, projectId)),
+      s.tests.map((t) => {
+        const content = { ...t.content, id: t.id };
+        return {
+          id: t.id,
+          values: {
+            folderId: t.folderId,
+            name: content.name,
+            description: content.description ?? null,
+            tags: content.tags,
+            content,
+            schemaVersion: content.schemaVersion ?? CURRENT_SCHEMA_VERSION,
+          },
+        };
+      }),
+    );
+
+    const envs = services.environments;
+    reconcile(
+      envs.repo as unknown as Repo<never>,
+      envs.list(projectId),
+      s.environments.map((e) => ({
+        id: e.id,
+        values: {
+          name: e.name,
+          baseUrl: e.baseUrl ?? null,
+          proxy: e.proxy ?? null,
+          ssh: e.ssh ?? null,
+          sortOrder: e.sortOrder,
+          secretNames: [...new Set(e.secretNames)].sort(),
+        },
+      })),
+      (id) => {
+        const e = s.environments.find((x) => x.id === id);
+        if (!e) return;
+        if (!same(envs.variables(id), e.variables)) envs.setVariables(id, e.variables);
+        // A secret removed by a teammate: drop this machine's value too.
+        const names = new Set(e.secretNames);
+        for (const sec of envs.secrets.list(eq(secretsTable.environmentId, id)))
+          if (!names.has(sec.name)) envs.secrets.remove(sec.id);
+      },
+    );
+
+    reconcile(
+      services.elements.repo as unknown as Repo<never>,
+      services.elements.list(projectId),
+      s.elements.map((e) => ({
+        id: e.id,
+        values: { name: e.name, locator: e.locator, pageUrl: e.pageUrl ?? null },
+      })),
+    );
+    reconcile(
+      services.sharedSteps.repo as unknown as Repo<never>,
+      services.sharedSteps.list(projectId),
+      s.sharedSteps.map((x) => ({
+        id: x.id,
+        values: { name: x.name, params: x.params, steps: x.steps },
+      })),
+    );
+    reconcile(
+      services.datasets.repo as unknown as Repo<never>,
+      services.datasets.list(projectId),
+      s.datasets.map((d) => ({
+        id: d.id,
+        values: { name: d.name, columns: d.columns, rows: d.rows, source: d.source },
+      })),
+    );
+    reconcile(
+      services.suites.repo as unknown as Repo<never>,
+      services.suites.list(projectId),
+      s.suites.map((x) => ({
+        id: x.id,
+        values: {
+          name: x.name,
+          description: x.description ?? null,
+          variables: x.variables,
+          environmentId: x.environmentId ?? null,
+        },
+      })),
+      (id) => {
+        const x = s.suites.find((y) => y.id === id);
+        if (!x) return;
+        const cur = services.suites.listItems(id).map((i) => ({
+          testCaseId: i.testCaseId,
+          datasetId: i.datasetId ?? null,
+          enabled: i.enabled,
+        }));
+        const next = x.items.map((i) => ({
+          testCaseId: i.testCaseId,
+          datasetId: i.datasetId ?? null,
+          enabled: i.enabled,
+        }));
+        if (!same(cur, next)) services.suites.setItems(id, next);
+      },
+    );
+  });
+}

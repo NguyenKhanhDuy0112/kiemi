@@ -15,6 +15,19 @@ export const viUi = {
     toggleDetail: 'Ẩn/hiện panel chi tiết',
     comingSoon: 'Màn hình này sẽ có ở bản sau.',
   },
+  projectFolder: {
+    open: 'Mở thư mục dự án…',
+    pickTitle: 'Chọn thư mục dự án Kiemi',
+    reveal: 'Mở thư mục của dự án',
+    savedIn: 'Lưu tại: {{path}}',
+    opened: 'Đã mở dự án “{{name}}”.',
+    missingSecrets:
+      'Máy này chưa có {{count}} bí mật của dự án (môi trường: {{envs}}). Vào Môi trường để nhập.',
+    missing: 'Không tìm thấy thư mục dự án “{{path}}”. Thay đổi vẫn được giữ trong app.',
+    retry: 'Thử lại',
+    conflicts: '{{count}} file vừa được sửa cả trong app và trên đĩa — Kiemi chưa ghi đè.',
+    problems: '{{count}} file trong thư mục dự án đang hỏng nên chưa đọc được.',
+  },
   palette: {
     placeholder: 'Tìm test, lệnh…',
     hint: 'Tìm nhanh (Ctrl/⌘ K)',
@@ -463,6 +476,8 @@ export const viUi = {
     NAME_TAKEN: 'Tên này đã có, hãy chọn tên khác.',
     SECRETS_UNAVAILABLE: 'Máy chưa cho phép mã hóa bí mật bằng khóa của hệ điều hành.',
     IMPORT_FAILED: 'Không nhập được file này.',
+    FOLDER_INVALID: 'Thư mục này không phải dự án Kiemi hoặc file dự án bị hỏng.',
+    PROJECT_ALREADY_OPEN: 'Dự án này đang được mở từ một thư mục khác.',
     SSH_FAILED: 'Không kết nối được máy chủ SSH.',
     unknown: 'Có lỗi xảy ra. Hãy thử lại.',
   },

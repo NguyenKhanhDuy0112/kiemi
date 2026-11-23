@@ -10,12 +10,13 @@ import {
 } from '@kiemi/db';
 import { type SampleSite, startSampleSite } from '@kiemi/demo-site/sample';
 import { BRAND } from '@kiemi/shared';
-import { app, BrowserWindow, net, protocol, safeStorage, shell } from 'electron';
+import { app, BrowserWindow, dialog, net, protocol, safeStorage, shell } from 'electron';
 import { createIPCHandler } from 'electron-trpc/main';
 import { autoUpdater } from 'electron-updater';
 import { rootRouter } from './api/root';
 import { CrashReports } from './crash/crash-reports';
 import { isTrustedRendererUrl } from './ipc-allow';
+import { ProjectFolderManager } from './projects/folder-manager';
 import { RecorderManager } from './record/recorder-manager';
 import { ARTIFACT_SCHEME, parseArtifactUrl, resolveInside } from './results/artifact-path';
 import { TraceServer } from './results/trace-server';
@@ -81,6 +82,7 @@ function createUpdates(): UpdateService {
 let runs: RunManager | undefined;
 let updates: UpdateService | undefined;
 let recorder: RecorderManager | undefined;
+let projectFolders: ProjectFolderManager | undefined;
 const traceServer = new TraceServer();
 
 /** Screenshots / videos of runs, read-only and limited to each run's folder [S-04]. */
@@ -143,6 +145,14 @@ function registerIpc(data: { services: Services; defaultProjectId: string }): vo
   });
   recorder = recorderManager;
   registerArtifactProtocol(data.services);
+  // Each project = one folder, the shared source of truth [T-01, ADR 0018].
+  const folders = new ProjectFolderManager({
+    services: data.services,
+    root: process.env.KIEMI_PROJECTS_DIR || join(app.getPath('documents'), 'Kiemi'),
+    log: (message, err) => console.error(message, err),
+  });
+  projectFolders = folders;
+  folders.syncAll();
   const updateService = createUpdates();
   updates = updateService;
   updateService.start();
@@ -167,12 +177,22 @@ function registerIpc(data: { services: Services; defaultProjectId: string }): vo
       sampleSiteUrl: () => sampleSiteUrl(data.services),
       updates: updateService,
       crashReports,
+      projectFolders: folders,
       desktop: {
         openExternal: (url: string) => {
           if (url.startsWith('https://')) void shell.openExternal(url);
         },
         openTrace: openTraceWindow,
         showInFolder: (path: string) => shell.showItemInFolder(path),
+        openFolder: (path: string) => void shell.openPath(path),
+        pickFolder: async (title: string) => {
+          const win = BrowserWindow.getFocusedWindow();
+          const options = { title, properties: ['openDirectory' as const] };
+          const r = win
+            ? await dialog.showOpenDialog(win, options)
+            : await dialog.showOpenDialog(options);
+          return r.canceled ? undefined : r.filePaths[0];
+        },
       },
     }),
   });
@@ -240,6 +260,13 @@ if (!gotLock) {
   });
 
   app.on('before-quit', () => {
+    // Edits not yet written to the project folders [T-01].
+    try {
+      projectFolders?.flush();
+    } catch (err) {
+      console.error('Project folder flush failed', err);
+    }
+    projectFolders?.stop();
     updates?.stop();
     void runs?.shutdown();
     void recorder?.shutdown();

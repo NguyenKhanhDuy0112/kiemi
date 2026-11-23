@@ -12,6 +12,8 @@ export const DB_ERROR_CODES = [
   'NAME_TAKEN',
   'SECRETS_UNAVAILABLE',
   'IMPORT_FAILED',
+  'FOLDER_INVALID',
+  'PROJECT_ALREADY_OPEN',
 ] as const;
 /** Data-layer error codes; the UI shows `ui.dbErrors.<code>` for each. */
 export type DbErrorCode = (typeof DB_ERROR_CODES)[number];
