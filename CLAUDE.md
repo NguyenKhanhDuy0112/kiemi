@@ -1,24 +1,11 @@
 # CLAUDE.md — Kiemi (No-code UI Test Automation)
 
-## Thương hiệu
-- Tên sản phẩm: **Kiemi** (từ "kiểm"). Package scope: `@kiemi/*`. File test: `.kiemi.json`. App ID: `app.kiemi.desktop`.
-- Slogan (tiếng Anh, dùng cho mọi ngôn ngữ): *"Let Kiemi do the checking."*
-- Màu: chàm đậm `#1F2A5C` (chủ đạo), xanh lá pass `#3DDC84`, đỏ fail `#E5484D`, trắng.
-- Linh vật: **Cú Kiemi** — cú tròn màu chàm, mắt to, bụng/mỏ là **dấu tick xanh lá** (SPEC U-16).
-- Icon: ô vuông bo góc nền chàm có **Cú Kiemi** (dấu tick xanh lá). Phải nhận diện được ở 16px.
-
 > File này được Claude Code tự đọc mỗi phiên. Đây là luật của dự án — tuân thủ tuyệt đối.
+> Skills: `.claude/skills/branding/SKILL.md` (UI/icon/màu — tải khi làm màn hình mới) · `.claude/skills/release/SKILL.md` (build/sign/CI release — tải khi làm M7/N-14)
 
 ## 1. Sản phẩm
-Desktop app (Windows + macOS) cho **tester không biết code**: ghi thao tác hoặc soạn bảng step → bấm Chạy → xem kết quả.
-Cài là dùng: offline, không cần tài khoản, không cài thêm gì (dùng Edge/Chrome có sẵn trên máy).
-
-Tài liệu nguồn (đọc khi cần):
-- `docs/SPEC.md` — toàn bộ yêu cầu, mỗi yêu cầu có ID (vd `B-03`)
-- `docs/ROADMAP.md` — danh sách task theo milestone, có checkbox
-- `docs/PROGRESS.md` — tiến độ, nhật ký, **task tiếp theo**
-- `docs/ARCHITECTURE.md` — kiến trúc, luồng chạy, ranh giới giữa các khối
-- `docs/adr/` — các quyết định kiến trúc
+Desktop app (Windows + macOS) cho **tester không biết code**: ghi thao tác hoặc soạn bảng step → bấm Chạy → xem kết quả. Offline, không cần tài khoản.
+Docs: `docs/SPEC.md` (yêu cầu + ID), `docs/ROADMAP.md` (task), `docs/PROGRESS.md` (tiến độ), `docs/ARCHITECTURE.md`, `docs/adr/`.
 
 ## 2. Quy trình mỗi phiên (BẮT BUỘC)
 1. Đọc `docs/PROGRESS.md` → mục **"Tiếp theo"**, **"Lưu ý cho task sau"**, **"Vấn đề tồn đọng"**. Tra các ID SPEC của task bằng `node scripts/spec-lookup.mjs <ID>...` (xem §8).
@@ -36,7 +23,7 @@ Tài liệu nguồn (đọc khi cần):
 6. Commit theo Conventional Commits, kèm ID: `feat(engine): add fill action [A-02]`
    - **Tác giả commit = chủ dự án**: `Duy Nguyen Khanh <duynguyen.011202@gmail.com>` (đã đặt trong `git config` của repo). Trước khi commit, kiểm tra `git config user.email` đúng email này.
    - **Không thêm** dòng `Co-Authored-By: Claude …` hay bất kỳ attribution AI nào vào commit/PR.
-   - Mỗi task 1 commit. **Xong task cuối của milestone, test pass → `git push`** lên GitHub (`origin`). Chưa có remote `origin` → nhắc người dùng cung cấp URL repo, không tự tạo repo.
+   - Mỗi task 1 commit. **Mỗi milestone làm trên nhánh riêng** (vd `m9`); push sau mỗi task commit. Cuối milestone mở PR từ `m9` → `main`. Chưa có remote `origin` → nhắc người dùng cung cấp URL repo, không tự tạo repo.
    - Không `push --force` lên `main`.
 7. Nếu người dùng chỉ nói "làm tiếp" / "continue" → làm task trong mục "Tiếp theo" (hoặc mục "Đang làm dở" nếu có).
 8. **Kết thúc phiên**: sau khi commit (và push nếu là task cuối milestone), DỪNG — không tự làm task kế. Báo ngắn gọn (≤ 10 dòng): đã xong gì, kết quả test, task tiếp theo, và nhắc người dùng `/clear` (hoặc mở chat mới) rồi gõ `Làm tiếp.`
@@ -105,14 +92,7 @@ docs/
 5. **Nhiều phiên từ đầu**: mỗi step có `session` (mặc định `"default"`); mỗi session = 1 browser context riêng.
 6. **DB**: mọi bảng có `id` (UUIDv7), `workspaceId`, `createdAt`, `updatedAt`, `deletedAt` (soft delete), `version`.
 7. **Bảo mật Electron**: `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`. Renderer chỉ gọi main qua electron-trpc. Secret lưu bằng `safeStorage`. Che secret trong log, kết quả, ảnh chụp.
-8. **UI đẹp, đơn giản, dễ dùng**: mọi màn hình tuân thủ mục **U** trong `docs/SPEC.md` (U-01 → U-15). Trước khi làm UI, đọc lại mục U.
-   **Làm UI nhanh — dùng đồ có sẵn, không tự thiết kế từ đầu**:
-   - Component: lấy từ **shadcn/ui** bằng `pnpm dlx shadcn@latest add <tên>` trong `apps/desktop` (button, input, dialog, dropdown-menu, command, table, tabs, sonner, tooltip, sheet…).
-   - Bố cục màn hình: dùng **shadcn Blocks** (vd `sidebar-07` cho layout 3 vùng U-01, `dashboard-01`, `login-0x`) rồi chỉnh màu/chữ theo token sẵn có trong `styles.css`.
-   - Bảng: TanStack Table theo mẫu "Data Table" của shadcn. Icon: Lucide. Toast: sonner. Command palette: `command` (cmdk).
-   - Chỉ tự viết component khi shadcn không có; không thêm UI kit khác (MUI, Ant…).
-   - Demo-site (`apps/demo-site`) là web mục tiêu để test, không cần đẹp — HTML/CSS thuần.
-   **UI cho người không biết code**: không hardcode chuỗi (dùng i18n). Không hiện thuật ngữ kỹ thuật (selector, CSS, Playwright) trừ chế độ "Nâng cao". Lỗi phải nói bằng tiếng Việt dễ hiểu: *"Bước 5: Không tìm thấy nút 'Lưu' sau 10 giây"*.
+8. **UI đẹp, đơn giản, dễ dùng**: mọi màn hình tuân thủ mục **U** trong `docs/SPEC.md`. Trước khi làm màn hình mới, tải skill `branding` (`.claude/skills/branding/SKILL.md`).
 9. **Không thêm dependency lớn** khi chưa ghi lý do vào ADR.
 
 ## 6. Definition of Done
