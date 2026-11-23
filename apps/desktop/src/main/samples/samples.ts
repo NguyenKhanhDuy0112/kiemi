@@ -275,6 +275,8 @@ export async function installSamples(
 export function syncSampleEnvironment(services: Services, baseUrl: string): void {
   const project = services.projects.list().find((p) => p.name === SAMPLE_PROJECT);
   if (!project) return;
-  const env = services.environments.list(project.id).find((e) => e.name === SAMPLE_ENV);
-  if (env && env.baseUrl !== baseUrl) services.environments.update(env.id, { baseUrl });
+  const row = services.environments.list(project.id).find((e) => e.name === SAMPLE_ENV);
+  // The URL lives in the "Web" cell [O-02].
+  if (row && services.environments.get(row.id).baseUrl !== baseUrl)
+    services.environments.update(row.id, { baseUrl });
 }

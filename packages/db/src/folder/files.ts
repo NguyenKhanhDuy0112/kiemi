@@ -162,9 +162,20 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
         .map((e) => ({
           id: e.id,
           name: e.name,
-          ...(e.baseUrl ? { baseUrl: e.baseUrl } : {}),
-          ...(e.proxy ? { proxy: e.proxy } : {}),
-          ...(e.ssh ? { ssh: e.ssh } : {}),
+          cells: [...e.cells]
+            .sort(
+              byKey(
+                (c) => s.products.find((p) => p.id === c.productId)?.sortOrder ?? 1e9,
+                (c) => c.productId,
+              ),
+            )
+            .map((c) => ({
+              productId: c.productId,
+              ...(c.url ? { url: c.url } : {}),
+              variables: Object.fromEntries(Object.entries(c.variables).sort(byKey(([k]) => k))),
+              ...(c.proxy ? { proxy: c.proxy } : {}),
+              ...(c.ssh ? { ssh: c.ssh } : {}),
+            })),
           variables: Object.fromEntries(Object.entries(e.variables).sort(byKey(([k]) => k))),
           secretNames: [...new Set(e.secretNames)].sort(),
           sortOrder: e.sortOrder,

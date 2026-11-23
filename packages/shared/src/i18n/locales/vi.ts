@@ -105,6 +105,14 @@ export const vi = {
         message: 'Chưa có mật khẩu proxy (bí mật “{{secret}}”).',
         hint: 'Vào Môi trường → Bí mật để nhập mật khẩu.',
       },
+      APP_NOT_AVAILABLE: {
+        message: 'Sản phẩm “{{product}}” chưa có ở môi trường “{{environment}}”.',
+        hint: 'Vào Môi trường, nhập địa chỉ của sản phẩm này ở cột môi trường đó — hoặc chọn môi trường khác khi chạy.',
+      },
+      UNKNOWN_PRODUCT: {
+        message: 'Dự án không có sản phẩm “{{product}}”.',
+        hint: 'Kiểm tra lại tên sản phẩm sau “app.”, hoặc thêm sản phẩm này vào dự án.',
+      },
       UNKNOWN_VARIABLE: {
         message: 'Chưa có biến “{{name}}”.',
         hint: 'Kiểm tra tên biến, hoặc thêm bước “Lưu giá trị vào biến” trước bước này.',

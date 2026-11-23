@@ -247,15 +247,19 @@ export function exportBundle(
       sortOrder: f.sortOrder,
     })),
     tests: testEntries,
-    environments: services.environments.list(projectId).map((e) => ({
-      id: e.id,
-      name: e.name,
-      baseUrl: e.baseUrl,
-      proxy: e.proxy,
-      ssh: e.ssh,
-      variables: services.environments.variables(e.id),
-      secretNames: services.environments.secretNames(e.id),
-    })),
+    // Bundles (J-03) carry the default product's cell only.
+    environments: services.environments.list(projectId).map((row) => {
+      const e = services.environments.get(row.id);
+      return {
+        id: e.id,
+        name: e.name,
+        baseUrl: e.baseUrl,
+        proxy: e.proxy,
+        ssh: e.ssh,
+        variables: services.environments.variables(e.id),
+        secretNames: services.environments.secretNames(e.id),
+      };
+    }),
     sharedSteps: services.sharedSteps.forRun(projectId),
     elements: services.elements
       .list(projectId)

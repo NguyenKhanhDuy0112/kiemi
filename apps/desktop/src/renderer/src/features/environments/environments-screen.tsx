@@ -1,7 +1,15 @@
-import type { SshHop, SshSettings } from '@kiemi/schema';
+import type { ProxySettings, SshHop, SshSettings } from '@kiemi/schema';
 import { EmptyState } from '@renderer/components/empty-state';
 import { NameDialog, type NameDialogState } from '@renderer/components/name-dialog';
+import { Badge } from '@renderer/components/ui/badge';
 import { Button } from '@renderer/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@renderer/components/ui/dropdown-menu';
 import { Input } from '@renderer/components/ui/input';
 import { Label } from '@renderer/components/ui/label';
 import {
@@ -11,20 +19,62 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@renderer/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@renderer/components/ui/sheet';
 import { Switch } from '@renderer/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@renderer/components/ui/table';
 import { errorMessage } from '@renderer/lib/errors';
 import { useAppStore } from '@renderer/lib/store';
 import { trpc, trpcClient } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
 import { cn } from '@renderer/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Globe, KeyRound, Loader2, Plus, ServerCog, Trash2 } from 'lucide-react';
+import {
+  Copy,
+  Globe,
+  KeyRound,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  ServerCog,
+  Trash2,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const NONE = '__none__';
 
-/** Environments with base URL, variables, secrets, proxy and SSH (S-06, G-06, G-07, G-08). */
+interface CellRef {
+  environmentId: string;
+  productId: string;
+}
+
+/** Cell values as stored (`environments.matrix`). */
+interface CellValues {
+  url: string | null;
+  variables: Record<string, string>;
+  proxy: ProxySettings | null;
+  ssh: SshSettings | null;
+}
+
+/**
+ * Environment × Product matrix [O-02]: products in rows, environments in
+ * columns; each cell = the product's address, variables, proxy and SSH there.
+ * Below: variables and secrets of the chosen environment (S-06, G-06, G-07, G-08).
+ */
 export function EnvironmentsScreen() {
   const tx = useTx();
   const qc = useQueryClient();
@@ -33,66 +83,273 @@ export function EnvironmentsScreen() {
     ...trpc.environments.list.queryOptions({ projectId }),
     enabled: !!projectId,
   });
+  const products = useQuery({
+    ...trpc.products.list.queryOptions({ projectId }),
+    enabled: !!projectId,
+  });
+  const matrix = useQuery({
+    ...trpc.environments.matrix.queryOptions({ projectId }),
+    enabled: !!projectId,
+  });
   const [selected, setSelected] = useState<string | null>(null);
+  const [cell, setCell] = useState<CellRef | null>(null);
   const [dialog, setDialog] = useState<NameDialogState | null>(null);
-  const currentId = selected ?? envs.data?.[0]?.id ?? null;
+  const list = envs.data ?? [];
+  const currentId = list.some((e) => e.id === selected) ? selected : (list[0]?.id ?? null);
 
   const refresh = () =>
-    qc.invalidateQueries({ queryKey: trpc.environments.list.queryKey({ projectId }) });
+    Promise.all([
+      qc.invalidateQueries({ queryKey: trpc.environments.list.queryKey({ projectId }) }),
+      qc.invalidateQueries({ queryKey: trpc.environments.matrix.queryKey({ projectId }) }),
+    ]);
+  const run = async (fn: () => Promise<unknown>) => {
+    try {
+      await fn();
+      await refresh();
+    } catch (err) {
+      toast.error(errorMessage(err, tx));
+    }
+  };
+  const newEnv = () =>
+    setDialog({
+      title: tx('ui.environments.new'),
+      initial: list.length ? '' : 'UAT',
+      onSubmit: (name) =>
+        run(async () => {
+          const env = await trpcClient.environments.create.mutate({ projectId, name });
+          setSelected(env.id);
+        }),
+    });
+  const cellOf = (environmentId: string, productId: string) =>
+    matrix.data?.find((c) => c.environmentId === environmentId && c.productId === productId);
+
+  if (envs.data && list.length === 0) {
+    return (
+      <>
+        <EmptyState
+          icon={Globe}
+          title={tx('ui.environments.emptyTitle')}
+          text={tx('ui.environments.emptyText')}
+          action={
+            <Button onClick={newEnv}>
+              <Plus /> {tx('ui.environments.new')}
+            </Button>
+          }
+        />
+        <NameDialog state={dialog} onClose={() => setDialog(null)} />
+      </>
+    );
+  }
+
+  const productList = products.data ?? [];
+  const openCell = cell
+    ? {
+        ...cell,
+        env: list.find((e) => e.id === cell.environmentId),
+        product: productList.find((p) => p.id === cell.productId),
+      }
+    : null;
 
   return (
-    <div className="flex min-h-0 flex-1">
-      <aside className="w-60 shrink-0 border-r p-3" aria-label={tx('ui.nav.environments')}>
-        <Button
-          size="sm"
-          className="mb-3 w-full"
-          onClick={() =>
-            setDialog({
-              title: tx('ui.environments.new'),
-              initial: 'UAT',
-              onSubmit: async (name) => {
-                try {
-                  const env = await trpcClient.environments.create.mutate({ projectId, name });
-                  await refresh();
-                  setSelected(env.id);
-                } catch (err) {
-                  toast.error(errorMessage(err, tx));
-                }
-              },
-            })
-          }
+    <div className="min-h-0 flex-1 overflow-auto">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 p-4">
+        <div className="flex items-start gap-3">
+          <p className="flex-1 text-sm text-muted-foreground">{tx('ui.environments.hint')}</p>
+          <Button onClick={newEnv}>
+            <Plus /> {tx('ui.environments.new')}
+          </Button>
+        </div>
+
+        <Section
+          icon={Globe}
+          title={tx('ui.environments.matrix')}
+          hint={tx('ui.environments.matrixHint')}
         >
-          <Plus /> {tx('ui.environments.new')}
-        </Button>
-        <ul className="flex flex-col gap-0.5">
-          {(envs.data ?? []).map((e) => (
-            <li key={e.id}>
-              <button
-                type="button"
-                className={cn(
-                  'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent',
-                  e.id === currentId && 'bg-accent font-medium',
-                )}
-                onClick={() => setSelected(e.id)}
-              >
-                <Globe className="size-4 text-muted-foreground" aria-hidden />
-                <span className="truncate">{e.name}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </aside>
-      <div className="min-w-0 flex-1 overflow-auto">
-        {currentId ? (
-          <EnvironmentEditor key={currentId} id={currentId} onDeleted={() => setSelected(null)} />
-        ) : (
-          <EmptyState
-            icon={Globe}
-            title={tx('ui.environments.emptyTitle')}
-            text={tx('ui.environments.emptyText')}
-          />
+          <Table aria-label={tx('ui.environments.matrix')}>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-48">{tx('ui.environments.product')}</TableHead>
+                {list.map((e) => (
+                  <TableHead key={e.id} className="min-w-52">
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        className={cn(
+                          'truncate rounded-md px-1.5 py-0.5 text-left hover:bg-accent',
+                          e.id === currentId && 'bg-accent font-semibold text-foreground',
+                        )}
+                        aria-pressed={e.id === currentId}
+                        onClick={() => setSelected(e.id)}
+                      >
+                        {e.name}
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7"
+                            aria-label={`${tx('ui.environments.actions')}: ${e.name}`}
+                          >
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              setDialog({
+                                title: tx('ui.environments.rename'),
+                                initial: e.name,
+                                onSubmit: (name) =>
+                                  run(() =>
+                                    trpcClient.environments.update.mutate({
+                                      id: e.id,
+                                      patch: { name },
+                                    }),
+                                  ),
+                              })
+                            }
+                          >
+                            <Pencil /> {tx('ui.environments.rename')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              setDialog({
+                                title: tx('ui.environments.duplicate'),
+                                initial: tx('ui.environments.duplicateName', { name: e.name }),
+                                onSubmit: (name) =>
+                                  run(async () => {
+                                    const copy = await trpcClient.environments.duplicate.mutate({
+                                      id: e.id,
+                                      name,
+                                    });
+                                    setSelected(copy.id);
+                                    toast.success(tx('ui.environments.duplicated'));
+                                  }),
+                              })
+                            }
+                          >
+                            <Copy /> {tx('ui.environments.duplicate')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() =>
+                              void run(() => trpcClient.environments.remove.mutate({ id: e.id }))
+                            }
+                          >
+                            <Trash2 /> {tx('ui.actions.delete')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {productList.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex flex-col">
+                      <span>{p.name}</span>
+                      <code className="text-xs text-muted-foreground">{`{{app.${p.key}}}`}</code>
+                    </div>
+                  </TableCell>
+                  {list.map((e) => {
+                    const c = cellOf(e.id, p.id);
+                    return (
+                      <TableCell key={e.id}>
+                        <button
+                          type="button"
+                          className={cn(
+                            'flex w-full flex-col items-start gap-1 rounded-md border px-2 py-1.5 text-left hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
+                            !c && 'border-dashed text-muted-foreground',
+                          )}
+                          aria-label={tx('ui.environments.cellTitle', {
+                            product: p.name,
+                            environment: e.name,
+                          })}
+                          onClick={() => setCell({ environmentId: e.id, productId: p.id })}
+                        >
+                          {c ? (
+                            <>
+                              <span className="max-w-60 truncate text-sm">
+                                {c.url || tx('ui.environments.addCell')}
+                              </span>
+                              {(c.ssh?.enabled || c.proxy) && (
+                                <span className="flex gap-1">
+                                  {c.ssh?.enabled && (
+                                    <Badge variant="secondary">
+                                      {tx('ui.environments.badgeSsh')}
+                                    </Badge>
+                                  )}
+                                  {c.proxy && (
+                                    <Badge variant="secondary">
+                                      {tx('ui.environments.badgeProxy')}
+                                    </Badge>
+                                  )}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="flex items-center gap-1 text-sm">
+                              <Plus className="size-3.5" aria-hidden />
+                              {tx('ui.environments.notAvailable')}
+                            </span>
+                          )}
+                        </button>
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Section>
+
+        {currentId && (
+          <EnvironmentDetails key={currentId} id={currentId} onChanged={() => void refresh()} />
         )}
       </div>
+
+      <Sheet open={!!openCell} onOpenChange={(open) => !open && setCell(null)}>
+        <SheetContent className="overflow-y-auto sm:max-w-xl">
+          {openCell?.env && openCell.product && (
+            <>
+              <SheetHeader>
+                <SheetTitle>
+                  {tx('ui.environments.cellTitle', {
+                    product: openCell.product.name,
+                    environment: openCell.env.name,
+                  })}
+                </SheetTitle>
+                <SheetDescription>
+                  {tx('ui.environments.cellUrlHint', { environment: openCell.env.name })}
+                </SheetDescription>
+              </SheetHeader>
+              <CellEditor
+                key={`${openCell.environmentId}:${openCell.productId}`}
+                environmentId={openCell.environmentId}
+                productId={openCell.productId}
+                productKey={openCell.product.key}
+                cell={cellOf(openCell.environmentId, openCell.productId) ?? null}
+                onSaved={() => void refresh()}
+                onRemoved={() => {
+                  toast.success(
+                    tx('ui.environments.cellRemoved', {
+                      product: openCell.product?.name ?? '',
+                      environment: openCell.env?.name ?? '',
+                    }),
+                  );
+                  setCell(null);
+                  void refresh();
+                }}
+              />
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
       <NameDialog state={dialog} onClose={() => setDialog(null)} />
     </div>
   );
@@ -120,149 +377,296 @@ function Section({
   );
 }
 
-function EnvironmentEditor({ id, onDeleted }: { id: string; onDeleted: () => void }) {
+/** Name → value rows with a Save button. */
+function VariablesEditor({
+  initial,
+  onSave,
+  reference,
+}: {
+  initial: Record<string, string>;
+  onSave: (values: Record<string, string>) => Promise<void>;
+  /** How a step refers to a variable, e.g. `{{app.admin.user}}`. */
+  reference?: (name: string) => string;
+}) {
   const tx = useTx();
-  const qc = useQueryClient();
-  const projectId = useAppStore((s) => s.projectId) ?? '';
-  const env = useQuery(trpc.environments.get.queryOptions({ id }));
-  const [vars, setVars] = useState<[string, string][]>([]);
-  const [secretName, setSecretName] = useState('');
-  const [secretValue, setSecretValue] = useState('');
+  const [vars, setVars] = useState<[string, string][]>(Object.entries(initial));
+  const signature = JSON.stringify(initial);
+  // Reset when the saved values change (not on every new object identity).
+  useEffect(
+    () => setVars(Object.entries(JSON.parse(signature) as Record<string, string>)),
+    [signature],
+  );
+  return (
+    <>
+      {vars.map(([k, v], i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: rows are positional.
+        <div key={i} className="flex items-center gap-2">
+          <Input
+            className="w-44"
+            aria-label={tx('ui.variables.name')}
+            value={k}
+            onChange={(ev) => setVars(vars.map((r, j) => (j === i ? [ev.target.value, r[1]] : r)))}
+          />
+          <Input
+            aria-label={tx('ui.variables.value')}
+            value={v}
+            onChange={(ev) => setVars(vars.map((r, j) => (j === i ? [r[0], ev.target.value] : r)))}
+          />
+          {reference && k.trim() && (
+            <code className="hidden shrink-0 rounded bg-muted px-1.5 py-1 text-xs md:block">
+              {reference(k.trim())}
+            </code>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={tx('ui.actions.delete')}
+            onClick={() => setVars(vars.filter((_, j) => j !== i))}
+          >
+            <Trash2 />
+          </Button>
+        </div>
+      ))}
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={() => setVars([...vars, ['', '']])}>
+          <Plus /> {tx('ui.variables.add')}
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => void onSave(Object.fromEntries(vars.filter(([k]) => k.trim())))}
+        >
+          {tx('common.save')}
+        </Button>
+      </div>
+    </>
+  );
+}
+
+/** One cell: address, cell variables, proxy, SSH — or remove [O-02, G-06, G-07]. */
+function CellEditor({
+  environmentId,
+  productId,
+  productKey,
+  cell,
+  onSaved,
+  onRemoved,
+}: {
+  environmentId: string;
+  productId: string;
+  productKey: string;
+  cell: CellValues | null;
+  onSaved: () => void;
+  onRemoved: () => void;
+}) {
+  const tx = useTx();
+  const env = useQuery(trpc.environments.get.queryOptions({ id: environmentId }));
   const [testing, setTesting] = useState(false);
-
-  useEffect(() => {
-    if (env.data) setVars(Object.entries(env.data.variables));
-  }, [env.data]);
-
-  const reload = () =>
-    Promise.all([
-      qc.invalidateQueries({ queryKey: trpc.environments.get.queryKey({ id }) }),
-      qc.invalidateQueries({ queryKey: trpc.environments.list.queryKey({ projectId }) }),
-    ]);
-  const update = async (
-    patch: Parameters<typeof trpcClient.environments.update.mutate>[0]['patch'],
-  ) => {
+  const cur: CellValues = cell ?? { url: null, variables: {}, proxy: null, ssh: null };
+  const save = async (patch: Partial<CellValues>, quiet = false) => {
     try {
-      await trpcClient.environments.update.mutate({ id, patch });
-      await reload();
-      toast.success(tx('ui.actions.saved'));
+      await trpcClient.environments.setCell.mutate({
+        environmentId,
+        productId,
+        cell: { ...cur, ...patch },
+      });
+      onSaved();
+      if (!quiet) toast.success(tx('ui.actions.saved'));
     } catch (err) {
       toast.error(errorMessage(err, tx));
     }
   };
-
-  if (!env.data) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-  const e = env.data;
-  const secretNames = e.secrets.map((s) => s.name);
-  const ssh: SshSettings | null = e.ssh ?? null;
-  const saveSsh = (next: SshSettings | null) => void update({ ssh: next });
+  const secretNames = env.data?.secrets.map((s) => s.name) ?? [];
+  const ssh = cur.ssh;
+  const saveSsh = (next: SshSettings | null) => void save({ ssh: next });
   const defaultHop: SshHop = { host: '', port: 22, username: '', auth: 'password' };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4">
-      <div className="flex items-end gap-3">
-        <div className="flex flex-1 flex-col gap-1.5">
-          <Label htmlFor="env-name">{tx('ui.environments.name')}</Label>
+    <div className="flex flex-col gap-4 px-4 pb-6">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="cell-url">{tx('ui.environments.baseUrl')}</Label>
+        <Input
+          id="cell-url"
+          placeholder={tx('ui.examples.baseUrl')}
+          defaultValue={cur.url ?? ''}
+          onBlur={(ev) => {
+            const url = ev.target.value.trim() || null;
+            if (url !== cur.url || !cell) void save({ url });
+          }}
+        />
+        <code className="self-start rounded bg-muted px-1.5 py-1 text-xs">{`{{app.${productKey}}}`}</code>
+      </div>
+
+      <Section icon={ServerCog} title={tx('ui.environments.cellVariables')}>
+        <VariablesEditor
+          initial={cur.variables}
+          reference={(n) => `{{app.${productKey}.${n}}}`}
+          onSave={(variables) => save({ variables })}
+        />
+      </Section>
+
+      <Section icon={Globe} title={tx('ui.environments.proxy')}>
+        <Input
+          aria-label={tx('ui.environments.proxyServer')}
+          placeholder={tx('ui.environments.proxyServer')}
+          defaultValue={cur.proxy?.server ?? ''}
+          onBlur={(ev) => {
+            const server = ev.target.value.trim();
+            if (server === (cur.proxy?.server ?? '')) return;
+            void save({ proxy: server ? { ...(cur.proxy ?? { bypass: [] }), server } : null });
+          }}
+        />
+        {cur.proxy && (
           <Input
-            id="env-name"
-            defaultValue={e.name}
-            onBlur={(ev) =>
-              ev.target.value.trim() &&
-              ev.target.value !== e.name &&
-              void update({ name: ev.target.value.trim() })
-            }
+            aria-label={tx('ui.environments.proxyBypass')}
+            placeholder={tx('ui.environments.proxyBypass')}
+            defaultValue={cur.proxy.bypass.join(', ')}
+            onBlur={(ev) => {
+              const bypass = ev.target.value
+                .split(',')
+                .map((x) => x.trim())
+                .filter(Boolean);
+              if (cur.proxy) void save({ proxy: { ...cur.proxy, bypass } });
+            }}
+          />
+        )}
+      </Section>
+
+      <Section icon={ServerCog} title={tx('ui.environments.ssh.title')}>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="ssh-on">{tx('ui.environments.ssh.enabled')}</Label>
+          <Switch
+            id="ssh-on"
+            checked={ssh?.enabled === true}
+            // Enabled once the SSH server below has been saved.
+            disabled={!ssh}
+            onCheckedChange={(on) => ssh && saveSsh({ ...ssh, enabled: on })}
           />
         </div>
+        <SshHopForm
+          idPrefix="ssh-target"
+          hop={ssh?.target ?? defaultHop}
+          secretNames={secretNames}
+          onSave={(target) =>
+            saveSsh({
+              enabled: ssh?.enabled ?? true,
+              target,
+              ...(ssh?.jump ? { jump: ssh.jump } : {}),
+            })
+          }
+        />
+        {ssh && (
+          <details className="rounded-md border p-3" open={!!ssh.jump}>
+            <summary className="cursor-pointer text-sm font-medium">
+              {tx('ui.environments.ssh.jump')}
+            </summary>
+            <div className="mt-3">
+              <SshHopForm
+                idPrefix="ssh-jump"
+                hop={ssh.jump ?? defaultHop}
+                secretNames={secretNames}
+                onSave={(jump) => saveSsh({ ...ssh, jump })}
+              />
+            </div>
+          </details>
+        )}
+        {ssh && (
+          <Button
+            variant="outline"
+            className="self-start"
+            disabled={testing}
+            onClick={async () => {
+              setTesting(true);
+              try {
+                const res = await trpcClient.system.testSsh.mutate({ environmentId, productId });
+                if (res.ok) toast.success(tx('ui.environments.ssh.ok', { ms: res.ms }));
+                else toast.error(tx('ui.environments.ssh.failed', { reason: res.message }));
+              } catch (err) {
+                toast.error(errorMessage(err, tx));
+              } finally {
+                setTesting(false);
+              }
+            }}
+          >
+            {testing ? <Loader2 className="animate-spin" /> : <ServerCog />}{' '}
+            {testing ? tx('ui.environments.ssh.testing') : tx('ui.environments.ssh.test')}
+          </Button>
+        )}
+        <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+          <p className="mb-1 font-medium text-foreground">{tx('ui.environments.ssh.guideTitle')}</p>
+          <p>{tx('ui.environments.ssh.guide1')}</p>
+          <p>{tx('ui.environments.ssh.guide2')}</p>
+          <p>{tx('ui.environments.ssh.guide3')}</p>
+          <p>{tx('ui.environments.ssh.guide4')}</p>
+        </div>
+      </Section>
+
+      {cell && (
         <Button
           variant="ghost"
+          className="self-start text-fail-text"
           onClick={async () => {
             try {
-              await trpcClient.environments.remove.mutate({ id });
-              await reload();
-              onDeleted();
+              await trpcClient.environments.setCell.mutate({
+                environmentId,
+                productId,
+                cell: null,
+              });
+              onRemoved();
             } catch (err) {
               toast.error(errorMessage(err, tx));
             }
           }}
         >
-          <Trash2 /> {tx('ui.actions.delete')}
+          <Trash2 /> {tx('ui.environments.removeCell')}
         </Button>
+      )}
+    </div>
+  );
+}
+
+/** Variables and secrets shared by every product of one environment (S-06, E-08). */
+function EnvironmentDetails({ id, onChanged }: { id: string; onChanged: () => void }) {
+  const tx = useTx();
+  const qc = useQueryClient();
+  const env = useQuery(trpc.environments.get.queryOptions({ id }));
+  const [secretName, setSecretName] = useState('');
+  const [secretValue, setSecretValue] = useState('');
+  const reload = async () => {
+    await qc.invalidateQueries({ queryKey: trpc.environments.get.queryKey({ id }) });
+    onChanged();
+  };
+
+  if (!env.data) {
+    return (
+      <div className="flex items-center justify-center p-6">
+        <Loader2 className="animate-spin text-muted-foreground" />
       </div>
-      <p className="text-sm text-muted-foreground">{tx('ui.environments.hint')}</p>
-
+    );
+  }
+  const e = env.data;
+  return (
+    <div className="flex flex-col gap-4">
+      <h2 className="text-base font-semibold">
+        {tx('ui.environments.settingsOf', { name: e.name })}
+      </h2>
       <Section
-        icon={Globe}
-        title={tx('ui.environments.baseUrl')}
-        hint={tx('ui.environments.baseUrlHint')}
+        icon={ServerCog}
+        title={tx('ui.environments.variables')}
+        hint={tx('ui.environments.envVariablesHint')}
       >
-        <Input
-          aria-label={tx('ui.environments.baseUrl')}
-          placeholder={tx('ui.examples.baseUrl')}
-          defaultValue={e.baseUrl ?? ''}
-          onBlur={(ev) =>
-            ev.target.value !== (e.baseUrl ?? '') &&
-            void update({ baseUrl: ev.target.value.trim() || null })
-          }
+        <VariablesEditor
+          initial={e.variables}
+          reference={(n) => `{{env.${n}}}`}
+          onSave={async (variables) => {
+            try {
+              await trpcClient.environments.setVariables.mutate({ id, variables });
+              await reload();
+              toast.success(tx('ui.actions.saved'));
+            } catch (err) {
+              toast.error(errorMessage(err, tx));
+            }
+          }}
         />
-      </Section>
-
-      <Section icon={ServerCog} title={tx('ui.environments.variables')}>
-        {vars.map(([k, v], i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: rows are positional.
-          <div key={i} className="flex gap-2">
-            <Input
-              className="w-56"
-              aria-label={tx('ui.variables.name')}
-              value={k}
-              onChange={(ev) =>
-                setVars(vars.map((r, j) => (j === i ? [ev.target.value, r[1]] : r)))
-              }
-            />
-            <Input
-              aria-label={tx('ui.variables.value')}
-              value={v}
-              onChange={(ev) =>
-                setVars(vars.map((r, j) => (j === i ? [r[0], ev.target.value] : r)))
-              }
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={tx('ui.actions.delete')}
-              onClick={() => setVars(vars.filter((_, j) => j !== i))}
-            >
-              <Trash2 />
-            </Button>
-          </div>
-        ))}
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setVars([...vars, ['', '']])}>
-            <Plus /> {tx('ui.variables.add')}
-          </Button>
-          <Button
-            size="sm"
-            onClick={async () => {
-              try {
-                await trpcClient.environments.setVariables.mutate({
-                  id,
-                  variables: Object.fromEntries(vars.filter(([k]) => k.trim())),
-                });
-                await reload();
-                toast.success(tx('ui.actions.saved'));
-              } catch (err) {
-                toast.error(errorMessage(err, tx));
-              }
-            }}
-          >
-            {tx('common.save')}
-          </Button>
-        </div>
       </Section>
 
       <Section
@@ -327,102 +731,6 @@ function EnvironmentEditor({ id, onDeleted }: { id: string; onDeleted: () => voi
             {tx('common.save')}
           </Button>
         </form>
-      </Section>
-
-      <Section icon={Globe} title={tx('ui.environments.proxy')}>
-        <Input
-          aria-label={tx('ui.environments.proxyServer')}
-          placeholder={tx('ui.environments.proxyServer')}
-          defaultValue={e.proxy?.server ?? ''}
-          onBlur={(ev) => {
-            const server = ev.target.value.trim();
-            if (server === (e.proxy?.server ?? '')) return;
-            void update({ proxy: server ? { ...(e.proxy ?? { bypass: [] }), server } : null });
-          }}
-        />
-        {e.proxy && (
-          <Input
-            aria-label={tx('ui.environments.proxyBypass')}
-            placeholder={tx('ui.environments.proxyBypass')}
-            defaultValue={e.proxy.bypass.join(', ')}
-            onBlur={(ev) => {
-              const bypass = ev.target.value
-                .split(',')
-                .map((x) => x.trim())
-                .filter(Boolean);
-              if (e.proxy) void update({ proxy: { ...e.proxy, bypass } });
-            }}
-          />
-        )}
-      </Section>
-
-      <Section icon={ServerCog} title={tx('ui.environments.ssh.title')}>
-        <div className="flex items-center justify-between">
-          <Label htmlFor="ssh-on">{tx('ui.environments.ssh.enabled')}</Label>
-          <Switch
-            id="ssh-on"
-            checked={ssh?.enabled === true}
-            // Enabled once the SSH server below has been saved.
-            disabled={!ssh}
-            onCheckedChange={(on) => ssh && saveSsh({ ...ssh, enabled: on })}
-          />
-        </div>
-        <SshHopForm
-          idPrefix="ssh-target"
-          hop={ssh?.target ?? defaultHop}
-          secretNames={secretNames}
-          onSave={(target) =>
-            saveSsh({
-              enabled: ssh?.enabled ?? true,
-              target,
-              ...(ssh?.jump ? { jump: ssh.jump } : {}),
-            })
-          }
-        />
-        {ssh && (
-          <details className="rounded-md border p-3" open={!!ssh.jump}>
-            <summary className="cursor-pointer text-sm font-medium">
-              {tx('ui.environments.ssh.jump')}
-            </summary>
-            <div className="mt-3">
-              <SshHopForm
-                idPrefix="ssh-jump"
-                hop={ssh.jump ?? defaultHop}
-                secretNames={secretNames}
-                onSave={(jump) => saveSsh({ ...ssh, jump })}
-              />
-            </div>
-          </details>
-        )}
-        {ssh && (
-          <Button
-            variant="outline"
-            className="self-start"
-            disabled={testing}
-            onClick={async () => {
-              setTesting(true);
-              try {
-                const res = await trpcClient.system.testSsh.mutate({ environmentId: id });
-                if (res.ok) toast.success(tx('ui.environments.ssh.ok', { ms: res.ms }));
-                else toast.error(tx('ui.environments.ssh.failed', { reason: res.message }));
-              } catch (err) {
-                toast.error(errorMessage(err, tx));
-              } finally {
-                setTesting(false);
-              }
-            }}
-          >
-            {testing ? <Loader2 className="animate-spin" /> : <ServerCog />}{' '}
-            {testing ? tx('ui.environments.ssh.testing') : tx('ui.environments.ssh.test')}
-          </Button>
-        )}
-        <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
-          <p className="mb-1 font-medium text-foreground">{tx('ui.environments.ssh.guideTitle')}</p>
-          <p>{tx('ui.environments.ssh.guide1')}</p>
-          <p>{tx('ui.environments.ssh.guide2')}</p>
-          <p>{tx('ui.environments.ssh.guide3')}</p>
-          <p>{tx('ui.environments.ssh.guide4')}</p>
-        </div>
       </Section>
     </div>
   );

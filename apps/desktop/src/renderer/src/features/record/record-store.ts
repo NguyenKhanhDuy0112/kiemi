@@ -74,7 +74,7 @@ export const useRecordStore = create<RecordStore>((set, get) => {
       // The editor is closed: keep the mirror in sync anyway.
       recorded = applyRecordChanges(
         {
-          schemaVersion: 1,
+          schemaVersion: 2,
           id: 'x',
           name: 'x',
           tags: [],

@@ -51,6 +51,8 @@ function openData(): { services: Services; defaultProjectId: string } {
   const services = createServices({ db, workspaceId: seed.workspaceId }, keychainCipher);
   // v1.0 projects: one "Web" product holding everything [O-01].
   services.products.backfillAll();
+  // v1.0 environments: their URL/proxy/SSH become the "Web" cell [O-02].
+  services.environments.backfillCells();
   return { services, defaultProjectId: seed.projectId };
 }
 
@@ -136,10 +138,7 @@ function registerIpc(data: { services: Services; defaultProjectId: string }): vo
     spawnWorker: () => spawnUtilityWorker(join(__dirname, 'engine-worker.js')),
     artifactsRoot: join(userData, 'runs'),
     browsersPath: join(userData, 'browsers'),
-    openTunnel: (env, secrets) => {
-      if (!env.ssh) throw new Error('No SSH settings');
-      return openSshTunnel(env.ssh, secrets);
-    },
+    openTunnel: (ssh, secrets) => openSshTunnel(ssh, secrets),
   });
   runs = runManager;
   // Recording / Pick run in their own engine process too [M5].
@@ -147,10 +146,7 @@ function registerIpc(data: { services: Services; defaultProjectId: string }): vo
     services: data.services,
     spawnWorker: () => spawnUtilityWorker(join(__dirname, 'engine-worker.js')),
     browsersPath: join(userData, 'browsers'),
-    openTunnel: (env, secrets) => {
-      if (!env.ssh) throw new Error('No SSH settings');
-      return openSshTunnel(env.ssh, secrets);
-    },
+    openTunnel: (ssh, secrets) => openSshTunnel(ssh, secrets),
   });
   recorder = recorderManager;
   registerArtifactProtocol(data.services);

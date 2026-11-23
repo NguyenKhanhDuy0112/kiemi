@@ -1,4 +1,5 @@
 import {
+  CellInputSchema,
   DatasetInputSchema,
   ElementInputSchema,
   EnvironmentInputSchema,
@@ -271,6 +272,20 @@ export const environmentsRouter = router({
   removeSecret: publicProcedure
     .input(z.object({ id, name: z.string() }))
     .mutation(({ ctx, input }) => ctx.services.environments.removeSecret(input.id, input.name)),
+  /** Every cell of the Environment × Product matrix of a project [O-02]. */
+  matrix: publicProcedure
+    .input(z.object({ projectId: id }))
+    .query(({ ctx, input }) => ctx.services.environments.matrix(input.projectId)),
+  /** `cell: null` = the product is not available in that environment. */
+  setCell: publicProcedure
+    .input(z.object({ environmentId: id, productId: id, cell: CellInputSchema.nullable() }))
+    .mutation(({ ctx, input }) =>
+      ctx.services.environments.setCell(input.environmentId, input.productId, input.cell),
+    ),
+  /** "Nhân bản môi trường": cells, variables and secret names (not values) [O-02]. */
+  duplicate: publicProcedure
+    .input(z.object({ id, name: z.string().trim().min(1).max(100) }))
+    .mutation(({ ctx, input }) => ctx.services.environments.duplicate(input.id, input.name)),
 });
 
 /** Test data [E-03]. */

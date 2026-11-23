@@ -7,7 +7,7 @@ import {
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { DbError, type Patch, Repo, type RepoContext, validation } from '../repo';
-import { elements, folders, products, projects, testCases } from '../tables';
+import { elements, environmentProducts, folders, products, projects, testCases } from '../tables';
 
 export const ProductInputSchema = z.object({
   projectId: z.string().min(1),
@@ -85,7 +85,9 @@ export class ProductService {
     const tests = new Repo(this.#ctx, testCases, 'test case');
     const fs = new Repo(this.#ctx, folders, 'folder');
     const els = new Repo(this.#ctx, elements, 'element');
+    const cells = new Repo(this.#ctx, environmentProducts, 'environment cell');
     this.#ctx.db.transaction(() => {
+      for (const c of cells.list(eq(environmentProducts.productId, id))) cells.remove(c.id);
       for (const t of tests.list(eq(testCases.productId, id))) tests.remove(t.id);
       for (const f of fs.list(eq(folders.productId, id))) fs.remove(f.id);
       for (const e of els.list(eq(elements.productId, id))) els.remove(e.id);

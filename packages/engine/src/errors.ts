@@ -19,6 +19,10 @@ export const ENGINE_ERROR_CODES = [
   'NO_BROWSER',
   'PROXY_SECRET_MISSING',
   'UNKNOWN_VARIABLE',
+  /** `{{app.<key>}}`: the product has no cell in the environment of the run [O-02]. */
+  'APP_NOT_AVAILABLE',
+  /** `{{app.<key>}}`: no product with this key in the project [O-02]. */
+  'UNKNOWN_PRODUCT',
   'INVALID_EXPRESSION',
   'CONSOLE_ERROR',
   'HTTP_ERROR',

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 2,
+  "id": "0193a5b2-7c4e-7d1a-9f3b-2c8e4a6d1f05",
+  "name": "Duyệt đơn trên trang quản trị",
+  "product": "web",
+  "environments": { "except": ["Production"], "reason": "Tạo dữ liệu thật" },
+  "steps": [
+    { "id": "s1", "action": "goto", "params": { "url": "{{app}}/login.html" } },
+    { "id": "s2", "action": "goto", "params": { "url": "{{app.admin}}/requests.html" } },
+    {
+      "id": "s3",
+      "action": "fill",
+      "params": { "target": { "ref": "user" }, "value": "{{app.admin.username}}" }
+    }
+  ],
+  "elements": {
+    "user": {
+      "name": "Tên đăng nhập",
+      "strategies": [{ "kind": "label", "value": "Tên đăng nhập" }]
+    }
+  }
+}

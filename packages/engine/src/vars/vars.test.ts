@@ -178,3 +178,68 @@ describe('secrets [E-08]', () => {
     expect(maskSecrets('login an / P@ss-123 tok', s.secretValues())).toBe('login an / •••• ••••');
   });
 });
+
+describe('products × environments: {{app}} [O-02]', () => {
+  const uat = EnvSchema.parse({
+    id: 'e-uat',
+    name: 'UAT',
+    defaultProduct: 'web',
+    apps: {
+      web: { name: 'Web', url: 'https://uat.example.com', variables: { user: 'nv001' } },
+      admin: {
+        name: 'Admin',
+        url: 'https://admin.uat.example.com',
+        variables: { user: 'admin01', home: '{{app.admin}}/home' },
+      },
+      api: { name: 'API', missing: true },
+    },
+  });
+  const code = (fn: () => unknown) => {
+    try {
+      fn();
+    } catch (e) {
+      return e instanceof EngineError ? { code: e.code, details: e.details } : String(e);
+    }
+    return undefined;
+  };
+
+  it('{{app}} is the main product URL; {{app.<key>}} other products; {{app.<key>.<var>}} cell variables', () => {
+    const v = new VariableStore({ env: uat });
+    expect(v.render('{{app}}/login')).toBe('https://uat.example.com/login');
+    expect(v.render('{{app}}')).toBe('https://uat.example.com');
+    expect(v.render('{{app.admin}}')).toBe('https://admin.uat.example.com');
+    expect(v.render('{{app.admin.user}} / {{app.web.user}}')).toBe('admin01 / nv001');
+    expect(v.render('{{app.admin.home}}')).toBe('https://admin.uat.example.com/home');
+    expect(v.render('{{env.baseUrl}}')).toBe('https://uat.example.com');
+  });
+
+  it('the test’s product decides {{app}}', () => {
+    const v = new VariableStore({ env: uat, product: 'admin' });
+    expect(v.render('{{app}}')).toBe('https://admin.uat.example.com');
+    expect(v.render('{{env.baseUrl}}')).toBe('https://admin.uat.example.com');
+  });
+
+  it('a product missing in the environment fails with a readable error only when used', () => {
+    const v = new VariableStore({ env: uat });
+    expect(v.render('{{app.web}}')).toBe('https://uat.example.com');
+    expect(code(() => v.render('{{app.api}}/v1'))).toEqual({
+      code: 'APP_NOT_AVAILABLE',
+      details: { product: 'API', environment: 'UAT', key: 'api' },
+    });
+    expect(code(() => v.render('{{app.shop}}'))).toMatchObject({
+      code: 'UNKNOWN_PRODUCT',
+      details: { product: 'shop' },
+    });
+    expect(
+      code(() => new VariableStore({ env: uat, product: 'api' }).render('{{app}}')),
+    ).toMatchObject({ code: 'APP_NOT_AVAILABLE' });
+  });
+
+  it('a v1.0 environment (baseUrl only) still answers {{app}}', () => {
+    const v = new VariableStore({
+      env: EnvSchema.parse({ id: 'e', name: 'Old', baseUrl: 'http://x.test' }),
+    });
+    expect(v.render('{{app}}/a')).toBe('http://x.test/a');
+    expect(v.render('{{env.baseUrl}}')).toBe('http://x.test');
+  });
+});

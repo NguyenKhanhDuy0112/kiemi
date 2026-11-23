@@ -93,6 +93,8 @@ describe('describeRunError [I-04, N-06]', () => {
       'NO_BROWSER',
       'PROXY_SECRET_MISSING',
       'UNKNOWN_VARIABLE',
+      'APP_NOT_AVAILABLE',
+      'UNKNOWN_PRODUCT',
       'INVALID_EXPRESSION',
       'CONSOLE_ERROR',
       'HTTP_ERROR',

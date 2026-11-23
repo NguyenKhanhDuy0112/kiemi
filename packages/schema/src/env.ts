@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ProductKeySchema } from './product';
 
 export const VariableNameSchema = z
   .string()
@@ -84,11 +85,32 @@ export const SshSettingsSchema = z.object({
 });
 export type SshSettings = z.infer<typeof SshSettingsSchema>;
 
+/**
+ * One cell of the Environment × Product matrix as the engine sees it [O-02]:
+ * the product's URL, variables and network settings in the environment of the run.
+ */
+export const AppCellSchema = z.object({
+  /** Product name, for error messages ("Sản phẩm 'Admin' chưa có ở môi trường 'UAT'"). */
+  name: z.string().min(1),
+  url: z.url().optional(),
+  variables: z.record(VariableNameSchema, z.string()).default({}),
+  proxy: ProxySchema.optional(),
+  ssh: SshSettingsSchema.optional(),
+  /** The product exists in the project but has no cell in this environment. */
+  missing: z.boolean().default(false),
+});
+export type AppCell = z.infer<typeof AppCellSchema>;
+
 /** Environment (dev / staging / prod…) with its variables [E-02]. */
 export const EnvSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  /** v1.0 single URL; now the main product's cell URL (`{{env.baseUrl}}` = `{{app}}`). */
   baseUrl: z.url().optional(),
+  /** Cells of this environment by product key [O-02]. */
+  apps: z.record(ProductKeySchema, AppCellSchema).default({}),
+  /** Product key used when a test names none (the project's first product). */
+  defaultProduct: ProductKeySchema.optional(),
   variables: z.record(VariableNameSchema, z.string()).default({}),
   /** Names of secrets this env expects; values never live in the env [E-08]. */
   secretNames: z.array(VariableNameSchema).default([]),

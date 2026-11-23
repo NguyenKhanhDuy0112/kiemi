@@ -47,6 +47,17 @@ export class TestCaseService {
     return this.repo.get(id);
   }
 
+  /**
+   * Content to run/record: `product` defaults to the key of the product the
+   * test lives in, so `{{app}}` is that product's URL [O-01, O-02].
+   */
+  forRun(id: string): TestCase {
+    const row = this.repo.get(id);
+    if (row.content.product || !row.productId) return row.content;
+    const product = new ProductService(this.#ctx).repo.find(row.productId);
+    return product ? { ...row.content, product: product.key } : row.content;
+  }
+
   /** New empty test with a ready-to-use `.kiemi.json` document. */
   create(input: z.input<typeof NewTestCaseSchema>): TestCaseRow {
     const p = NewTestCaseSchema.safeParse(input);

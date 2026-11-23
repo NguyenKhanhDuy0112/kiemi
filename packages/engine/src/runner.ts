@@ -27,6 +27,7 @@ import type { RunDebugger } from './run/debug';
 import type { SavedLogin } from './run/services';
 import { DialogController, type RunServices } from './run/services';
 import { toLocator } from './run/target';
+import { mainAppUrl } from './vars/app';
 import { maskSecrets, VariableStore } from './vars/store';
 
 /** Default per-step timeout when neither the step nor the request sets one [D-07]. */
@@ -146,6 +147,7 @@ class Run {
         test: request.testCase.variables,
         row,
         secrets: request.secrets,
+        product: request.testCase.product,
       },
       this.#now,
     );
@@ -324,7 +326,7 @@ class Run {
     const req = this.#req;
     const logins = new Map(Object.entries(req.savedLogins ?? {}));
     const shared = new Map((req.sharedSteps ?? []).map((s) => [s.id, s]));
-    const baseUrl = req.env?.baseUrl;
+    const baseUrl = mainAppUrl(req.env, req.testCase.product);
     return {
       testCase: req.testCase,
       env: req.env,

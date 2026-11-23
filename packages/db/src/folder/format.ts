@@ -61,12 +61,23 @@ export const FolderEntrySchema = z.object({
 });
 export const FoldersFileSchema = z.object({ folders: z.array(FolderEntrySchema).default([]) });
 
+/** One cell of the Environment × Product matrix [O-02]. */
+export const CellEntrySchema = z.object({
+  productId: id,
+  url: z.string().nullish(),
+  variables: z.record(VariableNameSchema, z.string()).default({}),
+  proxy: ProxySchema.nullish(),
+  ssh: SshSettingsSchema.nullish(),
+});
+
 export const EnvironmentEntrySchema = z.object({
   id,
   name: z.string().trim().min(1),
+  /** Read only (files written before M9-05) → the first product's cell. */
   baseUrl: z.string().nullish(),
   proxy: ProxySchema.nullish(),
   ssh: SshSettingsSchema.nullish(),
+  cells: z.array(CellEntrySchema).default([]),
   variables: z.record(VariableNameSchema, z.string()).default({}),
   /** Names only — secret values never live in the project folder [O-11]. */
   secretNames: z.array(VariableNameSchema).default([]),
@@ -122,6 +133,7 @@ export const SuiteFileSchema = z.object({
 export type ProductEntry = z.infer<typeof ProductSchema>;
 export type FolderEntry = z.infer<typeof FolderEntrySchema>;
 export type EnvironmentEntry = z.infer<typeof EnvironmentEntrySchema>;
+export type CellEntry = z.infer<typeof CellEntrySchema>;
 export type ElementEntry = z.infer<typeof ElementEntrySchema>;
 export type SharedStepEntry = z.infer<typeof SharedStepFileSchema>;
 export type DatasetEntry = z.infer<typeof DatasetFileSchema>;

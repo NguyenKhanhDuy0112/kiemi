@@ -81,7 +81,7 @@ const brief = (list: Step[]) =>
 async function replay(recorded: Step[], checks: StepInput[] = []) {
   await fetch(`${site.url}/api/reset`, { method: 'POST' });
   const testCase = TestCaseSchema.parse({
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: '0193a5b2-7c4e-7d1a-9f3b-2c8e4a6d1f11',
     name: 'recorded',
     steps: [...recorded, ...checks.map((s, i) => ({ ...s, id: `check${i + 1}` }))],
@@ -90,7 +90,14 @@ async function replay(recorded: Step[], checks: StepInput[] = []) {
     {
       runId: `replay-${Date.now()}`,
       testCase,
-      env: { id: 'demo', name: 'Demo', baseUrl: site.url, variables: {}, secretNames: [] },
+      env: {
+        id: 'demo',
+        name: 'Demo',
+        baseUrl: site.url,
+        variables: {},
+        secretNames: [],
+        apps: {},
+      },
     },
     { registry: createDefaultRegistry(), browser },
   );
@@ -430,7 +437,7 @@ describe('record from step X, passwords [K-04, K-05]', () => {
   it('continues recording in the browser left at step X', async () => {
     let kept: SessionPages | undefined;
     const testCase = TestCaseSchema.parse({
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: '0193a5b2-7c4e-7d1a-9f3b-2c8e4a6d1f13',
       name: 'prefix',
       steps: [
@@ -444,7 +451,14 @@ describe('record from step X, passwords [K-04, K-05]', () => {
       {
         runId: 'prefix-1',
         testCase,
-        env: { id: 'demo', name: 'Demo', baseUrl: site.url, variables: {}, secretNames: [] },
+        env: {
+          id: 'demo',
+          name: 'Demo',
+          baseUrl: site.url,
+          variables: {},
+          secretNames: [],
+          apps: {},
+        },
         options: { stopAfterStepId: 's2' },
       },
       { registry: createDefaultRegistry(), browser, keepSessions: (p) => (kept = p) },

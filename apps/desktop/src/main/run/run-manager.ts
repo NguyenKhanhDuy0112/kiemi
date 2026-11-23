@@ -10,6 +10,7 @@ import type {
   Secrets,
   TestCase,
 } from '@kiemi/schema';
+import { type OpenTunnel, prepareNetwork, type TunnelLike, usedProducts } from '../tunnel/network';
 import type { HostToWorker, WorkerToHost } from './protocol';
 import { type StartRunInput, StartRunInputSchema } from './start-input';
 
@@ -24,10 +25,7 @@ export interface WorkerHandle {
   kill(): void;
 }
 
-export interface TunnelLike {
-  readonly proxyUrl: string;
-  close(): Promise<void>;
-}
+export type { OpenTunnel, TunnelLike } from '../tunnel/network';
 
 export interface RunManagerDeps {
   services: Services;
@@ -36,7 +34,8 @@ export interface RunManagerDeps {
   artifactsRoot: string;
   /** Where a downloaded Chromium lives (`userData/browsers`). */
   browsersPath: string;
-  openTunnel?: (env: Env, secrets: Secrets) => Promise<TunnelLike>;
+  /** Opens one SSH tunnel; called once per distinct SSH setting of the cells a run uses [O-02]. */
+  openTunnel?: OpenTunnel;
   /** Grace period after Stop before the engine process is killed. */
   cancelKillMs?: number;
 }
@@ -161,7 +160,8 @@ export class RunManager {
       const row = s.testCases.get(t.testCaseId);
       projectId = row.projectId;
       target = { kind: 'test', testCaseId: row.id, name: row.name };
-      plans = expand(row.content, datasetOf(row.content, s), t.rowIndex);
+      const content = s.testCases.forRun(row.id);
+      plans = expand(content, datasetOf(content, s), t.rowIndex);
     } else if (t.kind === 'suite') {
       const suite = s.suites.get(t.suiteId);
       projectId = suite.projectId;
@@ -173,7 +173,8 @@ export class RunManager {
         if (!item.enabled) continue;
         const row = s.testCases.repo.find(item.testCaseId);
         if (!row) continue;
-        plans.push(...expand(row.content, datasetOf(row.content, s, item.datasetId)));
+        const content = s.testCases.forRun(row.id);
+        plans.push(...expand(content, datasetOf(content, s, item.datasetId)));
       }
     } else {
       projectId = t.projectId;
@@ -181,8 +182,8 @@ export class RunManager {
       const tag = t.tag.toLowerCase();
       for (const summary of s.testCases.list(projectId)) {
         if (!summary.tags.some((x) => x.toLowerCase() === tag)) continue;
-        const row = s.testCases.get(summary.id);
-        plans.push(...expand(row.content, datasetOf(row.content, s)));
+        const content = s.testCases.forRun(summary.id);
+        plans.push(...expand(content, datasetOf(content, s)));
       }
     }
 
@@ -370,14 +371,21 @@ export class RunManager {
     this.#publish(active, { type: 'status', runId: active.runId, status: 'running' });
 
     let msg = start;
-    if (env?.ssh?.enabled && this.#d.openTunnel) {
+    if (env) {
       try {
-        const tunnel = await this.#d.openTunnel(env, secrets);
-        active.tunnel = tunnel;
-        const proxied: Env = {
-          ...env,
-          proxy: { server: tunnel.proxyUrl, bypass: env.proxy?.bypass ?? [] },
-        };
+        // Each product's cell may need its own SSH tunnel / proxy [O-02].
+        const net = await prepareNetwork({
+          env,
+          secrets,
+          used: usedProducts(
+            env,
+            start.requests.map((r) => r.testCase),
+            start.requests[0]?.sharedSteps ?? [],
+          ),
+          openTunnel: this.#d.openTunnel,
+        });
+        active.tunnel = { proxyUrl: net.env.proxy?.server ?? '', close: net.close };
+        const proxied = net.env;
         msg = { ...start, requests: start.requests.map((r) => ({ ...r, env: proxied })) };
       } catch (err) {
         this.#finish(active, 'error', {

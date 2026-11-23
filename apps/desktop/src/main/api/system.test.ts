@@ -69,7 +69,8 @@ describe('system router [M3-03, S-07, G-07]', () => {
     expect((await c.environments.get({ id: env.id })).ssh).toMatchObject({
       target: { host: '127.0.0.1', port: 1 },
     });
-    const res = await c.system.testSsh({ environmentId: env.id });
+    const [web] = await c.products.list({ projectId });
+    const res = await c.system.testSsh({ environmentId: env.id, productId: web?.id as string });
     expect(res).toMatchObject({ ok: false, reason: 'missingSecret' });
   });
 });

@@ -33,9 +33,13 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
     environments: services.environments.list(projectId).map((e) => ({
       id: e.id,
       name: e.name,
-      baseUrl: e.baseUrl,
-      proxy: e.proxy,
-      ssh: e.ssh,
+      cells: services.environments.cells(e.id).map((c) => ({
+        productId: c.productId,
+        url: c.url,
+        variables: c.variables,
+        proxy: c.proxy,
+        ssh: c.ssh,
+      })),
       variables: services.environments.variables(e.id),
       secretNames: services.environments.secretNames(e.id),
       sortOrder: e.sortOrder,
@@ -233,9 +237,6 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
         id: e.id,
         values: {
           name: e.name,
-          baseUrl: e.baseUrl ?? null,
-          proxy: e.proxy ?? null,
-          ssh: e.ssh ?? null,
           sortOrder: e.sortOrder,
           secretNames: [...new Set(e.secretNames)].sort(),
         },
@@ -244,6 +245,25 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
         const e = s.environments.find((x) => x.id === id);
         if (!e) return;
         if (!same(envs.variables(id), e.variables)) envs.setVariables(id, e.variables);
+        // Cells by product; files from before M9-05 carry one URL for the first product.
+        const legacy =
+          !e.cells.length && (e.baseUrl || e.proxy || e.ssh)
+            ? [{ productId: first, url: e.baseUrl, variables: {}, proxy: e.proxy, ssh: e.ssh }]
+            : [];
+        const seen = new Set<string>();
+        const cells = [...e.cells, ...legacy].filter(
+          (c) => productIds.has(c.productId) && !seen.has(c.productId) && seen.add(c.productId),
+        );
+        envs.setCells(
+          id,
+          cells.map((c) => ({
+            productId: c.productId,
+            url: c.url && /^[a-z][a-z0-9+.-]*:\/\//i.test(c.url) ? c.url : null,
+            variables: c.variables,
+            proxy: c.proxy ?? null,
+            ssh: c.ssh ?? null,
+          })),
+        );
         // A secret removed by a teammate: drop this machine's value too.
         const names = new Set(e.secretNames);
         for (const sec of envs.secrets.list(eq(secretsTable.environmentId, id)))

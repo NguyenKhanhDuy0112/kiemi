@@ -178,8 +178,37 @@ export const environments = sqliteTable(
      */
     secretNames: json<string[]>('secret_names'),
     sortOrder: integer('sort_order').notNull().default(0),
+    /**
+     * 1 = v1.0 row whose `baseUrl/proxy/ssh` still wait to move into a cell of the
+     * default product (`EnvironmentService.backfillCells`) [O-02] (migration 7).
+     * Those three columns are legacy: cells hold them now.
+     */
+    cellsPending: integer('cells_pending').notNull().default(0),
   },
   (t) => [index('environments_project_idx').on(t.projectId)],
+);
+
+/**
+ * One cell of the Environment × Product matrix [O-02] (migration 7): the
+ * product's URL, variables and network in that environment. No row = the
+ * product is not available in the environment.
+ */
+export const environmentProducts = sqliteTable(
+  'environment_products',
+  {
+    ...base,
+    projectId: text('project_id').notNull(),
+    environmentId: text('environment_id').notNull(),
+    productId: text('product_id').notNull(),
+    url: text('url'),
+    variables: json<Record<string, string>>('variables').notNull(),
+    proxy: json<ProxySettings>('proxy'),
+    ssh: json<SshSettings>('ssh'),
+  },
+  (t) => [
+    index('environment_products_environment_idx').on(t.environmentId),
+    index('environment_products_project_idx').on(t.projectId),
+  ],
 );
 
 export const variables = sqliteTable(
@@ -331,6 +360,7 @@ export const ALL_TABLES = {
   sharedSteps,
   elements,
   environments,
+  environmentProducts,
   variables,
   secrets,
   datasets,

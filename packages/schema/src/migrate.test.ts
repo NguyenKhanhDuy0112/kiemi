@@ -94,6 +94,35 @@ describe('real migrations', () => {
     }
   }
 
+  it('v1 → v2 turns {{env.baseUrl}} into {{app}} in steps and cleanup only [O-02]', () => {
+    const raw: unknown = JSON.parse(
+      readFileSync(join(FIXTURES, 'v1', 'env-base-url.kiemi.json'), 'utf8'),
+    );
+    const { testCase } = parseTestCase(raw);
+    expect(testCase.steps.map((s) => Object.values(s.params)[0])).toEqual([
+      '{{app}}/login.html',
+      '{{app}}/login.html',
+    ]);
+    expect(testCase.cleanup[0]?.params.url).toBe('{{app}}');
+    const kept = parseTestCase({
+      schemaVersion: 1,
+      id: '0193a5b2-7c4e-7d1a-9f3b-2c8e4a6d1f06',
+      name: '{{env.baseUrl}}',
+      steps: [{ id: 's1', action: 'goto', params: { url: '{{env.name}}' } }],
+    }).testCase;
+    expect(kept.name).toBe('{{env.baseUrl}}');
+    expect(kept.steps[0]?.params.url).toBe('{{env.name}}');
+  });
+
+  it('v2 keeps the main product and environment limits [O-01, O-06]', () => {
+    const raw: unknown = JSON.parse(
+      readFileSync(join(FIXTURES, 'v2', 'two-products.kiemi.json'), 'utf8'),
+    );
+    const { testCase } = parseTestCase(raw);
+    expect(testCase.product).toBe('web');
+    expect(testCase.environments).toEqual({ except: ['Production'], reason: 'Tạo dữ liệu thật' });
+  });
+
   it('rejects a file from a newer app with NEWER_VERSION', () => {
     expect(codeOf(() => parseTestCase({ schemaVersion: CURRENT_SCHEMA_VERSION + 1 }))).toBe(
       'NEWER_VERSION',

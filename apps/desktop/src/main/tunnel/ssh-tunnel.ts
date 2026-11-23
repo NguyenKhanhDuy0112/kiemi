@@ -1,6 +1,6 @@
 import { type AddressInfo, createServer, type Server, type Socket } from 'node:net';
 import type { Duplex } from 'node:stream';
-import type { Env, Secrets, SshHop, SshSettings } from '@kiemi/schema';
+import type { Secrets, SshHop, SshSettings } from '@kiemi/schema';
 import { Client, type ConnectConfig } from 'ssh2';
 
 /** Error with a stable code for the UI ("Không kết nối được máy chủ SSH"). */
@@ -210,9 +210,4 @@ export async function testSshConnection(
     const e = err instanceof SshError ? err : new SshError('other', String(err));
     return { ok: false, reason: e.reason, message: e.message };
   }
-}
-
-/** The env with its browser traffic sent through the tunnel (DNS via SSH). */
-export function withTunnelProxy(env: Env, tunnel: Pick<SshTunnel, 'proxyUrl'>): Env {
-  return { ...env, proxy: { server: tunnel.proxyUrl, bypass: env.proxy?.bypass ?? [] } };
 }

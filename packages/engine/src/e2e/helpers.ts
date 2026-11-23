@@ -42,7 +42,7 @@ export async function startE2E(syncDelayMs = 0): Promise<E2E> {
       const { request, events, sharedSteps, ...tc } = extra;
       await fetch(`${site.url}/api/reset`, { method: 'POST' });
       const testCase = TestCaseSchema.parse({
-        schemaVersion: 1,
+        schemaVersion: 2,
         id: '0193a5b2-7c4e-7d1a-9f3b-2c8e4a6d1f10',
         name: 'e2e',
         ...tc,
@@ -52,7 +52,14 @@ export async function startE2E(syncDelayMs = 0): Promise<E2E> {
         {
           runId: `run-${++n}`,
           testCase,
-          env: { id: 'demo', name: 'Demo', baseUrl: site.url, variables: {}, secretNames: [] },
+          env: {
+            id: 'demo',
+            name: 'Demo',
+            baseUrl: site.url,
+            variables: {},
+            secretNames: [],
+            apps: {},
+          },
           ...(sharedSteps ? { sharedSteps } : {}),
           ...request,
           // Cold browsers on CI runners (macOS especially) can need > 10 s for the first page.

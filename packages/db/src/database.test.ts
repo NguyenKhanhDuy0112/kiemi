@@ -24,6 +24,7 @@ describe('database & migrations [M2-01]', () => {
         'artifacts',
         'datasets',
         'elements',
+        'environment_products',
         'environments',
         'folders',
         'products',

@@ -105,7 +105,7 @@ describe('sample tests [L-01, S-08]', () => {
     const { services, caller } = setup();
     const { projectId } = await caller.samples.install();
     syncSampleEnvironment(services, 'http://127.0.0.1:50001');
-    const env = services.environments.list(projectId).find((e) => e.name === SAMPLE_ENV);
-    expect(env?.baseUrl).toBe('http://127.0.0.1:50001');
+    const row = services.environments.list(projectId).find((e) => e.name === SAMPLE_ENV);
+    expect(services.environments.get(row?.id as string).baseUrl).toBe('http://127.0.0.1:50001');
   });
 });

@@ -19,7 +19,7 @@ const tx = (key: string, vars?: Record<string, unknown>, fallback?: string) => {
 };
 
 const doc = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: 't1',
   name: 'Đăng nhập',
   sessions: ['default'],

@@ -1,5 +1,6 @@
 import type { DataRow, Env, Secrets } from '@kiemi/schema';
 import { EngineError } from '../errors';
+import { AppValue, appNamespace, mainAppUrl } from './app';
 import { type EvalEnv, evaluateExpression, stringify } from './evaluate';
 
 export interface VariableScopes {
@@ -11,6 +12,8 @@ export interface VariableScopes {
   /** Current dataset row (`{{row.col}}`) [E-03]. */
   row?: DataRow | undefined;
   secrets?: Secrets | undefined;
+  /** Main product of the test (`TestCase.product`) for `{{app}}` [O-02]. */
+  product?: string | undefined;
 }
 
 const TEMPLATE = /\{\{([\s\S]+?)\}\}/g;
@@ -19,7 +22,7 @@ const MAX_DEPTH = 5;
 /**
  * Variables of one run [E-01, E-02]. Bare names are looked up
  * runtime (saved from the page) → loop/shared-step frames → test → suite → env.
- * Namespaces: `env.x`, `secret.x` [E-08], `row.x`, `param.x` (shared step args), `loop.x`.
+ * Namespaces: `app`, `app.<product>`, `app.<product>.x` [O-02], `env.x`, `secret.x` [E-08], `row.x`, `param.x` (shared step args), `loop.x`.
  */
 export class VariableStore {
   readonly #scopes: VariableScopes;
@@ -115,7 +118,7 @@ export class VariableStore {
       const single = /^\{\{([\s\S]+?)\}\}$/.exec(template);
       if (single?.[1] !== undefined && !single[1].includes('{{')) {
         const v = evaluateExpression(single[1], this.#env());
-        return v instanceof Date ? stringify(v) : v;
+        return v instanceof Date || v instanceof AppValue ? stringify(v) : v;
       }
       return template.replace(TEMPLATE, (_m, expr: string) =>
         stringify(evaluateExpression(expr, this.#env())),
@@ -144,10 +147,14 @@ export class VariableStore {
         for (const [k, v] of Object.entries(s.env?.variables ?? {})) {
           Object.defineProperty(vars, k, { enumerable: true, get: () => this.#expand(v) });
         }
-        if (s.env?.baseUrl !== undefined) vars.baseUrl = s.env.baseUrl;
+        // `{{env.baseUrl}}` (v1.0) = the main product's URL [ADR 0018 §6].
+        const baseUrl = mainAppUrl(s.env, s.product);
+        if (baseUrl !== undefined) vars.baseUrl = baseUrl;
         if (s.env?.name !== undefined) vars.name = s.env.name;
         return ok(vars);
       }
+      case 'app':
+        return ok(appNamespace(s.env, s.product, (v) => this.#expand(v)));
       case 'secret':
         return ok({ ...(s.secrets ?? {}) });
       case 'row':

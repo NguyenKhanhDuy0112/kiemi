@@ -102,6 +102,14 @@ export const en = {
         message: 'The proxy password (secret “{{secret}}”) is missing.',
         hint: 'Go to Environment → Secrets to enter it.',
       },
+      APP_NOT_AVAILABLE: {
+        message: 'Product “{{product}}” is not set up in environment “{{environment}}”.',
+        hint: 'Go to Environments and enter this product’s address in that environment’s column — or pick another environment when running.',
+      },
+      UNKNOWN_PRODUCT: {
+        message: 'The project has no product “{{product}}”.',
+        hint: 'Check the product name after “app.”, or add this product to the project.',
+      },
       UNKNOWN_VARIABLE: {
         message: 'There is no variable “{{name}}”.',
         hint: 'Check the variable name, or add a “Save value to variable” step before this one.',

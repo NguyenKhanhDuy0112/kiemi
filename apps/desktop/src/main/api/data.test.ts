@@ -67,6 +67,6 @@ describe('data routers [M2-02 → M2-05]', () => {
     const one = await c.io.exportTest({
       id: (await c.testCases.list({ projectId }))[0]?.id as string,
     });
-    expect(JSON.parse(one.content)).toMatchObject({ schemaVersion: 1, name: 'T' });
+    expect(JSON.parse(one.content)).toMatchObject({ schemaVersion: 2, name: 'T' });
   });
 });

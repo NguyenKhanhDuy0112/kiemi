@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DatasetSourceSchema } from './dataset';
 import { ElementRefSchema, ElementSchema } from './locator';
+import { ProductKeySchema } from './product';
 import { DEFAULT_SESSION, SessionNameSchema, StepSchema } from './step';
 import { CURRENT_SCHEMA_VERSION } from './version';
 
@@ -15,6 +16,19 @@ export const TestCaseSchema = z
     name: z.string().min(1),
     description: z.string().optional(),
     tags: z.array(z.string().min(1)).default([]),
+    /**
+     * Key of the test's main product: `{{app}}` is its URL in the environment of
+     * the run. Missing = the project's first product [O-01, O-02] (v2).
+     */
+    product: ProductKeySchema.optional(),
+    /** Environments the test may run on; others skip it with the reason [O-06] (v2). */
+    environments: z
+      .object({
+        only: z.array(z.string().min(1)).optional(),
+        except: z.array(z.string().min(1)).optional(),
+        reason: z.string().optional(),
+      })
+      .optional(),
     /** Declared sessions; every step's `session` must be one of these [F-01]. */
     sessions: z.array(SessionNameSchema).min(1).default([DEFAULT_SESSION]),
     /** Reusable elements referenced by `{ "ref": "<key>" }` targets [C-01, C-02]. */
