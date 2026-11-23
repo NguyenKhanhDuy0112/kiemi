@@ -23,6 +23,10 @@ export const AppSettingsSchema = z.object({
   crashReports: z.boolean().default(false),
   /** Turn off animations, on top of the OS "reduce motion" setting [U-17, U-13]. */
   reduceMotion: z.boolean().default(false),
+  /** Workspace-level variables, inherited by every project [O-04]. */
+  workspaceVariables: z
+    .record(z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/), z.string())
+    .default({}),
 });
 export type AppSettings = z.infer<typeof AppSettingsSchema>;
 
@@ -43,6 +47,7 @@ export const AppSettingsPatchSchema = z.object({
   advancedMode: f.advancedMode.unwrap().optional(),
   crashReports: f.crashReports.unwrap().optional(),
   reduceMotion: f.reduceMotion.unwrap().optional(),
+  workspaceVariables: f.workspaceVariables.unwrap().optional(),
 });
 export type AppSettingsKey = keyof AppSettings;
 

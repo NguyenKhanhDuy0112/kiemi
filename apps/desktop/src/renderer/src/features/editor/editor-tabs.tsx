@@ -19,6 +19,8 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { childLists, sessionUsage } from './doc-model';
 import { useEditorStore } from './editor-store';
+import { EffectiveVariables } from './effective-variables';
+import { EnvironmentRows } from './environment-rows';
 
 const VAR_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const SESSION_NAME = /^[A-Za-z0-9_-]+$/;
@@ -133,6 +135,9 @@ export function DataTab() {
             <FileUp /> {tx('ui.data.importFile')}
           </Button>
         </div>
+      )}
+      {mode === 'saved' && source?.source === 'saved' && (
+        <EnvironmentRows key={source.datasetId} datasetId={source.datasetId} />
       )}
 
       {mode === 'table' && (
@@ -297,6 +302,7 @@ export function VariablesTab() {
           <Plus /> {tx('ui.variables.add')}
         </Button>
       </form>
+      <EffectiveVariables testCaseId={doc.id} />
     </div>
   );
 }

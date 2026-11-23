@@ -52,6 +52,7 @@ import {
   Copy,
   Globe,
   KeyRound,
+  Layers,
   Loader2,
   MoreHorizontal,
   Palette,
@@ -328,6 +329,8 @@ export function EnvironmentsScreen() {
             </TableBody>
           </Table>
         </Section>
+
+        <SharedVariables projectId={projectId} />
 
         {currentId && (
           <EnvironmentDetails key={currentId} id={currentId} onChanged={() => void refresh()} />
@@ -642,6 +645,64 @@ function CellEditor({
         </Button>
       )}
     </div>
+  );
+}
+
+/** Workspace / project / product variables, inherited by every test below [O-04]. */
+function SharedVariables({ projectId }: { projectId: string }) {
+  const tx = useTx();
+  const qc = useQueryClient();
+  const settings = useQuery(trpc.system.settings.queryOptions());
+  const project = useQuery(trpc.projects.get.queryOptions({ id: projectId }));
+  const products = useQuery(trpc.products.list.queryOptions({ projectId }));
+  const [level, setLevel] = useState('project');
+  const product = level.startsWith('product:')
+    ? products.data?.find((p) => p.id === level.slice(8))
+    : undefined;
+  const initial =
+    level === 'workspace'
+      ? (settings.data?.workspaceVariables ?? {})
+      : level === 'project'
+        ? (project.data?.variables ?? {})
+        : (product?.variables ?? {});
+  const save = async (variables: Record<string, string>) => {
+    try {
+      if (level === 'workspace') {
+        await trpcClient.system.updateSettings.mutate({ workspaceVariables: variables });
+        await qc.invalidateQueries({ queryKey: trpc.system.settings.queryKey() });
+      } else if (level === 'project') {
+        await trpcClient.projects.setVariables.mutate({ id: projectId, variables });
+        await qc.invalidateQueries({ queryKey: trpc.projects.get.queryKey({ id: projectId }) });
+      } else if (product) {
+        await trpcClient.products.setVariables.mutate({ id: product.id, variables });
+        await qc.invalidateQueries({ queryKey: trpc.products.list.queryKey({ projectId }) });
+      }
+      toast.success(tx('ui.actions.saved'));
+    } catch (err) {
+      toast.error(errorMessage(err, tx));
+    }
+  };
+  return (
+    <Section icon={Layers} title={tx('ui.variables.shared')} hint={tx('ui.variables.sharedHint')}>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="shared-level">{tx('ui.variables.sharedLevel')}</Label>
+        <Select value={level} onValueChange={setLevel}>
+          <SelectTrigger id="shared-level" className="w-64">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="workspace">{tx('ui.variables.levels.workspace')}</SelectItem>
+            <SelectItem value="project">{tx('ui.variables.levels.project')}</SelectItem>
+            {(products.data ?? []).map((p) => (
+              <SelectItem key={p.id} value={`product:${p.id}`}>
+                {tx('ui.variables.productLevel', { name: p.name })}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <VariablesEditor key={level} initial={initial} onSave={save} reference={(n) => `{{${n}}}`} />
+    </Section>
   );
 }
 

@@ -4,7 +4,7 @@ import { EngineError } from '../errors';
 import { parseDate } from './dates';
 import { toNumber } from './evaluate';
 import { parseExpression } from './expression';
-import { maskSecrets, VariableStore } from './store';
+import { explainVariables, maskSecrets, VariableStore } from './store';
 
 const NOW = new Date(2026, 10, 16, 14, 30, 5); // 16/11/2026 14:30:05 (Monday)
 const env = EnvSchema.parse({
@@ -241,5 +241,50 @@ describe('products × environments: {{app}} [O-02]', () => {
     });
     expect(v.render('{{app}}/a')).toBe('http://x.test/a');
     expect(v.render('{{env.baseUrl}}')).toBe('http://x.test');
+  });
+});
+
+describe('inherited levels and "Giá trị hiệu lực" [O-04]', () => {
+  const env = EnvSchema.parse({
+    id: 'e',
+    name: 'UAT',
+    defaultProduct: 'web',
+    variables: { timeout: '20', who: 'env' },
+    apps: { web: { name: 'Web', url: 'http://w', variables: { user: 'nv001', who: 'cell' } } },
+  });
+  const scopes = {
+    env,
+    workspace: { timeout: '10', company: 'ACME' },
+    project: { timeout: '15', lang: 'vi' },
+    productVariables: { lang: 'en', who: 'product' },
+    suite: { who: 'suite' },
+    test: {},
+    row: { user: 'row-user' },
+  };
+
+  it('most specific level wins: row → test → suite → cell → environment → product → project → workspace', () => {
+    const v = new VariableStore(scopes);
+    expect(v.render('{{timeout}} {{company}} {{lang}} {{who}} {{user}}')).toBe(
+      '20 ACME en suite row-user',
+    );
+    expect(new VariableStore({ ...scopes, suite: {} }).render('{{who}}')).toBe('cell');
+  });
+
+  it('explains each value with its level and what it overrides', () => {
+    const list = explainVariables(scopes);
+    expect(list.find((x) => x.name === 'timeout')).toEqual({
+      name: 'timeout',
+      value: '20',
+      level: 'environment',
+      overridden: [
+        { level: 'project', value: '15' },
+        { level: 'workspace', value: '10' },
+      ],
+    });
+    expect(list.find((x) => x.name === 'user')).toMatchObject({
+      level: 'row',
+      overridden: [{ level: 'cell', value: 'nv001' }],
+    });
+    expect(list.map((x) => x.name)).toEqual(['company', 'lang', 'timeout', 'user', 'who']);
   });
 });

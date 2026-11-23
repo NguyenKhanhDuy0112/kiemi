@@ -35,6 +35,10 @@ export interface FileProblem {
   reason: 'badJson' | 'invalid' | 'migration' | 'newerVersion';
 }
 
+/** Same object with keys in a fixed order (stable diffs). */
+const sortKeys = <T>(o: Record<string, T>): Record<string, T> =>
+  Object.fromEntries(Object.entries(o).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+
 const byKey =
   <T>(...keys: ((x: T) => string | number)[]) =>
   (a: T, b: T): number => {
@@ -121,6 +125,9 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
       id: s.project.id,
       name: s.project.name,
       ...(s.project.description ? { description: s.project.description } : {}),
+      ...(Object.keys(s.project.variables).length
+        ? { variables: sortKeys(s.project.variables) }
+        : {}),
     }),
   );
   files.set(
@@ -133,7 +140,14 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
             (p) => p.id,
           ),
         )
-        .map((p) => ({ id: p.id, key: p.key, name: p.name, kind: p.kind, sortOrder: p.sortOrder })),
+        .map((p) => ({
+          id: p.id,
+          key: p.key,
+          name: p.name,
+          kind: p.kind,
+          sortOrder: p.sortOrder,
+          ...(Object.keys(p.variables).length ? { variables: sortKeys(p.variables) } : {}),
+        })),
     }),
   );
   const folders = [...s.folders].sort(byKey((f) => f.id));
@@ -232,6 +246,7 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
     columns: x.columns,
     rows: x.rows,
     source: x.source,
+    ...(Object.keys(x.envRows).length ? { envRows: sortKeys(x.envRows) } : {}),
   }));
   named(PATHS.suites, s.suites, (x) => ({
     id: x.id,
@@ -390,6 +405,7 @@ export function filesToSnapshot(files: FileMap): {
       name: segment === key && segment === DEFAULT_PRODUCT_KEY ? 'Web' : segment,
       kind: 'web',
       sortOrder: products.length,
+      variables: {},
     };
     products.push(p);
     return p;
@@ -399,7 +415,12 @@ export function filesToSnapshot(files: FileMap): {
   const firstProduct = () => products[0] ?? addProduct(DEFAULT_PRODUCT_KEY);
 
   const snapshot: ProjectSnapshot = {
-    project: { id: project.id, name: project.name, description: project.description ?? null },
+    project: {
+      id: project.id,
+      name: project.name,
+      description: project.description ?? null,
+      variables: project.variables,
+    },
     products,
     folders: dedupedFolders,
     tests: [],

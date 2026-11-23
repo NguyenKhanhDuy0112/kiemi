@@ -1,6 +1,6 @@
 import type { DataRow, Env, Secrets } from '@kiemi/schema';
 import { EngineError } from '../errors';
-import { AppValue, appNamespace, mainAppUrl } from './app';
+import { AppValue, appNamespace, mainAppUrl, mainProductKey } from './app';
 import { type EvalEnv, evaluateExpression, stringify } from './evaluate';
 
 export interface VariableScopes {
@@ -14,6 +14,65 @@ export interface VariableScopes {
   secrets?: Secrets | undefined;
   /** Main product of the test (`TestCase.product`) for `{{app}}` [O-02]. */
   product?: string | undefined;
+  /** Inherited levels [O-04]: workspace → project → product (then environment…). */
+  workspace?: Record<string, string> | undefined;
+  project?: Record<string, string> | undefined;
+  productVariables?: Record<string, string> | undefined;
+}
+
+/** Where a bare `{{name}}` comes from, most specific first [O-04]. */
+export const VARIABLE_LEVELS = [
+  'row',
+  'test',
+  'suite',
+  'cell',
+  'environment',
+  'product',
+  'project',
+  'workspace',
+] as const;
+export type VariableLevel = (typeof VARIABLE_LEVELS)[number];
+
+/** Values of each level, from the scopes of a run. */
+export function variableLevels(s: VariableScopes): Record<VariableLevel, Record<string, string>> {
+  const key = mainProductKey(s.env, s.product);
+  const cell = key === undefined ? undefined : s.env?.apps[key];
+  return {
+    row: { ...(s.row ?? {}) } as Record<string, string>,
+    test: s.test ?? {},
+    suite: s.suite ?? {},
+    cell: cell && !cell.missing ? cell.variables : {},
+    environment: s.env?.variables ?? {},
+    product: s.productVariables ?? {},
+    project: s.project ?? {},
+    workspace: s.workspace ?? {},
+  };
+}
+
+export interface EffectiveVariable {
+  name: string;
+  /** Raw value (may hold `{{…}}`) of the level that wins. */
+  value: string;
+  level: VariableLevel;
+  /** Less specific levels that also declare it (overridden). */
+  overridden: { level: VariableLevel; value: string }[];
+}
+
+/** "Giá trị hiệu lực": every variable with the level it comes from [O-04]. */
+export function explainVariables(s: VariableScopes): EffectiveVariable[] {
+  const levels = variableLevels(s);
+  const names = new Set<string>();
+  for (const l of VARIABLE_LEVELS) for (const n of Object.keys(levels[l])) names.add(n);
+  const out: EffectiveVariable[] = [];
+  for (const name of [...names].sort((a, b) => a.localeCompare(b))) {
+    const hits = VARIABLE_LEVELS.filter((l) => Object.hasOwn(levels[l], name)).map((l) => ({
+      level: l,
+      value: String(levels[l][name]),
+    }));
+    const [win, ...rest] = hits;
+    if (win) out.push({ name, value: win.value, level: win.level, overridden: rest });
+  }
+  return out;
 }
 
 const TEMPLATE = /\{\{([\s\S]+?)\}\}/g;
@@ -173,8 +232,13 @@ export class VariableStore {
       const vars = f.vars as Record<string, unknown> | undefined;
       if (vars && Object.hasOwn(vars, name)) return ok(vars[name]);
     }
-    for (const scope of [s.test, s.suite, s.env?.variables]) {
-      if (scope && Object.hasOwn(scope, name)) return ok(this.#expand(scope[name]));
+    // Inherited levels, most specific first [O-04]. Data row values are plain text.
+    if (s.row && Object.hasOwn(s.row, name)) return ok(s.row[name]);
+    const levels = variableLevels(s);
+    for (const level of VARIABLE_LEVELS) {
+      if (level === 'row') continue;
+      const scope = levels[level];
+      if (Object.hasOwn(scope, name)) return ok(this.#expand(scope[name]));
     }
     return { found: false };
   }

@@ -44,6 +44,29 @@ describe('data routers [M2-02 → M2-05]', () => {
     await expect(c.projects.create({ name: '' })).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 
+  it('explains the effective value of each variable and its level [O-04]', async () => {
+    const { c, projectId } = caller();
+    const [web] = await c.products.list({ projectId });
+    const env = await c.environments.create({ projectId, name: 'UAT' });
+    await c.environments.setVariables({ id: env.id, variables: { timeout: '20' } });
+    await c.projects.setVariables({ id: projectId, variables: { timeout: '15', lang: 'vi' } });
+    await c.products.setVariables({ id: web?.id as string, variables: { lang: 'en' } });
+    await c.system.updateSettings({ workspaceVariables: { company: 'ACME' } });
+    const t = await c.testCases.create({ projectId, name: 'T' });
+    await c.testCases.save({ id: t.id, content: { ...t.content, variables: { who: 'test' } } });
+    await c.environments.setSecret({ id: env.id, name: 'pass', value: 'S3cret!' });
+    const list = await c.testCases.effectiveVariables({ testCaseId: t.id, environmentId: env.id });
+    expect(list.map((v) => [v.name, v.value, v.level])).toEqual([
+      ['company', 'ACME', 'workspace'],
+      ['lang', 'en', 'product'],
+      ['timeout', '20', 'environment'],
+      ['who', 'test', 'test'],
+    ]);
+    expect(JSON.stringify(list)).not.toContain('S3cret');
+    const none = await c.testCases.effectiveVariables({ testCaseId: t.id, environmentId: null });
+    expect(none.find((v) => v.name === 'timeout')?.level).toBe('project');
+  });
+
   it('never returns secret values', async () => {
     const { c, projectId } = caller();
     const [env] = await c.environments.list({ projectId });

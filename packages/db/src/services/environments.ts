@@ -393,12 +393,20 @@ export class EnvironmentService {
    * Main process only — never send the result to the renderer.
    */
   forRun(environmentId: string): { env: Env; secrets: Secrets } {
-    const row = this.repo.get(environmentId);
     const list = this.secrets.list(eq(secrets.environmentId, environmentId));
     if (list.length) this.#requireCipher();
     const plain: Secrets = Object.fromEntries(
       list.map((s) => [s.name, this.#cipher.decrypt(s.ciphertext)]),
     );
+    return {
+      env: { ...this.envOf(environmentId), secretNames: Object.keys(plain) },
+      secrets: plain,
+    };
+  }
+
+  /** Engine `Env` without decrypting anything (explanations, previews) [O-02, O-04]. */
+  envOf(environmentId: string): Env {
+    const row = this.repo.get(environmentId);
     const byProduct = new Map(this.cells(environmentId).map((c) => [c.productId, c]));
     const productList = this.#products.list(row.projectId);
     const apps: Record<string, AppCell> = {};
@@ -427,9 +435,9 @@ export class EnvironmentService {
       apps,
       ...(first ? { defaultProduct: first.key } : {}),
       variables: this.variables(environmentId),
-      secretNames: Object.keys(plain),
+      secretNames: this.secretNames(environmentId),
     });
-    return { env, secrets: plain };
+    return env;
   }
 
   #requireCipher(): void {

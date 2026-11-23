@@ -346,4 +346,11 @@ UPDATE "environments" SET "type" = 'staging' WHERE lower("name") IN ('staging', 
 UPDATE "environments" SET "type" = 'dev' WHERE lower("name") IN ('dev', 'development');
 UPDATE "environments" SET "type" = 'test' WHERE lower("name") IN ('test', 'qa', 'sit');`,
   },
+  {
+    id: 9,
+    name: 'variable-levels',
+    sql: `ALTER TABLE "projects" ADD COLUMN "variables" TEXT;
+ALTER TABLE "products" ADD COLUMN "variables" TEXT;
+ALTER TABLE "datasets" ADD COLUMN "env_rows" TEXT;`,
+  },
 ];

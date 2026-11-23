@@ -3,6 +3,7 @@ import {
   ProductKeySchema,
   ProductKindSchema,
   productKeyFrom,
+  VariableNameSchema,
 } from '@kiemi/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
@@ -71,6 +72,13 @@ export class ProductService {
     if (p.data.key !== undefined && p.data.key !== cur.key)
       this.#uniqueKey(this.repo.list(eq(products.projectId, cur.projectId)), p.data.key);
     return this.repo.update(id, p.data, expectedVersion);
+  }
+
+  /** Product-level variables [O-04]. */
+  setVariables(id: string, values: Record<string, string>): ProductRow {
+    const p = z.record(VariableNameSchema, z.string()).safeParse(values);
+    if (!p.success) throw validation('variable', p.error.issues);
+    return this.repo.update(id, { variables: p.data });
   }
 
   /** Soft-deletes the product with its folders, tests and elements (undo = restore each). */

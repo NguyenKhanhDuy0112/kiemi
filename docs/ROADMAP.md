@@ -97,7 +97,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M9-04** Cấp **Sản phẩm**: schema + lưu trữ, test/phần tử/step dùng chung/tag gắn sản phẩm; migration map baseURL cũ thành 1 sản phẩm mặc định; UI cây Dự án → Sản phẩm → Thư mục [O-01]
 - [x] **M9-05** Ma trận Môi trường × Sản phẩm: mỗi ô URL, tài khoản/secret, proxy/SSH tunnel, biến; ô trống; nhân bản môi trường; DSL v2 `{{app.<sảnPhẩm>}}` (migration v1 → v2); engine mở tunnel theo ô [O-02]
 - [x] **M9-06** Loại môi trường + màu nhận diện (thanh tiêu đề, màn Chạy, báo cáo) + bảo vệ Production: chặn step ghi (cleanup, API POST/PUT/DELETE, DB write), xác nhận 2 lần, cảnh báo đỏ [O-03, W-10]
-- [ ] **M9-07** Kế thừa biến nhiều cấp (Workspace → … → Dòng dữ liệu) + màn "Giá trị hiệu lực"; dataset/biến/secret riêng theo môi trường [O-04, O-05]
+- [x] **M9-07** Kế thừa biến nhiều cấp (Workspace → … → Dòng dữ liệu) + màn "Giá trị hiệu lực"; dataset/biến/secret riêng theo môi trường [O-04, O-05]
 - [ ] **M9-08** Giới hạn test theo môi trường (chỉ chạy / không chạy trên X, bỏ qua có lý do) + môi trường mặc định của suite [O-06]
 - [ ] **M9-09** Phạm vi tài nguyên dùng chung: Sản phẩm / Dự án / Thư viện workspace, dùng chéo dự án, danh sách dự án/test bị ảnh hưởng khi sửa [O-07]
 - [ ] **M9-10** Chuyển dự án nhanh (bộ chọn, gần đây, ghim) + tìm kiếm toàn workspace Ctrl/Cmd+K [O-08]

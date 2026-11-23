@@ -9,13 +9,19 @@ import type { ProjectSnapshot } from './format';
 export function readSnapshot(services: Services, projectId: string): ProjectSnapshot {
   const p = services.projects.get(projectId);
   return {
-    project: { id: p.id, name: p.name, description: p.description ?? null },
+    project: {
+      id: p.id,
+      name: p.name,
+      description: p.description ?? null,
+      variables: p.variables ?? {},
+    },
     products: services.products.list(projectId).map((x) => ({
       id: x.id,
       key: x.key,
       name: x.name,
       kind: x.kind,
       sortOrder: x.sortOrder,
+      variables: x.variables ?? {},
     })),
     folders: services.folders.list(projectId).map((f) => ({
       id: f.id,
@@ -67,6 +73,7 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       columns: d.columns,
       rows: d.rows,
       source: d.source,
+      envRows: d.envRows ?? {},
     })),
     suites: services.suites.list(projectId).map((s) => ({
       id: s.id,
@@ -142,10 +149,15 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
 
   services.ctx.db.transaction(() => {
     const project = services.projects.repo.get(projectId);
-    if (project.name !== s.project.name || (project.description ?? null) !== s.project.description)
+    if (
+      project.name !== s.project.name ||
+      (project.description ?? null) !== s.project.description ||
+      !same(project.variables ?? {}, s.project.variables ?? {})
+    )
       services.projects.repo.update(projectId, {
         name: s.project.name,
         description: s.project.description,
+        variables: s.project.variables ?? {},
       });
 
     /** Generic reconcile of one table. `values` = columns from the file. */
@@ -175,14 +187,29 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
     // Products first: everything else points at them. A project keeps at least one.
     if (!s.products.length) {
       const d = services.products.defaultFor(projectId);
-      s.products = [{ id: d.id, key: d.key, name: d.name, kind: d.kind, sortOrder: d.sortOrder }];
+      s.products = [
+        {
+          id: d.id,
+          key: d.key,
+          name: d.name,
+          kind: d.kind,
+          sortOrder: d.sortOrder,
+          variables: d.variables ?? {},
+        },
+      ];
     }
     reconcile(
       services.products.repo as unknown as Repo<never>,
       services.products.repo.list(eq(productsTable.projectId, projectId)),
       s.products.map((p) => ({
         id: p.id,
-        values: { key: p.key, name: p.name, kind: p.kind, sortOrder: p.sortOrder },
+        values: {
+          key: p.key,
+          name: p.name,
+          kind: p.kind,
+          sortOrder: p.sortOrder,
+          variables: Object.keys(p.variables ?? {}).length ? p.variables : null,
+        },
       })),
     );
     const productIds = new Set(s.products.map((p) => p.id));
@@ -308,7 +335,13 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
       services.datasets.list(projectId),
       s.datasets.map((d) => ({
         id: d.id,
-        values: { name: d.name, columns: d.columns, rows: d.rows, source: d.source },
+        values: {
+          name: d.name,
+          columns: d.columns,
+          rows: d.rows,
+          source: d.source,
+          envRows: Object.keys(d.envRows ?? {}).length ? d.envRows : null,
+        },
       })),
     );
     reconcile(

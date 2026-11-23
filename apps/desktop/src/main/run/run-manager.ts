@@ -100,13 +100,15 @@ function datasetOf(
   tc: TestCase,
   services: Services,
   overrideId?: string | null,
+  environmentId?: string | null,
 ): Dataset | undefined {
-  if (overrideId) return services.datasets.forRun(overrideId);
+  // Saved datasets may have their own rows on this environment [O-05].
+  if (overrideId) return services.datasets.forRun(overrideId, environmentId);
   const src = tc.dataset;
   if (!src) return undefined;
   if (src.source === 'table')
     return { id: 'table', name: 'table', columns: src.columns, rows: src.rows };
-  if (src.source === 'saved') return services.datasets.forRun(src.datasetId);
+  if (src.source === 'saved') return services.datasets.forRun(src.datasetId, environmentId);
   // Excel/CSV files are imported into a table / saved dataset by the editor.
   return undefined;
 }
@@ -156,12 +158,17 @@ export class RunManager {
     let defaultEnv: string | null | undefined;
     let plans: CasePlan[] = [];
     const t = input.target;
+    /** Environment of the run (known before the data: datasets differ per environment). */
+    const envFor = (pid: string, suiteEnv?: string | null): string | null =>
+      input.environmentId === undefined
+        ? (suiteEnv ?? s.environments.list(pid)[0]?.id ?? null)
+        : input.environmentId;
     if (t.kind === 'test') {
       const row = s.testCases.get(t.testCaseId);
       projectId = row.projectId;
       target = { kind: 'test', testCaseId: row.id, name: row.name };
       const content = s.testCases.forRun(row.id);
-      plans = expand(content, datasetOf(content, s), t.rowIndex);
+      plans = expand(content, datasetOf(content, s, null, envFor(projectId)), t.rowIndex);
     } else if (t.kind === 'suite') {
       const suite = s.suites.get(t.suiteId);
       projectId = suite.projectId;
@@ -174,7 +181,12 @@ export class RunManager {
         const row = s.testCases.repo.find(item.testCaseId);
         if (!row) continue;
         const content = s.testCases.forRun(row.id);
-        plans.push(...expand(content, datasetOf(content, s, item.datasetId)));
+        plans.push(
+          ...expand(
+            content,
+            datasetOf(content, s, item.datasetId, envFor(projectId, suite.environmentId)),
+          ),
+        );
       }
     } else {
       projectId = t.projectId;
@@ -183,7 +195,7 @@ export class RunManager {
       for (const summary of s.testCases.list(projectId)) {
         if (!summary.tags.some((x) => x.toLowerCase() === tag)) continue;
         const content = s.testCases.forRun(summary.id);
-        plans.push(...expand(content, datasetOf(content, s)));
+        plans.push(...expand(content, datasetOf(content, s, null, envFor(projectId))));
       }
     }
 
@@ -204,6 +216,12 @@ export class RunManager {
       });
     const settings = s.settings.getAll();
     const sharedSteps = s.sharedSteps.forRun(projectId);
+    // Inherited variables [O-04]: workspace → project → the test's product.
+    const workspaceVars = settings.workspaceVariables;
+    const projectVars = s.projects.get(projectId).variables ?? {};
+    const productVars = new Map(
+      s.products.list(projectId).map((p) => [p.key, p.variables ?? {}] as const),
+    );
     // Stored as Playwright gave it (`storageState()`); the DB only checks the outline.
     const savedLogins = s.savedLogins.forRun(projectId) as unknown as Record<string, SavedLogin>;
 
@@ -248,6 +266,13 @@ export class RunManager {
         ...(p.rowIndex === undefined ? {} : { rowIndex: p.rowIndex }),
         sharedSteps,
         savedLogins,
+        variables: {
+          workspace: workspaceVars,
+          project: projectVars,
+          product:
+            productVars.get(p.testCase.product ?? env?.defaultProduct ?? '') ??
+            ({} as Record<string, string>),
+        },
         ...(suiteVariables ? { suiteVariables } : {}),
         options: {
           defaultStepTimeoutMs: settings.defaultTimeoutSec * 1000,

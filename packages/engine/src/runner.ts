@@ -56,6 +56,12 @@ export interface RunRequest {
   sharedSteps?: SharedStep[];
   /** Suite-level variables [E-02]. */
   suiteVariables?: Record<string, string>;
+  /** Inherited variables of the workspace, project and the test's product [O-04]. */
+  variables?: {
+    workspace?: Record<string, string>;
+    project?: Record<string, string>;
+    product?: Record<string, string>;
+  };
   /** Saved login sessions of the project, by name [F-02]. */
   savedLogins?: Record<string, SavedLogin>;
   options?: {
@@ -149,6 +155,9 @@ class Run {
         row,
         secrets: request.secrets,
         product: request.testCase.product,
+        workspace: request.variables?.workspace,
+        project: request.variables?.project,
+        productVariables: request.variables?.product,
       },
       this.#now,
     );

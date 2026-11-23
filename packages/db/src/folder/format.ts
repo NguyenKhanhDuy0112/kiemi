@@ -49,6 +49,8 @@ export const ProjectFileSchema = z.object({
   id,
   name: z.string().trim().min(1),
   description: z.string().nullish(),
+  /** Project-level variables [O-04]. */
+  variables: z.record(VariableNameSchema, z.string()).default({}),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -116,6 +118,8 @@ export const DatasetFileSchema = z.object({
       sheet: z.string().optional(),
     })
     .default({ kind: 'manual' }),
+  /** Rows per environment id [O-05]. */
+  envRows: z.record(id, z.array(z.record(z.string(), z.string()))).default({}),
 });
 
 export const SuiteFileSchema = z.object({
@@ -146,7 +150,12 @@ export type SuiteEntry = z.infer<typeof SuiteFileSchema>;
 
 /** Everything of one project that is shared through its folder. */
 export interface ProjectSnapshot {
-  project: { id: string; name: string; description: string | null };
+  project: {
+    id: string;
+    name: string;
+    description: string | null;
+    variables: Record<string, string>;
+  };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];
   folders: FolderEntry[];

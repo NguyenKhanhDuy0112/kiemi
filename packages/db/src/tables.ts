@@ -48,6 +48,8 @@ export const projects = sqliteTable(
     folderPath: text('folder_path'),
     /** `relative path → hash` at the last folder sync (three-way merge base). */
     folderState: json<Record<string, string>>('folder_state'),
+    /** Project-level variables [O-04] (migration 9). */
+    variables: json<Record<string, string>>('variables'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );
@@ -65,6 +67,8 @@ export const products = sqliteTable(
       .notNull()
       .default('web'),
     sortOrder: integer('sort_order').notNull().default(0),
+    /** Product-level variables [O-04] (migration 9). */
+    variables: json<Record<string, string>>('variables'),
   },
   (t) => [index('products_project_idx').on(t.projectId)],
 );
@@ -257,6 +261,8 @@ export const datasets = sqliteTable(
     columns: json<string[]>('columns').notNull(),
     rows: json<Record<string, string>[]>('rows').notNull(),
     source: json<DatasetSourceInfo>('source').notNull(),
+    /** Rows used instead on some environments, by environment id [O-05] (migration 9). */
+    envRows: json<Record<string, Record<string, string>[]>>('env_rows'),
   },
   (t) => [index('datasets_project_idx').on(t.projectId)],
 );
