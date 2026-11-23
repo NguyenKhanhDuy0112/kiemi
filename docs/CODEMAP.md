@@ -1,0 +1,37 @@
+# CODEMAP — Code nằm ở đâu
+
+> Mỗi module 1 dòng. Chỉ mở file này khi chưa biết code nằm ở đâu. Cập nhật khi thêm/đổi vị trí module. Giữ dưới ~80 dòng.
+
+## apps/desktop/src/main (Electron main — không React)
+- `index.ts` → khởi động: mở DB, backfill (sản phẩm, ô môi trường), đăng ký IPC, RunManager/RecorderManager
+- `api/trpc.ts` → context tRPC, map `DbError` → mã tRPC + `kiemiCode` · `api/root.ts` → gộp router
+- `api/routers/data.ts` → projects, products, folders, testCases, suites, sharedSteps, elements, environments, datasets, io
+- `api/routers/{runs,recorder,system,samples,updates,app}.ts` → chạy test, ghi, cài đặt/SSH test, test mẫu, cập nhật
+- `run/` → `run-manager.ts` (lập kế hoạch chạy, môi trường, biến các cấp), `worker-core.ts`/`engine-worker.ts` (utility process), `protocol.ts`, `start-input.ts`, `testing.ts` (`createTestRunManager`)
+- `record/` → `recorder-manager.ts` + `record-core.ts` (ghi trong engine process)
+- `tunnel/` → `ssh-tunnel.ts` (SSH → SOCKS), `network.ts` (tunnel/proxy theo ô sản phẩm×môi trường), `router.ts` (SOCKS định tuyến theo host)
+- `projects/` → `folder-manager.ts` (đồng bộ thư mục dự án, watcher), `locks.ts` (khóa mềm)
+- `results/` → `kiemi-artifact://`, trace server · `samples/` → dự án mẫu · `update/`, `crash/`
+## apps/desktop/src/renderer/src (React)
+- `App.tsx` → khung U-01 (sidebar, thanh tiêu đề, màn hình lazy) · `lib/` → `store.ts` (điều hướng), `trpc.ts`, `tx.ts`, `errors.ts`, `environment.ts`
+- `features/tests/` → cây Dự án → Sản phẩm → Thư mục → Test, suite-dialog
+- `features/editor/` → bảng bước, `schema-form.tsx` (form tự sinh), `editor-tabs.tsx` (Dữ liệu/Biến/Phiên), `effective-variables.tsx`, `environment-rows.tsx`
+- `features/environments/` → `environments-screen.tsx` (ma trận Môi trường × Sản phẩm, biến các cấp, bí mật, proxy/SSH), `environment-badge.tsx`
+- `features/run/` → `run-screen.tsx`, `run-dialog.tsx` (`useStartRun`), `run-store.ts`, `report.ts`, `confirm-protected.tsx`
+- `features/{record,history,elements,settings,onboarding,projects,update}/`
+- `components/ui/` → shadcn (không sửa tay) · `components/mascot/` → Cú Kiemi
+## apps/demo-site
+- web mục tiêu cho e2e (`server.ts` + trang HTML); `startDemoServer()` từ `@kiemi/demo-site/server`
+## packages/
+- `schema/src/` → `test-case.ts` (DSL v2), `step.ts`, `locator.ts`, `env.ts` (Env, apps, loại môi trường), `product.ts`, `migrate.ts` (migration DSL) · fixtures ở `schema/fixtures/vN/`
+- `db/src/` → `tables.ts` (Drizzle), `migrations.ts` (SQL theo số), `services/*.ts` (1 service/bảng), `folder/` (DB ↔ thư mục dự án: `format.ts`, `files.ts`, `snapshot.ts`, `sync.ts`), `io/` (bundle, Excel/CSV), `testing.ts` (`createMemoryServices`)
+- `engine/src/` → `runner.ts` (`runTestCase`), `define-action.ts`, `actions/<type>.ts`, `assertions/`, `locator/`, `browser/` (launch, proxy, sessions), `vars/` (biến, `{{app}}`, các cấp), `run/` (services, debug, `protection.ts`), `e2e/` (demo-site)
+- `recorder/src/` → `injected.ts` (script trang), `collector.ts`, `pure.ts`
+- `shared/src/i18n/locales/` → `vi.ts`/`en.ts` (lỗi engine), `vi-ui.ts`/`en-ui.ts` (chuỗi UI)
+
+## Khuôn mẫu nên làm theo
+- Thêm action → copy `packages/engine/src/actions/clear-data.ts`, đăng ký ở `actions/index.ts`, chuỗi `actions.<type>` ở `shared/.../vi.ts` + `en.ts`, e2e ở `engine/src/e2e/actions.e2e.test.ts`
+- Thêm cột/bảng DB → `tables.ts` + migration mới cuối `migrations.ts` (test `database.test.ts` đối chiếu); nếu là dữ liệu dự án → thêm vào `folder/format.ts`, `files.ts`, `snapshot.ts` (test round-trip `folder.test.ts`)
+- Thêm tRPC → router trong `api/routers/data.ts` (input Zod), test qua `createCaller` như `api/data.test.ts`
+- Thêm màn hình/khối UI → copy cấu trúc `features/environments/environments-screen.tsx` (Section + shadcn), chuỗi vào `vi-ui.ts` trước rồi `en-ui.ts`
+- Thêm mã lỗi engine → `engine/src/errors.ts` + `shared/.../vi.ts`/`en.ts` + danh sách trong `shared/src/i18n/errors.test.ts`

@@ -1,6 +1,6 @@
 # Prompt dùng với Claude Code
 
-> Nguyên tắc: **1 chat = 1 milestone**. Claude code hết các task của milestone (mỗi task 1 commit), rồi test cả milestone, sửa lỗi, push và dừng. Milestone mới bắt đầu bằng chat mới để không tốn token cho lịch sử cũ.
+> Nguyên tắc: **1 chat = 1 task** (CLAUDE.md §2, §8). Claude làm 1 task, test, commit và dừng; task cuối của milestone thì test cả milestone + push. Task mới bắt đầu bằng chat mới để không tốn token cho lịch sử cũ.
 
 ## Cách 1 — Thủ công (khuyên dùng)
 Trong VS Code (Claude Code):
@@ -10,10 +10,10 @@ Làm tiếp.
 ```
 `/clear` xóa lịch sử chat hiện tại (tương đương mở chat mới). Claude tự đọc `CLAUDE.md` + `docs/PROGRESS.md` để biết làm task nào.
 
-## Cách 2 — Tự động N milestone liên tiếp (mỗi milestone 1 phiên mới)
+## Cách 2 — Tự động N task liên tiếp (mỗi task 1 phiên mới)
 Chạy trong terminal tại thư mục dự án:
 ```bash
-# Làm tối đa 5 milestone, mỗi lần là 1 phiên Claude riêng; dừng nếu một lần bị lỗi
+# Làm tối đa 5 task, mỗi lần là 1 phiên Claude riêng; dừng nếu một lần bị lỗi
 for i in 1 2 3 4 5; do
   claude -p "Làm tiếp." --permission-mode acceptEdits || break
 done
