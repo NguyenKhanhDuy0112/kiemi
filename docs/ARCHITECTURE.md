@@ -49,7 +49,8 @@
 5. Đăng nhập lưu từ trang/bước được main mã hóa vào DB; cookie không bao giờ tới renderer.
 
 ## Dữ liệu
-- DB: SQLite trong thư mục dữ liệu app (`app.getPath('userData')/kiemi.db`). Schema theo SPEC Phụ lục 2.
+- **Thư mục dự án** (ADR 0018, T-01/O-11): mỗi dự án = 1 thư mục (`.kiemi/` + `tests/**/*.kiemi.json`), là nguồn chính để dùng chung qua Git/thư mục mạng. Lớp `packages/db/src/folder/` đồng bộ ba chiều DB ↔ file (base = hash lần đồng bộ cuối). Secret chỉ có tên trong thư mục.
+- DB: SQLite trong thư mục dữ liệu app (`app.getPath('userData')/kiemi.db`) — index/cache của thư mục dự án + dữ liệu chỉ thuộc máy (lịch sử chạy, giá trị secret, đăng nhập đã lưu, cài đặt). Schema theo SPEC Phụ lục 2.
 - Artifacts: `userData/runs/<runId>/` (ảnh, video, trace).
 - Secret: chỉ lưu bản mã hóa bằng `safeStorage`; giải mã ở main, truyền cho engine trong bộ nhớ, không ghi ra đĩa, che trong log/ảnh.
 - Xuất/Nhập: `.kiemi.json` (1 test) / `.zip` (project + data).
