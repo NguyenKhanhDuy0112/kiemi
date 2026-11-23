@@ -4,12 +4,13 @@ export type Tx = (key: string, vars?: Record<string, unknown>) => string;
 interface StatusLike {
   path: string | null;
   state: 'ok' | 'missing' | 'error';
-  conflicts: string[];
   problems: unknown[];
-  missingSecrets: { environment: string; names: string[] }[];
 }
 
-/** Plain-language notices for a project folder status [T-01, O-11]. Pure, for tests. */
+/**
+ * Toasts for a project folder status [T-01]. Conflicts and missing secrets have
+ * their own dialogs (`folder-dialogs.tsx`).
+ */
 export function folderNotices(
   s: StatusLike,
   tx: Tx,
@@ -21,27 +22,35 @@ export function folderNotices(
       level: 'warning',
       text: tx('ui.projectFolder.missing', { path: s.path ?? '' }),
     });
-  if (s.conflicts.length)
-    out.push({
-      key: `conflicts:${s.conflicts.join('|')}`,
-      level: 'warning',
-      text: tx('ui.projectFolder.conflicts', { count: s.conflicts.length }),
-    });
   if (s.problems.length)
     out.push({
       key: `problems:${s.problems.length}`,
       level: 'warning',
       text: tx('ui.projectFolder.problems', { count: s.problems.length }),
     });
-  const count = s.missingSecrets.reduce((n, m) => n + m.names.length, 0);
-  if (count)
-    out.push({
-      key: `secrets:${s.missingSecrets.map((m) => `${m.environment}=${m.names.join(',')}`).join(';')}`,
-      level: 'info',
-      text: tx('ui.projectFolder.missingSecrets', {
-        count,
-        envs: s.missingSecrets.map((m) => m.environment).join(', '),
-      }),
-    });
   return out;
+}
+
+const stem = (file: string, ext: string) => {
+  const base = file.slice(file.lastIndexOf('/') + 1);
+  return base.endsWith(ext) ? base.slice(0, -ext.length) : base;
+};
+
+/** "tests/Nghỉ phép/Tạo đơn.kiemi.json" → "Test “Nghỉ phép / Tạo đơn”" — no file jargon (U-15). */
+export function describeFolderPath(path: string, tx: Tx): string {
+  const k = (kind: string, name?: string) =>
+    tx(`ui.projectFolder.kind.${kind}`, name === undefined ? undefined : { name });
+  if (path === '.kiemi/project.json') return k('project');
+  if (path === '.kiemi/folders.json') return k('folders');
+  if (path === '.kiemi/environments.json') return k('environments');
+  if (path === '.kiemi/elements.json') return k('elements');
+  if (path.startsWith('.kiemi/shared-steps/')) return k('sharedStep', stem(path, '.json'));
+  if (path.startsWith('.kiemi/datasets/')) return k('dataset', stem(path, '.json'));
+  if (path.startsWith('.kiemi/suites/')) return k('suite', stem(path, '.json'));
+  if (path.startsWith('tests/')) {
+    const parts = path.slice('tests/'.length).split('/');
+    const last = stem(parts.pop() ?? '', '.kiemi.json');
+    return k('test', [...parts, last].join(' / '));
+  }
+  return path;
 }

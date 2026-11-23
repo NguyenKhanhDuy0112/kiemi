@@ -121,7 +121,7 @@ describe('attach / open / sync', () => {
     const r = attachProjectFolder(s, projectId, dir);
     expect(r.conflicts).toEqual([]);
     expect(existsSync(join(dir, 'tests', 'Trống'))).toBe(true); // empty folder kept
-    expect(read(dir, '.kiemi/.gitignore')).toBe('local/\n');
+    expect(read(dir, '.kiemi/.gitignore')).toBe('local/\nlocks/\n');
 
     const other = machine();
     const opened = openProjectFolder(other, dir);
@@ -136,7 +136,9 @@ describe('attach / open / sync', () => {
         .sort(),
     ).toEqual(['Duyệt', 'Nghỉ phép', 'Trống'].sort());
     // Secret value stays on the first machine: asked again here.
-    expect(opened.missingSecrets).toEqual([{ environment: 'Mặc định', names: ['nvPass'] }]);
+    expect(opened.missingSecrets).toEqual([
+      { environmentId: env.id, environment: 'Mặc định', names: ['nvPass'] },
+    ]);
     expect(other.environments.get(env.id).variables).toEqual({ portal: 'https://p' });
     // Nothing to write right after opening.
     expect(syncProjectFolder(other, projectId)).toMatchObject({ written: [], loaded: [] });

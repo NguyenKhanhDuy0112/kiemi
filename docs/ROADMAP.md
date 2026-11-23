@@ -93,7 +93,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 ## M9 — Dự án · Sản phẩm · Môi trường (đổi cấu trúc dữ liệu nền: DB + DSL)
 - [x] **M9-01** ADR: dự án dạng thư mục file là nguồn chính, SQLite chỉ index/cache + lịch sử chạy; mô hình Sản phẩm × Môi trường; DSL `schemaVersion: 2` [T-01, O-01, O-02, O-11]
 - [x] **M9-02** Lưu dự án dạng thư mục: `.kiemi/` + mỗi test 1 file `.kiemi.json` (định dạng dễ diff), SQLite thành index; mở nhiều thư mục dự án; chuyển dữ liệu DB hiện có sang thư mục; secret chỉ lưu tên tham chiếu [T-01, O-11]
-- [ ] **M9-03** Làm việc chung qua Git/thư mục mạng: theo dõi file đổi (≤ 5s), cảnh báo xung đột + hộp thoại chọn bản, khóa mềm khi đang sửa; nhập dự án trên máy khác → hỏi secret còn thiếu [T-01, O-11]
+- [x] **M9-03** Làm việc chung qua Git/thư mục mạng: theo dõi file đổi (≤ 5s), cảnh báo xung đột + hộp thoại chọn bản, khóa mềm khi đang sửa; nhập dự án trên máy khác → hỏi secret còn thiếu [T-01, O-11]
 - [ ] **M9-04** Cấp **Sản phẩm**: schema + lưu trữ, test/phần tử/step dùng chung/tag gắn sản phẩm; migration map baseURL cũ thành 1 sản phẩm mặc định; UI cây Dự án → Sản phẩm → Thư mục [O-01]
 - [ ] **M9-05** Ma trận Môi trường × Sản phẩm: mỗi ô URL, tài khoản/secret, proxy/SSH tunnel, biến; ô trống; nhân bản môi trường; DSL v2 `{{app.<sảnPhẩm>}}` (migration v1 → v2); engine mở tunnel theo ô [O-02]
 - [ ] **M9-06** Loại môi trường + màu nhận diện (thanh tiêu đề, màn Chạy, báo cáo) + bảo vệ Production: chặn step ghi (cleanup, API POST/PUT/DELETE, DB write), xác nhận 2 lần, cảnh báo đỏ [O-03, W-10]

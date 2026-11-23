@@ -58,6 +58,30 @@ export const projectsRouter = router({
       const dir = await ctx.desktop.pickFolder(input.title);
       return dir ? ctx.projectFolders.open(dir) : null;
     }),
+  /** User's choice per conflicting file: keep the app's version or take the folder's [T-01]. */
+  resolveConflicts: publicProcedure
+    .input(
+      z.object({
+        id,
+        choices: z.record(z.string().max(1000), z.enum(['local', 'remote'])),
+      }),
+    )
+    .mutation(
+      ({ ctx, input }) =>
+        ctx.projectFolders?.syncProject(input.id, { resolve: input.choices }).status ?? null,
+    ),
+  /** Pushes "reload" when teammates' changes were loaded from the folder. */
+  folderEvents: publicProcedure.subscription(async function* ({ ctx, signal }) {
+    if (!ctx.projectFolders) return;
+    yield* ctx.projectFolders.events(signal);
+  }),
+  /** Soft lock while a test is open in the editor; returns who else is editing it. */
+  touchLock: publicProcedure.input(z.object({ testId: id })).mutation(({ ctx, input }) => ({
+    heldBy: ctx.projectFolders?.touchLock(input.testId) ?? null,
+  })),
+  releaseLock: publicProcedure.input(z.object({ testId: id })).mutation(({ ctx, input }) => {
+    ctx.projectFolders?.releaseLock(input.testId);
+  }),
   revealFolder: publicProcedure.input(z.object({ id })).mutation(({ ctx, input }) => {
     const path = ctx.services.projects.get(input.id).folderPath;
     if (path) ctx.desktop?.openFolder(path);

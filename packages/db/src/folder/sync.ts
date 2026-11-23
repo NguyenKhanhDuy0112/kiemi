@@ -223,7 +223,7 @@ export function openProjectFolder(
 ): {
   projectId: string;
   result: SyncResult;
-  missingSecrets: { environment: string; names: string[] }[];
+  missingSecrets: { environmentId: string; environment: string; names: string[] }[];
 } {
   const folder = resolve(dir);
   const header = readProjectHeader(folder);
@@ -261,10 +261,14 @@ export function openProjectFolder(
 export function missingSecrets(
   services: Services,
   projectId: string,
-): { environment: string; names: string[] }[] {
+): { environmentId: string; environment: string; names: string[] }[] {
   return services.environments
     .list(projectId)
-    .map((e) => ({ environment: e.name, names: services.environments.missingSecrets(e.id) }))
+    .map((e) => ({
+      environmentId: e.id,
+      environment: e.name,
+      names: services.environments.missingSecrets(e.id),
+    }))
     .filter((x) => x.names.length > 0);
 }
 

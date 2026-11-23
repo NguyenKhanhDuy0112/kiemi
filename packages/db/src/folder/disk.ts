@@ -53,6 +53,40 @@ export function readProjectFiles(root: string): FileMap {
   return out;
 }
 
+/**
+ * Cheap fingerprint of the managed files (path, size, mtime) — the watcher's safety
+ * net for network shares that do not report changes.
+ */
+export function projectSignature(root: string): string {
+  const parts: string[] = [];
+  const walk = (rel: string, depth: number) => {
+    if (depth > 32 || parts.length > MAX_FILES) return;
+    let entries: import('node:fs').Dirent[];
+    try {
+      entries = readdirSync(rel ? abs(root, rel) : root, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const path = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory()) {
+        if (SKIP_DIRS.has(e.name) || path === PATHS.local || path === PATHS.locks) continue;
+        if (!rel && e.name !== META_DIR && e.name !== TESTS_DIR) continue;
+        walk(path, depth + 1);
+      } else if (e.isFile() && isManagedPath(path)) {
+        try {
+          const st = statSync(abs(root, path));
+          parts.push(`${path}:${st.size}:${st.mtimeMs}`);
+        } catch {
+          // Gone.
+        }
+      }
+    }
+  };
+  walk('', 0);
+  return parts.sort().join('\n');
+}
+
 /** Writes via a temp file + rename, so readers never see half a file. */
 export function writeProjectFile(root: string, rel: string, text: string): void {
   const file = abs(root, rel);
@@ -110,5 +144,5 @@ export function syncTestDirs(root: string, dirs: Iterable<string>): void {
 /** `.kiemi/.gitignore` so machine-only files never reach Git. */
 export function ensureGitignore(root: string): void {
   const file = abs(root, PATHS.gitignore);
-  if (!existsSync(file)) writeProjectFile(root, PATHS.gitignore, 'local/\n');
+  if (!existsSync(file)) writeProjectFile(root, PATHS.gitignore, 'local/\nlocks/\n');
 }

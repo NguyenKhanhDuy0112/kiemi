@@ -29,6 +29,8 @@ export const PATHS = {
   suites: `${META_DIR}/suites`,
   /** Machine-only (locks…): never synced, ignored by Git. */
   local: `${META_DIR}/local`,
+  /** Soft locks "X is editing this test" — visible on a network share, ignored by Git. */
+  locks: `${META_DIR}/locks`,
   gitignore: `${META_DIR}/.gitignore`,
 } as const;
 

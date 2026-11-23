@@ -18,6 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@renderer/components/ui/sidebar';
+import { ProjectFolderDialogs } from '@renderer/features/projects/folder-dialogs';
 import { openProjectFolder, useProjectFolder } from '@renderer/features/projects/project-folder';
 import { errorMessage } from '@renderer/lib/errors';
 import { useAppStore, type View } from '@renderer/lib/store';
@@ -169,6 +170,7 @@ export function AppSidebar() {
         </p>
       </SidebarFooter>
       <NameDialog state={dialog} onClose={() => setDialog(null)} />
+      <ProjectFolderDialogs status={folder} />
     </Sidebar>
   );
 }

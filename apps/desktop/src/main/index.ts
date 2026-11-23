@@ -1,4 +1,4 @@
-import { homedir } from 'node:os';
+import { homedir, hostname, userInfo } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
@@ -17,6 +17,7 @@ import { rootRouter } from './api/root';
 import { CrashReports } from './crash/crash-reports';
 import { isTrustedRendererUrl } from './ipc-allow';
 import { ProjectFolderManager } from './projects/folder-manager';
+import { SoftLocks } from './projects/locks';
 import { RecorderManager } from './record/recorder-manager';
 import { ARTIFACT_SCHEME, parseArtifactUrl, resolveInside } from './results/artifact-path';
 import { TraceServer } from './results/trace-server';
@@ -119,6 +120,14 @@ const crashReports = new CrashReports({
   homeDir: homedir(),
 });
 
+function safeUserName(): string {
+  try {
+    return userInfo().username;
+  } catch {
+    return 'kiemi';
+  }
+}
+
 function registerIpc(data: { services: Services; defaultProjectId: string }): void {
   const userData = app.getPath('userData');
   // Engine runs in its own utility process so the window never freezes [N-05].
@@ -150,9 +159,11 @@ function registerIpc(data: { services: Services; defaultProjectId: string }): vo
     services: data.services,
     root: process.env.KIEMI_PROJECTS_DIR || join(app.getPath('documents'), 'Kiemi'),
     log: (message, err) => console.error(message, err),
+    locks: new SoftLocks({ user: safeUserName(), host: hostname() }),
   });
   projectFolders = folders;
   folders.syncAll();
+  folders.watch();
   const updateService = createUpdates();
   updates = updateService;
   updateService.start();

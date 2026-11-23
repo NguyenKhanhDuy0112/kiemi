@@ -27,6 +27,32 @@ export const viUi = {
     retry: 'Thử lại',
     conflicts: '{{count}} file vừa được sửa cả trong app và trên đĩa — Kiemi chưa ghi đè.',
     problems: '{{count}} file trong thư mục dự án đang hỏng nên chưa đọc được.',
+    conflictTitle: 'Có thay đổi ở cả hai nơi',
+    conflictText:
+      'Các mục dưới đây vừa được sửa trong app và cũng được sửa trong thư mục dự án (bởi người khác hoặc Git). Chọn bản muốn giữ cho từng mục.',
+    keepApp: 'Bản trong app',
+    takeFolder: 'Bản trong thư mục',
+    keepAllApp: 'Giữ hết bản trong app',
+    takeAllFolder: 'Lấy hết bản trong thư mục',
+    apply: 'Áp dụng',
+    later: 'Để sau',
+    resolved: 'Đã cập nhật theo lựa chọn của bạn.',
+    secretsTitle: 'Nhập bí mật cho máy này',
+    secretsText:
+      'Dự án dùng các bí mật dưới đây nhưng máy này chưa có giá trị. Giá trị chỉ lưu trên máy này (không bao giờ nằm trong thư mục dự án).',
+    secretsSaved: 'Đã lưu {{count}} bí mật.',
+    lockedBy:
+      'Test này đang được {{user}} ({{host}}) mở để sửa. Sửa cùng lúc có thể bị xung đột — nên chờ hoặc báo người đó.',
+    kind: {
+      project: 'Thông tin dự án',
+      folders: 'Danh sách thư mục',
+      environments: 'Môi trường',
+      elements: 'Kho phần tử',
+      sharedStep: 'Bước dùng chung “{{name}}”',
+      dataset: 'Dữ liệu “{{name}}”',
+      suite: 'Suite “{{name}}”',
+      test: 'Test “{{name}}”',
+    },
   },
   palette: {
     placeholder: 'Tìm test, lệnh…',

@@ -87,9 +87,10 @@ const dbErrors = t.middleware(async ({ next }) => {
 });
 
 /** Every successful mutation may have changed project data: write the folders soon [T-01]. */
-const folderSync = t.middleware(async ({ ctx, type, next }) => {
+const NO_FOLDER_SYNC = new Set(['projects.touchLock', 'projects.releaseLock']);
+const folderSync = t.middleware(async ({ ctx, type, path, next }) => {
   const res = await next();
-  if (res.ok && type === 'mutation') ctx.projectFolders?.changed();
+  if (res.ok && type === 'mutation' && !NO_FOLDER_SYNC.has(path)) ctx.projectFolders?.changed();
   return res;
 });
 

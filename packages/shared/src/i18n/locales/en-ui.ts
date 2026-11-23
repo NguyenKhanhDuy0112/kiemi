@@ -28,6 +28,32 @@ export const enUi = {
     conflicts:
       '{{count}} files were changed both in the app and on disk — Kiemi did not overwrite them.',
     problems: '{{count}} files in the project folder are damaged and could not be read.',
+    conflictTitle: 'Changed in both places',
+    conflictText:
+      'These items were changed in the app and also in the project folder (by a teammate or Git). Choose which version to keep for each.',
+    keepApp: 'App version',
+    takeFolder: 'Folder version',
+    keepAllApp: 'Keep all app versions',
+    takeAllFolder: 'Take all folder versions',
+    apply: 'Apply',
+    later: 'Later',
+    resolved: 'Updated with your choices.',
+    secretsTitle: 'Enter secrets for this computer',
+    secretsText:
+      'The project uses these secrets but this computer has no value for them yet. Values stay on this computer only (never in the project folder).',
+    secretsSaved: 'Saved {{count}} secrets.',
+    lockedBy:
+      '{{user}} ({{host}}) has this test open for editing. Editing at the same time may cause a conflict — wait or tell them.',
+    kind: {
+      project: 'Project details',
+      folders: 'Folder list',
+      environments: 'Environments',
+      elements: 'Element library',
+      sharedStep: 'Shared steps “{{name}}”',
+      dataset: 'Data “{{name}}”',
+      suite: 'Suite “{{name}}”',
+      test: 'Test “{{name}}”',
+    },
   },
   palette: {
     placeholder: 'Search tests, commands…',

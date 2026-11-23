@@ -32,6 +32,9 @@ const typingInField = (e: KeyboardEvent) => {
 };
 
 /** Test editor (S-02): step table + detail panel + Data / Variables / Sessions tabs. */
+/** Same cadence as the main process lock heartbeat (`main/projects/locks.ts`). */
+const LOCK_HEARTBEAT_MS = 30_000;
+
 export function EditorScreen({ testId }: { testId: string }) {
   const tx = useTx();
   const qc = useQueryClient();
@@ -74,11 +77,34 @@ export function EditorScreen({ testId }: { testId: string }) {
 
   // Load (or reload) the document from the database.
   useEffect(() => {
-    if (test.data && useEditorStore.getState().testId !== testId) {
-      useEditorStore.getState().load(testId, test.data.content, test.data.version);
+    if (!test.data) return;
+    const s = useEditorStore.getState();
+    if (s.testId !== testId) {
+      s.load(testId, test.data.content, test.data.version);
       setConflict(false);
+    } else if (!s.dirty && test.data.version > s.version) {
+      // A teammate's change came in from the project folder and nothing is unsaved here [T-01].
+      s.load(testId, test.data.content, test.data.version);
     }
   }, [test.data, testId]);
+
+  // Soft lock: tell teammates on the shared folder that this test is open [T-01].
+  const [lockedBy, setLockedBy] = useState<{ user: string; host: string } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const touch = () =>
+      void trpcClient.projects.touchLock
+        .mutate({ testId })
+        .then((r) => alive && setLockedBy(r.heldBy))
+        .catch(() => undefined);
+    touch();
+    const timer = setInterval(touch, LOCK_HEARTBEAT_MS);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      void trpcClient.projects.releaseLock.mutate({ testId }).catch(() => undefined);
+    };
+  }, [testId]);
 
   const doSave = useCallback(async () => {
     const s = useEditorStore.getState();
@@ -280,6 +306,14 @@ export function EditorScreen({ testId }: { testId: string }) {
             </div>
           </header>
           <RecordPanel testId={testId} />
+          {lockedBy && (
+            <div
+              role="status"
+              className="border-b border-warning/40 bg-warning-soft px-4 py-2 text-sm text-warning-text"
+            >
+              {tx('ui.projectFolder.lockedBy', { user: lockedBy.user, host: lockedBy.host })}
+            </div>
+          )}
           {conflict && (
             <div
               role="alert"
