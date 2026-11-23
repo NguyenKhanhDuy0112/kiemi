@@ -110,6 +110,11 @@ export const en = {
         message: 'The project has no product “{{product}}”.',
         hint: 'Check the product name after “app.”, or add this product to the project.',
       },
+      PROTECTED_ENVIRONMENT: {
+        message:
+          'Environment “{{environment}}” is protected, so Kiemi does not run tests with steps that write data (cleanup steps, API calls that add/change/delete).',
+        hint: 'Run on another environment, or remove the data-writing steps from this test. Only turn protection off when you are sure.',
+      },
       UNKNOWN_VARIABLE: {
         message: 'There is no variable “{{name}}”.',
         hint: 'Check the variable name, or add a “Save value to variable” step before this one.',

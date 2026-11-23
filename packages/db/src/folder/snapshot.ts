@@ -33,6 +33,9 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
     environments: services.environments.list(projectId).map((e) => ({
       id: e.id,
       name: e.name,
+      type: e.type,
+      color: e.color,
+      protected: e.protected,
       cells: services.environments.cells(e.id).map((c) => ({
         productId: c.productId,
         url: c.url,
@@ -237,6 +240,9 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
         id: e.id,
         values: {
           name: e.name,
+          type: e.type,
+          color: e.color ?? null,
+          protected: e.protected,
           sortOrder: e.sortOrder,
           secretNames: [...new Set(e.secretNames)].sort(),
         },

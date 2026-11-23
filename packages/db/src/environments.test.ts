@@ -165,4 +165,23 @@ describe('Environment × Product matrix [O-02]', () => {
     s.environments.backfillCells();
     expect(s.environments.cell(bare.id, web.id)).toBeUndefined();
   });
+
+  it('type, colour and protection: Production is protected by default, copied on duplicate [O-03, W-10]', () => {
+    const { s, projectId } = setup();
+    const prod = s.environments.create({ projectId, name: 'Production', type: 'production' });
+    expect(prod).toMatchObject({ type: 'production', protected: true, color: null });
+    const dev = s.environments.create({ projectId, name: 'DEV', type: 'dev', color: '#00AA00' });
+    expect(dev.protected).toBe(false);
+    expect(s.environments.update(dev.id, { type: 'production' }).protected).toBe(true);
+    expect(s.environments.update(dev.id, { protected: false }).protected).toBe(false);
+    expect(() => s.environments.update(dev.id, { color: 'red' })).toThrow(DbError);
+    expect(s.environments.forRun(prod.id).env).toMatchObject({
+      type: 'production',
+      protected: true,
+    });
+    expect(s.environments.duplicate(prod.id, 'Prod 2')).toMatchObject({
+      type: 'production',
+      protected: true,
+    });
+  });
 });

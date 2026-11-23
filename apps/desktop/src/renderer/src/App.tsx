@@ -5,7 +5,9 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@renderer/compone
 import { Skeleton } from '@renderer/components/ui/skeleton';
 import { Toaster } from '@renderer/components/ui/sonner';
 import { TooltipProvider } from '@renderer/components/ui/tooltip';
+import { CurrentEnvironmentBadge } from '@renderer/features/environments/environment-badge';
 import { WelcomeDialog } from '@renderer/features/onboarding/welcome-dialog';
+import { ProtectedConfirmDialog } from '@renderer/features/run/confirm-protected';
 import { TestsScreen } from '@renderer/features/tests/tests-screen';
 import { UpdateNotice } from '@renderer/features/update/update-notice';
 import { useT } from '@renderer/i18n/use-t';
@@ -94,6 +96,7 @@ export function App() {
             <SidebarTrigger />
             <span className="text-sm font-medium">{tx(`ui.nav.${view}`)}</span>
             <span className="ml-auto" />
+            {projectId && !openRunId && <CurrentEnvironmentBadge />}
             <UpdateNotice />
             <span data-testid="app-version" className="text-xs text-muted-foreground">
               {info.data ? tx('app.version', { version: info.data.version }) : tx('common.loading')}
@@ -127,6 +130,7 @@ export function App() {
         </SidebarInset>
         <CommandPalette />
         <WelcomeDialog />
+        <ProtectedConfirmDialog />
         <Toaster position="bottom-right" />
       </SidebarProvider>
     </TooltipProvider>

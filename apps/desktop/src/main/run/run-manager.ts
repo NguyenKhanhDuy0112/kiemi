@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import type { RunRowStatus, RunTarget, Services } from '@kiemi/db';
+import { DbError, type RunRowStatus, type RunTarget, type Services } from '@kiemi/db';
 import type { EngineEvent, RunRequest, SavedLogin, StepPhase } from '@kiemi/engine';
 import type {
   ArtifactRef,
@@ -195,6 +195,13 @@ export class RunManager {
     const { env, secrets } = environmentId
       ? s.environments.forRun(environmentId)
       : { env: undefined, secrets: {} };
+    // Production & co.: the UI must have asked twice [O-03, W-10].
+    if (env?.protected && input.confirmProtected !== true)
+      throw new DbError('CONFIRM_REQUIRED', `Environment "${env.name}" is protected`, {
+        environment: env.name,
+        environmentId: env.id,
+        type: env.type,
+      });
     const settings = s.settings.getAll();
     const sharedSteps = s.sharedSteps.forRun(projectId);
     // Stored as Playwright gave it (`storageState()`); the DB only checks the outline.

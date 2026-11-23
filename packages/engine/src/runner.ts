@@ -24,6 +24,7 @@ import type { EngineEvent, EngineEventListener, LogLevel, StepPhase } from './ev
 import { evaluateCondition } from './flow/condition';
 import { type ResolvedLocator, resolveLocator } from './locator/resolve';
 import type { RunDebugger } from './run/debug';
+import { findWriteSteps } from './run/protection';
 import type { SavedLogin } from './run/services';
 import { DialogController, type RunServices } from './run/services';
 import { toLocator } from './run/target';
@@ -246,6 +247,25 @@ class Run {
     let runError: RunError | undefined;
 
     try {
+      // Protected environment (Production): refuse before anything runs [W-10].
+      const env = this.#req.env;
+      if (env?.protected) {
+        const writes = findWriteSteps(testCase, this.#opts.registry, this.#req.sharedSteps);
+        const first = writes[0];
+        if (first) {
+          throw new EngineError(
+            'PROTECTED_ENVIRONMENT',
+            `Environment "${env.name}" is protected: step ${first.stepId} (${first.action}) may write data`,
+            {
+              environment: env.name,
+              stepId: first.stepId,
+              action: first.action,
+              reason: first.reason,
+              count: writes.length,
+            },
+          );
+        }
+      }
       if (artifactsOpt) await mkdir(artifactsOpt.dir, { recursive: true });
       let video = artifactsOpt?.video === true && this.#opts.browser !== undefined;
       if (video) {

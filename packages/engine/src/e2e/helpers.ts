@@ -59,6 +59,8 @@ export async function startE2E(syncDelayMs = 0): Promise<E2E> {
             variables: {},
             secretNames: [],
             apps: {},
+            type: 'other',
+            protected: false,
           },
           ...(sharedSteps ? { sharedSteps } : {}),
           ...request,

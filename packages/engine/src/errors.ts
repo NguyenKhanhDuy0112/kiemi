@@ -34,6 +34,8 @@ export const ENGINE_ERROR_CODES = [
   'LOGIN_NOT_SAVED',
   'LOGIN_EXPIRED',
   'UNKNOWN_SHARED_STEP',
+  /** A step may write data and the environment is protected (Production) [W-10]. */
+  'PROTECTED_ENVIRONMENT',
   'ACTION_FAILED',
   'ENGINE_ERROR',
   /** The engine process stopped unexpectedly (raised by the host). */

@@ -242,3 +242,22 @@ describe('Env proxy [G-06]', () => {
       expect(EnvSchema.safeParse({ ...base, proxy }).success, proxy.server).toBe(false);
   });
 });
+
+describe('guessEnvType [O-03]', () => {
+  it('reads the usual names', async () => {
+    const { guessEnvType } = await import('./env');
+    expect(['Production', 'PROD', 'Chính thức', 'Live 2'].map(guessEnvType)).toEqual([
+      'production',
+      'production',
+      'production',
+      'production',
+    ]);
+    expect(['UAT', 'Staging', 'DEV', 'QA', 'Máy Lan'].map(guessEnvType)).toEqual([
+      'uat',
+      'staging',
+      'dev',
+      'test',
+      'other',
+    ]);
+  });
+});

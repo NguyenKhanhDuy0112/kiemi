@@ -23,10 +23,21 @@ import { useAppStore } from '@renderer/lib/store';
 import { trpc } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
 import { useQuery } from '@tanstack/react-query';
+import { TRPCClientError } from '@trpc/client';
 import { Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useProtectedConfirm } from './confirm-protected';
 import { type RunPrefs, useRunStore } from './run-store';
+
+/** Name of the protected environment when main asks for a confirmation. */
+function protectedEnvName(err: unknown): string | undefined {
+  if (!(err instanceof TRPCClientError)) return undefined;
+  const data = err.data as { kiemiCode?: string; details?: { environment?: unknown } } | undefined;
+  return data?.kiemiCode === 'CONFIRM_REQUIRED'
+    ? String(data.details?.environment ?? '')
+    : undefined;
+}
 
 export type RunTargetInput = StartRunInput['target'];
 
@@ -45,17 +56,27 @@ export function useStartRun() {
     const st = useRunStore.getState();
     const { environmentId, ...prefs } = extra.prefs ?? st.prefs;
     const breakpoints = target.kind === 'test' ? (st.breakpoints[target.testCaseId] ?? []) : [];
+    const input = {
+      target,
+      ...(environmentId === undefined ? {} : { environmentId }),
+      options: {
+        ...prefs,
+        ...(breakpoints.length ? { breakpoints } : {}),
+        ...(extra.startAtStepId ? { startAtStepId: extra.startAtStepId } : {}),
+        ...(extra.pauseAtStart ? { pauseAtStart: true } : {}),
+      },
+    };
     try {
-      const runId = await st.start({
-        target,
-        ...(environmentId === undefined ? {} : { environmentId }),
-        options: {
-          ...prefs,
-          ...(breakpoints.length ? { breakpoints } : {}),
-          ...(extra.startAtStepId ? { startAtStepId: extra.startAtStepId } : {}),
-          ...(extra.pauseAtStart ? { pauseAtStart: true } : {}),
-        },
-      });
+      let runId: string;
+      try {
+        runId = await st.start(input);
+      } catch (err) {
+        // Protected environment (Production): ask twice, then run [O-03, W-10].
+        const name = protectedEnvName(err);
+        if (name === undefined) throw err;
+        if (!(await useProtectedConfirm.getState().ask(name))) return undefined;
+        runId = await st.start({ ...input, confirmProtected: true });
+      }
       openRun(runId);
       return runId;
     } catch (err) {

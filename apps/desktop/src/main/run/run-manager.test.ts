@@ -232,6 +232,33 @@ describe('RunManager [M4-01, N-05]', () => {
     });
   });
 
+  it('a protected environment needs a confirmation, then refuses data-writing steps [O-03, W-10]', async () => {
+    const { services, runs, testId } = setup(
+      [{ id: 's1', action: 'note', params: { value: 'a' } }],
+      {
+        cleanup: [{ id: 'c1', action: 'note', params: { value: 'reset' } }],
+      },
+    );
+    const projectId = services.testCases.get(testId).projectId;
+    const prod = services.environments.create({
+      projectId,
+      name: 'Production',
+      type: 'production',
+    });
+    const target = { kind: 'test' as const, testCaseId: testId };
+    let err: unknown;
+    try {
+      runs.start({ target, environmentId: prod.id });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toMatchObject({ code: 'CONFIRM_REQUIRED', details: { environment: 'Production' } });
+    const { runId } = runs.start({ target, environmentId: prod.id, confirmProtected: true });
+    const events = await collect(runs.events(runId));
+    expect(finalStatus(events)).toBe('error');
+    expect(seen).toEqual([]);
+  });
+
   it('opens the SSH tunnel before the run and closes it after', async () => {
     const { services, testId } = setup([{ id: 's1', action: 'note', params: { value: 'a' } }]);
     const env = services.environments.list(services.testCases.get(testId).projectId)[0];

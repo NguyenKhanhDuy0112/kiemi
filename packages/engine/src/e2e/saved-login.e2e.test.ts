@@ -35,6 +35,8 @@ async function run(steps: StepInput[], extra: Partial<RunRequest> = {}, now?: ()
         variables: {},
         secretNames: [],
         apps: {},
+        type: 'other',
+        protected: false,
       },
       ...extra,
     },

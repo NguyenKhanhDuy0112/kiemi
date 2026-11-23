@@ -48,6 +48,8 @@ export const apiAction = defineAction({
       )
       .default([]),
   }),
+  // POST/PUT/PATCH/DELETE change data on the server [W-10].
+  writes: (p) => !['GET', 'HEAD'].includes(String(p.method ?? 'GET').toUpperCase()),
   ui: { label: 'actions.api', icon: 'webhook', group: 'data' },
   async execute(p, ctx) {
     const url = ctx.run.url(p.url);

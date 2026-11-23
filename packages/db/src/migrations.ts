@@ -333,4 +333,17 @@ CREATE INDEX "environment_products_project_idx" ON "environment_products" ("proj
 ALTER TABLE "environments" ADD COLUMN "cells_pending" INTEGER NOT NULL DEFAULT 0;
 UPDATE "environments" SET "cells_pending" = 1;`,
   },
+  {
+    id: 8,
+    name: 'environment-type',
+    sql: `ALTER TABLE "environments" ADD COLUMN "type" TEXT NOT NULL DEFAULT 'other';
+ALTER TABLE "environments" ADD COLUMN "color" TEXT;
+ALTER TABLE "environments" ADD COLUMN "protected" INTEGER NOT NULL DEFAULT 0;
+UPDATE "environments" SET "type" = 'production', "protected" = 1
+  WHERE lower("name") IN ('production', 'prod', 'live', 'thật', 'that', 'chính thức');
+UPDATE "environments" SET "type" = 'uat' WHERE lower("name") = 'uat';
+UPDATE "environments" SET "type" = 'staging' WHERE lower("name") IN ('staging', 'stg');
+UPDATE "environments" SET "type" = 'dev' WHERE lower("name") IN ('dev', 'development');
+UPDATE "environments" SET "type" = 'test' WHERE lower("name") IN ('test', 'qa', 'sit');`,
+  },
 ];

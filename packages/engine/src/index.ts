@@ -8,6 +8,7 @@ export * from './events';
 export * from './flow/condition';
 export * from './locator';
 export * from './run/debug';
+export * from './run/protection';
 export * from './run/services';
 export * from './run/target';
 export * from './runner';

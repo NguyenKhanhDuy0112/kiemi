@@ -94,6 +94,7 @@ describe('describeRunError [I-04, N-06]', () => {
       'PROXY_SECRET_MISSING',
       'UNKNOWN_VARIABLE',
       'APP_NOT_AVAILABLE',
+      'PROTECTED_ENVIRONMENT',
       'UNKNOWN_PRODUCT',
       'INVALID_EXPRESSION',
       'CONSOLE_ERROR',

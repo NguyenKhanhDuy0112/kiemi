@@ -1,7 +1,10 @@
 import {
   type AppCell,
   type Env,
+  EnvColorSchema,
   EnvSchema,
+  EnvTypeSchema,
+  guessEnvType,
   ProxySchema,
   type Secrets,
   SshSettingsSchema,
@@ -26,6 +29,11 @@ export interface SecretCipher {
 export const EnvironmentInputSchema = z.object({
   projectId: z.string().min(1),
   name: z.string().trim().min(1).max(100),
+  /** [O-03] Production turns `protected` on unless it is given. */
+  type: EnvTypeSchema.optional(),
+  color: EnvColorSchema.nullish(),
+  /** [W-10] */
+  protected: z.boolean().optional(),
   /**
    * Shortcuts for the DEFAULT product's cell (v1.0 callers: samples, bundles):
    * written into `environment_products`, not into the environment row [O-02].
@@ -100,9 +108,13 @@ export class EnvironmentService {
     if (!p.success) throw validation('environment', p.error.issues);
     this.#uniqueName(p.data.projectId, p.data.name);
     return this.#ctx.db.transaction(() => {
+      const type = p.data.type ?? guessEnvType(p.data.name);
       const row = this.repo.create({
         projectId: p.data.projectId,
         name: p.data.name,
+        type,
+        color: p.data.color ?? null,
+        protected: p.data.protected ?? type === 'production',
         sortOrder: this.list(p.data.projectId).length,
       });
       const { baseUrl, proxy, ssh } = p.data;
@@ -126,6 +138,9 @@ export class EnvironmentService {
       this.#uniqueName(env.projectId, p.data.name);
     }
     const { baseUrl, proxy, ssh, ...own } = p.data;
+    // Switching to Production protects it unless the caller says otherwise [W-10].
+    if (own.type === 'production' && env.type !== 'production' && own.protected === undefined)
+      own.protected = true;
     return this.#ctx.db.transaction(() => {
       if (baseUrl !== undefined || proxy !== undefined || ssh !== undefined) {
         const product = this.#products.defaultFor(env.projectId);
@@ -228,7 +243,13 @@ export class EnvironmentService {
   duplicate(environmentId: string, name: string) {
     const src = this.repo.get(environmentId);
     return this.#ctx.db.transaction(() => {
-      const copy = this.create({ projectId: src.projectId, name });
+      const copy = this.create({
+        projectId: src.projectId,
+        name,
+        type: src.type,
+        color: src.color,
+        protected: src.protected,
+      });
       this.setVariables(copy.id, this.variables(environmentId));
       this.setSecretNames(copy.id, this.secretNames(environmentId));
       for (const c of this.cells(environmentId))
@@ -399,6 +420,9 @@ export class EnvironmentService {
     const env = EnvSchema.parse({
       id: row.id,
       name: row.name,
+      type: row.type,
+      ...(row.color ? { color: row.color } : {}),
+      protected: row.protected,
       ...(main?.url ? { baseUrl: main.url } : {}),
       apps,
       ...(first ? { defaultProduct: first.key } : {}),

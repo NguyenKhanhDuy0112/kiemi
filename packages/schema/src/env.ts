@@ -101,10 +101,50 @@ export const AppCellSchema = z.object({
 });
 export type AppCell = z.infer<typeof AppCellSchema>;
 
+/** Kind of environment [O-03]; `production` turns protection on by default [W-10]. */
+export const ENV_TYPES = ['dev', 'test', 'uat', 'staging', 'production', 'other'] as const;
+export const EnvTypeSchema = z.enum(ENV_TYPES);
+export type EnvType = z.infer<typeof EnvTypeSchema>;
+
+/** `#RRGGBB` colour shown on the title bar, the Run screen and reports [O-03]. */
+export const EnvColorSchema = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Colour must look like #1F2A5C');
+
+/** Default colour of each environment type (readable as a dot/stripe on light and dark). */
+export const ENV_TYPE_COLORS: Record<EnvType, string> = {
+  dev: '#3B82F6',
+  test: '#8B5CF6',
+  uat: '#F59E0B',
+  staging: '#0EA5E9',
+  production: '#E5484D',
+  other: '#64748B',
+};
+
+/** Type suggested by a name: "Production", "PROD", "Chính thức" → production [O-03]. */
+export function guessEnvType(name: string): EnvType {
+  const n = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+    .trim();
+  if (/^(prod|production|live|that|chinh thuc|san xuat)\b/.test(n)) return 'production';
+  if (/^(uat)\b/.test(n)) return 'uat';
+  if (/^(staging|stg|pre-?prod)\b/.test(n)) return 'staging';
+  if (/^(dev|development)\b/.test(n)) return 'dev';
+  if (/^(test|qa|sit)\b/.test(n)) return 'test';
+  return 'other';
+}
+
 /** Environment (dev / staging / prod…) with its variables [E-02]. */
 export const EnvSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  type: EnvTypeSchema.default('other'),
+  color: EnvColorSchema.optional(),
+  /** Steps that may write data (cleanup, API POST/PUT/PATCH/DELETE) are refused [W-10]. */
+  protected: z.boolean().default(false),
   /** v1.0 single URL; now the main product's cell URL (`{{env.baseUrl}}` = `{{app}}`). */
   baseUrl: z.url().optional(),
   /** Cells of this environment by product key [O-02]. */

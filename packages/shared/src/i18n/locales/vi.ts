@@ -113,6 +113,11 @@ export const vi = {
         message: 'Dự án không có sản phẩm “{{product}}”.',
         hint: 'Kiểm tra lại tên sản phẩm sau “app.”, hoặc thêm sản phẩm này vào dự án.',
       },
+      PROTECTED_ENVIRONMENT: {
+        message:
+          'Môi trường “{{environment}}” đang được bảo vệ nên Kiemi không chạy test có bước ghi dữ liệu (bước dọn dẹp, gọi API thêm/sửa/xóa).',
+        hint: 'Chạy trên môi trường khác, hoặc bỏ các bước ghi dữ liệu khỏi test này. Chỉ tắt bảo vệ khi chắc chắn.',
+      },
       UNKNOWN_VARIABLE: {
         message: 'Chưa có biến “{{name}}”.',
         hint: 'Kiểm tra tên biến, hoặc thêm bước “Lưu giá trị vào biến” trước bước này.',

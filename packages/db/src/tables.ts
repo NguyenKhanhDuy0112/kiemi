@@ -184,6 +184,14 @@ export const environments = sqliteTable(
      * Those three columns are legacy: cells hold them now.
      */
     cellsPending: integer('cells_pending').notNull().default(0),
+    /** Dev · Test · UAT · Staging · Production · Other [O-03] (migration 8). */
+    type: text('type', { enum: ['dev', 'test', 'uat', 'staging', 'production', 'other'] })
+      .notNull()
+      .default('other'),
+    /** `#RRGGBB`; null = the type's colour. */
+    color: text('color'),
+    /** Refuses steps that write data [W-10]; on by default for Production. */
+    protected: integer('protected', { mode: 'boolean' }).notNull().default(false),
   },
   (t) => [index('environments_project_idx').on(t.projectId)],
 );

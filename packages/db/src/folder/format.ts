@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
+  EnvColorSchema,
+  EnvTypeSchema,
   LocatorSchema,
   ProductSchema,
   ProxySchema,
@@ -73,6 +75,9 @@ export const CellEntrySchema = z.object({
 export const EnvironmentEntrySchema = z.object({
   id,
   name: z.string().trim().min(1),
+  type: EnvTypeSchema.default('other'),
+  color: EnvColorSchema.nullish(),
+  protected: z.boolean().default(false),
   /** Read only (files written before M9-05) → the first product's cell. */
   baseUrl: z.string().nullish(),
   proxy: ProxySchema.nullish(),

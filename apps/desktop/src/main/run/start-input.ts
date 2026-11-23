@@ -36,6 +36,8 @@ export const StartRunInputSchema = z.object({
   /** `undefined` = suite's environment, else the project's first; `null` = none [H-02]. */
   environmentId: z.string().min(1).nullable().optional(),
   options: RunOptionsInputSchema.default({}),
+  /** The tester confirmed (twice) running on a protected environment [O-03, W-10]. */
+  confirmProtected: z.boolean().optional(),
 });
 
 export type StartRunInput = z.input<typeof StartRunInputSchema>;

@@ -38,6 +38,8 @@ describe('stop after step X and keep the sessions [K-04]', () => {
           variables: {},
           secretNames: [],
           apps: {},
+          type: 'other',
+          protected: false,
         },
         options: { stopAfterStepId: 's2' },
       },

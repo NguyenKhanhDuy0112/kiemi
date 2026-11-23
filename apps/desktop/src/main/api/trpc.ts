@@ -57,6 +57,7 @@ const DB_TO_TRPC = {
   IMPORT_FAILED: 'BAD_REQUEST',
   FOLDER_INVALID: 'BAD_REQUEST',
   PROJECT_ALREADY_OPEN: 'CONFLICT',
+  CONFIRM_REQUIRED: 'PRECONDITION_FAILED',
 } as const;
 
 const t = initTRPC.context<ApiContext>().create({

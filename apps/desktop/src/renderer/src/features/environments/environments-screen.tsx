@@ -1,4 +1,10 @@
-import type { ProxySettings, SshHop, SshSettings } from '@kiemi/schema';
+import {
+  ENV_TYPES,
+  type EnvType,
+  type ProxySettings,
+  type SshHop,
+  type SshSettings,
+} from '@kiemi/schema';
 import { EmptyState } from '@renderer/components/empty-state';
 import { NameDialog, type NameDialogState } from '@renderer/components/name-dialog';
 import { Badge } from '@renderer/components/ui/badge';
@@ -35,6 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from '@renderer/components/ui/table';
+import { envColor } from '@renderer/lib/environment';
 import { errorMessage } from '@renderer/lib/errors';
 import { useAppStore } from '@renderer/lib/store';
 import { trpc, trpcClient } from '@renderer/lib/trpc';
@@ -47,13 +54,16 @@ import {
   KeyRound,
   Loader2,
   MoreHorizontal,
+  Palette,
   Pencil,
   Plus,
   ServerCog,
+  ShieldAlert,
   Trash2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { EnvironmentPill } from './environment-badge';
 
 const NONE = '__none__';
 
@@ -172,6 +182,11 @@ export function EnvironmentsScreen() {
                 {list.map((e) => (
                   <TableHead key={e.id} className="min-w-52">
                     <div className="flex items-center gap-1">
+                      <span
+                        className="size-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: envColor(e) }}
+                        aria-hidden
+                      />
                       <button
                         type="button"
                         className={cn(
@@ -183,6 +198,12 @@ export function EnvironmentsScreen() {
                       >
                         {e.name}
                       </button>
+                      {e.protected && (
+                        <ShieldAlert
+                          className="size-3.5 shrink-0 text-fail-text"
+                          aria-label={tx('ui.environments.protectedBadge')}
+                        />
+                      )}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -644,11 +665,72 @@ function EnvironmentDetails({ id, onChanged }: { id: string; onChanged: () => vo
     );
   }
   const e = env.data;
+  const update = async (
+    patch: Parameters<typeof trpcClient.environments.update.mutate>[0]['patch'],
+  ) => {
+    try {
+      await trpcClient.environments.update.mutate({ id, patch });
+      await reload();
+      toast.success(tx('ui.actions.saved'));
+    } catch (err) {
+      toast.error(errorMessage(err, tx));
+    }
+  };
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-base font-semibold">
         {tx('ui.environments.settingsOf', { name: e.name })}
       </h2>
+      <Section
+        icon={Palette}
+        title={tx('ui.environments.type')}
+        hint={tx('ui.environments.colorHint')}
+      >
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="env-type">{tx('ui.environments.type')}</Label>
+            <Select value={e.type} onValueChange={(type) => void update({ type: type as EnvType })}>
+              <SelectTrigger id="env-type" className="w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ENV_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {tx(`ui.environments.types.${t}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="env-color">{tx('ui.environments.color')}</Label>
+            <input
+              id="env-color"
+              type="color"
+              className="h-9 w-16 cursor-pointer rounded-md border bg-background p-1"
+              value={envColor(e)}
+              onChange={(ev) => void update({ color: ev.target.value })}
+            />
+          </div>
+          <EnvironmentPill env={e} className="mb-2" />
+        </div>
+        <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+          <div>
+            <Label htmlFor="env-protected" className="flex items-center gap-1.5">
+              <ShieldAlert className="size-4 text-fail-text" aria-hidden />
+              {tx('ui.environments.protected')}
+            </Label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {tx('ui.environments.protectedHint')}
+            </p>
+          </div>
+          <Switch
+            id="env-protected"
+            checked={e.protected}
+            onCheckedChange={(on) => void update({ protected: on })}
+          />
+        </div>
+      </Section>
       <Section
         icon={ServerCog}
         title={tx('ui.environments.variables')}

@@ -14,6 +14,8 @@ export const DB_ERROR_CODES = [
   'IMPORT_FAILED',
   'FOLDER_INVALID',
   'PROJECT_ALREADY_OPEN',
+  /** The action needs an explicit confirmation (run on a protected environment) [W-10]. */
+  'CONFIRM_REQUIRED',
 ] as const;
 /** Data-layer error codes; the UI shows `ui.dbErrors.<code>` for each. */
 export type DbErrorCode = (typeof DB_ERROR_CODES)[number];

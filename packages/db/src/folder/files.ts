@@ -162,6 +162,9 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
         .map((e) => ({
           id: e.id,
           name: e.name,
+          type: e.type,
+          ...(e.color ? { color: e.color } : {}),
+          protected: e.protected,
           cells: [...e.cells]
             .sort(
               byKey(
