@@ -7,9 +7,12 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có)
 
 ## Tiếp theo
-Hết ROADMAP (M0 → M8). Trước khi phát hành **v1.0**: checklist `docs/RELEASE-CHECKLIST.md` mục C (cài thử trên máy sạch Windows/macOS, tự cập nhật v0.1.0 → v0.2.0) và mục D. Việc sau v1: mục "Sau v1 (v1.x)" trong ROADMAP (N-14 ký code khi có chứng chỉ).
+**M9 — Dự án · Sản phẩm · Môi trường** (bắt đầu từ M9-01: ADR lưu dự án dạng thư mục file + mô hình Sản phẩm × Môi trường + DSL v2). ROADMAP M9 → M16 = SPEC Phần 2 "Sẵn sàng cho dự án thật" (v1.1 → v1.2), thước đo độ phủ ở `docs/QC-COVERAGE.md`.
+Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C (cài thử trên máy sạch Windows/macOS, tự cập nhật v0.1.0 → v0.2.0) và mục D.
 
 ## Vấn đề tồn đọng / Câu hỏi cho người dùng
+- **Câu hỏi cho Phần 2 (trả lời trước khi làm task liên quan):** (1) Web dự án đăng nhập bằng **form** hay **Windows (NTLM)**? → nếu NTLM thì đưa W-01 (M13-05) lên sớm. (2) Team tester **bao nhiêu người**, dùng **Git** hay **thư mục mạng**? → cách làm T-01 (M9-02, M9-03). (3) Team dùng **Jira, Redmine hay Azure DevOps**? Chat nhóm **Teams, Slack hay Telegram**? → X-02, X-03. (4) DB dự án: **SQL Server** (mặc định ưu tiên) hay loại khác? → X-05.
+- **Thứ tự Phần 2 khác đề xuất gốc**: W-09 (popup toàn cục) và X-02 bản "Copy báo cáo bug" chuyển lên M10 vì FX-06/FX-07 cần; W-10 làm cùng O-03 ở M9; T-01 làm đầu M9 (trước khi thêm bảng Sản phẩm) để tránh làm lại lớp lưu trữ.
 - **Linh vật & chuyển động** (ADR 0017): `components/mascot/` (`Mascot`, `moodForStatus`), `motion.css` (mọi animation; quy tắc Giảm chuyển động phủ tất cả), splash ở `renderer/index.html` + `renderer/public/splash.css` + `lib/splash.ts`, cài đặt `reduceMotion` (`lib/motion.ts`, nhớ trong `localStorage`). Token mềm: bo góc 10/16px, nền pastel `bg-{pass,fail,warning,info}-soft`. Icon nguồn `apps/desktop/build/icon.svg`.
 - Chưa làm (nhỏ, để sau): thêm/xóa bước trong bảng chưa có hiệu ứng riêng (chỉ chuyển màn, panel, kết quả); splash lần mở đầu trên app chưa ký mất ~3 s vì macOS kiểm tra app — sẽ nhanh hơn khi có ký code (N-14).
 - **(Đã chốt: v1 phát hành chưa ký — N-14)** Thông tin khi có chứng chỉ: Bạn có (hoặc sẽ mua) chứng chỉ ký code không? Cần: (1) Windows — chứng chỉ OV/EV dạng `.pfx` → secret `WIN_CSC_LINK` (base64) + `WIN_CSC_KEY_PASSWORD`; nếu là EV trên USB/HSM thì phải dùng dịch vụ ký đám mây (vd Azure Trusted Signing) → sửa workflow; (2) macOS — tài khoản Apple Developer (99 USD/năm): Developer ID Application `.p12` → `MAC_CSC_LINK` + `MAC_CSC_KEY_PASSWORD`, và API key App Store Connect → `APPLE_API_KEY_BASE64`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`; (3) tùy chọn Sentry DSN → `SENTRY_DSN`. Chưa có thì vẫn phát hành được bản **không ký** (SmartScreen/Gatekeeper cảnh báo; macOS không tự cập nhật được).
@@ -133,3 +136,4 @@ Hết ROADMAP (M0 → M8). Trước khi phát hành **v1.0**: checklist `docs/RE
 | 2026-11-16 | — | Chốt U-17 (chuyển động), U-18 (splash mỗi lần mở, lần đầu dài hơn); M8 thêm M8-04, M8-05 | |
 | 2026-11-19 | M8-01 → M8-05 | Xong — Cú Kiemi (4 biểu cảm, icon mới), linh vật ở chào mừng/màn trống/kết quả, splash (lần đầu vẫy "Xin chào!"), chuyển động + Giảm chuyển động, bo góc 10/16 + nền pastel | ADR 0017 |
 | 2026-11-19 | M8 (test) | lint + typecheck + 397 test pass; app đóng gói: splash 0,9 s → tắt 1,7 s (lần mở sau), cú vui khi Đạt, Giảm chuyển động áp dụng + nhớ sau khi mở lại, giao diện tối ổn | Sửa: logo sidebar chìm vào nền chàm |
+| 2026-11-23 | — (docs) | Thêm SPEC Phần 2 + ROADMAP M9 → M16 + `docs/QC-COVERAGE.md` | Từ đề xuất 0001 "Sẵn sàng cho dự án thật" |
