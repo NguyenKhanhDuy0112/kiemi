@@ -23,7 +23,13 @@ Docs: `docs/SPEC.md` (yêu cầu + ID), `docs/ROADMAP.md` (task), `docs/PROGRESS
 6. Commit theo Conventional Commits, kèm ID: `feat(engine): add fill action [A-02]`
    - **Tác giả commit = chủ dự án**: `Duy Nguyen Khanh <duynguyen.011202@gmail.com>` (đã đặt trong `git config` của repo). Trước khi commit, kiểm tra `git config user.email` đúng email này.
    - **Không thêm** dòng `Co-Authored-By: Claude …` hay bất kỳ attribution AI nào vào commit/PR.
-   - Mỗi task 1 commit. **Mỗi milestone làm trên nhánh riêng** (vd `m9`); push sau mỗi task commit. Cuối milestone mở PR từ `m9` → `main`. Chưa có remote `origin` → nhắc người dùng cung cấp URL repo, không tự tạo repo.
+   - Mỗi task 1 commit. **Quy ước nhánh**:
+     - Tên: `<loại>/<ID>-<mô-tả>` — chữ thường, kebab-case, không dấu, < 40 ký tự.
+       Loại: `milestone/` (vd `milestone/m9-env-product`), `fix/`, `chore/`, `spike/`.
+     - Bắt đầu milestone: tạo nhánh `milestone/<mX>-<tên>` từ `main` mới nhất. Mọi task commit + push vào nhánh đó.
+     - Hết milestone: mở PR tiêu đề `M<số>: <tên milestone>`, mô tả liệt kê task + ID; CI xanh → merge (squash/merge commit, giữ ID trong message) → xóa nhánh.
+   - Phát hành: tag `vX.Y.Z` (beta: `vX.Y.Z-beta.N`) trên `main`.
+   - Chưa có remote `origin` → nhắc người dùng cung cấp URL repo, không tự tạo repo.
    - Không `push --force` lên `main`.
 7. Nếu người dùng chỉ nói "làm tiếp" / "continue" → làm task trong mục "Tiếp theo" (hoặc mục "Đang làm dở" nếu có).
 8. **Kết thúc phiên**: sau khi commit (và push nếu là task cuối milestone), DỪNG — không tự làm task kế. Báo ngắn gọn (≤ 10 dòng): đã xong gì, kết quả test, task tiếp theo, và nhắc người dùng `/clear` (hoặc mở chat mới) rồi gõ `Làm tiếp.`

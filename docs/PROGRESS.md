@@ -12,7 +12,7 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 
 ## Lưu ý cho task sau
 - Task M9-07z: tạo `scripts/gen/` với generator CLI; mẫu action ở `packages/engine/src/actions/wait.ts`, mẫu router ở `apps/desktop/src/main/api/routers/data.ts`, mẫu migration ở `packages/db/src/migrations.ts`.
-- Luật push mới: làm trên nhánh `m9`, push sau mỗi task; mở PR vào main khi kết thúc M9-11.
+- Nhánh hiện tại `m9` (pre-convention); từ M10 dùng `milestone/m10-<tên>` theo quy ước mới (CLAUDE.md §2 mục 6).
 - CI: job `quick` (Linux, nhánh không phải main) và `full` (Win+Mac, PR/main) — xem `.github/workflows/ci.yml`.
 
 ## Vấn đề tồn đọng / Câu hỏi cho người dùng
@@ -83,3 +83,4 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 | 2026-11-23 | M9-07 | Xong — biến kế thừa Workspace → … → Dòng dữ liệu (`explainVariables`), biến dự án/sản phẩm (migration 9), dữ liệu riêng theo môi trường, "Giá trị hiệu lực" | lint + typecheck + test liên quan pass |
 | 2026-11-23 | — | Thêm bộ quy tắc tiết kiệm token: CLAUDE.md §8, đổi quy trình thành **1 task/phiên**, `scripts/spec-lookup.mjs`, hook lọc output test `.claude/hooks/filter-test-output.sh`, `docs/CODEMAP.md`, mục "Lưu ý cho task sau" | |
 | 2026-11-23 | chore | Hoàn tất cài đặt token: CLAUDE.md 160→140 dòng, skills branding/release, archive nhật ký M0-M8, chia M9-08/09, thêm M9-07z, luật nhánh milestone + CI quick/full | |
+| 2026-11-23 | chore | Ghi quy ước Git vào CLAUDE.md: tên nhánh `<loại>/<ID>-<mô-tả>`, quy trình PR milestone, tag phát hành | |
