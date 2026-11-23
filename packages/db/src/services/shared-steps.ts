@@ -6,6 +6,8 @@ import { sharedSteps } from '../tables';
 
 export const SharedStepInputSchema = SharedStepSchema.omit({ id: true }).extend({
   projectId: z.string().min(1),
+  /** `null` = shared by every product of the project [O-07]. */
+  productId: z.string().min(1).nullish(),
 });
 
 /** Reusable step groups "Đăng nhập(user, pass)" [D-01]. */
@@ -23,7 +25,7 @@ export class SharedStepService {
   create(input: z.input<typeof SharedStepInputSchema>) {
     const p = SharedStepInputSchema.safeParse(input);
     if (!p.success) throw validation('shared step', p.error.issues);
-    return this.repo.create(p.data);
+    return this.repo.create({ ...p.data, productId: p.data.productId ?? null });
   }
   update(
     id: string,

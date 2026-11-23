@@ -147,7 +147,10 @@ export function syncProjectFolder(
       result.written.push(path);
     }
   }
-  syncTestDirs(dir, folderDirs(finalSnap.folders).values());
+  syncTestDirs(dir, [
+    ...finalSnap.products.map((p) => p.key),
+    ...folderDirs(finalSnap.folders, finalSnap.products).values(),
+  ]);
   ensureGitignore(dir);
 
   const state = hashes(final);

@@ -1,4 +1,9 @@
-import { parseTestCase } from '@kiemi/schema';
+import {
+  DEFAULT_PRODUCT_KEY,
+  ProductKeySchema,
+  parseTestCase,
+  productKeyFrom,
+} from '@kiemi/schema';
 import { z } from 'zod';
 import { safeFileName } from '../io/bundle';
 import { DbError, newId } from '../repo';
@@ -11,6 +16,8 @@ import {
   PATHS,
   PROJECT_FORMAT,
   PROJECT_FORMAT_VERSION,
+  type ProductEntry,
+  ProductsFileSchema,
   ProjectFileSchema,
   type ProjectSnapshot,
   SharedStepFileSchema,
@@ -54,18 +61,35 @@ function uniqueNames<T>(items: T[], base: (x: T) => string, ext: string): Map<T,
   return out;
 }
 
-/** Folder id → directory under `tests/` (no leading/trailing slash). */
-export function folderDirs(folders: readonly FolderEntry[]): Map<string, string> {
-  const children = new Map<string | null, FolderEntry[]>();
+/** The product an item belongs to (unknown / missing → the first one). */
+export function productOf(
+  products: readonly ProductEntry[],
+  productId: string | null | undefined,
+): ProductEntry | undefined {
+  return products.find((p) => p.id === productId) ?? products[0];
+}
+
+/**
+ * Folder id → directory under `tests/` (no leading/trailing slash): top-level
+ * folders live in their product's directory, `tests/<key>/…` [O-01].
+ */
+export function folderDirs(
+  folders: readonly FolderEntry[],
+  products: readonly ProductEntry[],
+): Map<string, string> {
+  const children = new Map<string, FolderEntry[]>();
   const ids = new Set(folders.map((f) => f.id));
   for (const f of folders) {
-    const parent = f.parentId && ids.has(f.parentId) ? f.parentId : null;
+    const parent =
+      f.parentId && ids.has(f.parentId)
+        ? f.parentId
+        : `product:${productOf(products, f.productId)?.key ?? ''}`;
     const list = children.get(parent) ?? [];
     list.push(f);
     children.set(parent, list);
   }
   const out = new Map<string, string>();
-  const walk = (parent: string | null, prefix: string, depth: number) => {
+  const walk = (parent: string, prefix: string, depth: number) => {
     if (depth > 64) return;
     const list = (children.get(parent) ?? []).sort(
       byKey(
@@ -81,7 +105,8 @@ export function folderDirs(folders: readonly FolderEntry[]): Map<string, string>
       walk(f.id, `${dir}/`, depth + 1);
     }
   };
-  walk(null, '', 0);
+  const keys = products.length ? products.map((p) => p.key) : [''];
+  for (const key of keys) walk(`product:${key}`, key ? `${key}/` : '', 0);
   return out;
 }
 
@@ -98,12 +123,26 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
       ...(s.project.description ? { description: s.project.description } : {}),
     }),
   );
+  files.set(
+    PATHS.products,
+    stableJson({
+      products: [...s.products]
+        .sort(
+          byKey(
+            (p) => p.sortOrder,
+            (p) => p.id,
+          ),
+        )
+        .map((p) => ({ id: p.id, key: p.key, name: p.name, kind: p.kind, sortOrder: p.sortOrder })),
+    }),
+  );
   const folders = [...s.folders].sort(byKey((f) => f.id));
   files.set(
     PATHS.folders,
     stableJson({
       folders: folders.map((f) => ({
         id: f.id,
+        ...(f.parentId ? {} : { productId: productOf(s.products, f.productId)?.id ?? null }),
         parentId: f.parentId,
         name: f.name,
         sortOrder: f.sortOrder,
@@ -144,6 +183,7 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
         )
         .map((e) => ({
           id: e.id,
+          productId: productOf(s.products, e.productId)?.id ?? null,
           name: e.name,
           locator: e.locator,
           ...(e.pageUrl ? { pageUrl: e.pageUrl } : {}),
@@ -167,6 +207,7 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
   };
   named(PATHS.sharedSteps, s.sharedSteps, (x) => ({
     id: x.id,
+    ...(x.productId ? { productId: x.productId } : {}),
     name: x.name,
     params: x.params,
     steps: x.steps,
@@ -191,10 +232,11 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
     })),
   }));
 
-  const dirs = folderDirs(s.folders);
+  const dirs = folderDirs(s.folders, s.products);
   const byDir = new Map<string, ProjectSnapshot['tests']>();
   for (const t of s.tests) {
-    const dir = (t.folderId && dirs.get(t.folderId)) || '';
+    const dir =
+      (t.folderId && dirs.get(t.folderId)) || productOf(s.products, t.productId)?.key || '';
     const list = byDir.get(dir) ?? [];
     list.push(t);
     byDir.set(dir, list);
@@ -255,6 +297,7 @@ export function parseFile(path: string, text: string): Parsed {
 function schemaFor(path: string): z.ZodType<any> | 'test' {
   if (path === PATHS.project) return ProjectFileSchema;
   if (path === PATHS.folders) return FoldersFileSchema;
+  if (path === PATHS.products) return ProductsFileSchema;
   if (path === PATHS.environments) return EnvironmentsFileSchema;
   if (path === PATHS.elements) return ElementsFileSchema;
   if (path.startsWith(`${PATHS.sharedSteps}/`)) return SharedStepFileSchema;
@@ -312,8 +355,38 @@ export function filesToSnapshot(files: FileMap): {
       .filter((x): x is T => x !== undefined)
       .map(unique);
 
+  const products: ProductEntry[] = [];
+  const keys = new Set<string>();
+  for (const p of (get<z.infer<typeof ProductsFileSchema>>(PATHS.products)?.products ?? []).map(
+    unique,
+  )) {
+    const key = keys.has(p.key) ? productKeyFrom(p.key, keys) : p.key;
+    keys.add(key);
+    products.push({ ...p, key });
+  }
+  const addProduct = (segment: string): ProductEntry => {
+    const key =
+      ProductKeySchema.safeParse(segment).success && !keys.has(segment)
+        ? segment
+        : productKeyFrom(segment, keys);
+    keys.add(key);
+    const p: ProductEntry = {
+      id: newId(),
+      key,
+      name: segment === key && segment === DEFAULT_PRODUCT_KEY ? 'Web' : segment,
+      kind: 'web',
+      sortOrder: products.length,
+    };
+    products.push(p);
+    return p;
+  };
+  const productByKey = (segment: string) =>
+    products.find((p) => p.key.toLowerCase() === segment.toLowerCase()) ?? addProduct(segment);
+  const firstProduct = () => products[0] ?? addProduct(DEFAULT_PRODUCT_KEY);
+
   const snapshot: ProjectSnapshot = {
     project: { id: project.id, name: project.name, description: project.description ?? null },
+    products,
     folders: dedupedFolders,
     tests: [],
     environments: (
@@ -325,37 +398,44 @@ export function filesToSnapshot(files: FileMap): {
     suites: list(PATHS.suites),
   };
 
-  // Directory → folder id; unknown directories become folders.
+  // `tests/<product key>/<folders…>/<test>.kiemi.json`; unknown directories become
+  // products (first level) or folders.
   const dirToId = new Map<string, string>();
-  for (const [fid, dir] of folderDirs(snapshot.folders)) dirToId.set(dir.toLowerCase(), fid);
-  const folderFor = (dir: string): string | null => {
+  for (const [fid, dir] of folderDirs(snapshot.folders, products))
+    dirToId.set(dir.toLowerCase(), fid);
+  const folderFor = (product: ProductEntry, dir: string): string | null => {
     if (!dir) return null;
-    const known = dirToId.get(dir.toLowerCase());
+    const full = `${product.key}/${dir}`.toLowerCase();
+    const known = dirToId.get(full);
     if (known) return known;
     const cut = dir.lastIndexOf('/');
-    const parentId = folderFor(cut < 0 ? '' : dir.slice(0, cut));
+    const parentId = folderFor(product, cut < 0 ? '' : dir.slice(0, cut));
     const f: FolderEntry = {
       id: newId(),
+      productId: product.id,
       parentId,
       name: dir.slice(cut + 1),
       sortOrder: snapshot.folders.filter((x) => x.parentId === parentId).length,
     };
     snapshot.folders.push(f);
-    dirToId.set(dir.toLowerCase(), f.id);
+    dirToId.set(full, f.id);
     return f.id;
   };
   for (const path of paths) {
     if (!path.startsWith(`${TESTS_DIR}/`) || !path.endsWith(TEST_EXT)) continue;
     const content = get<ProjectSnapshot['tests'][number]['content']>(path);
     if (!content) continue;
-    const rel = path.slice(TESTS_DIR.length + 1);
-    const cut = rel.lastIndexOf('/');
+    const parts = path.slice(TESTS_DIR.length + 1).split('/');
+    parts.pop();
+    const product = parts.length ? productByKey(parts[0] as string) : firstProduct();
     const t = unique({
       id: content.id,
-      folderId: folderFor(cut < 0 ? '' : rel.slice(0, cut)),
+      productId: product.id,
+      folderId: folderFor(product, parts.slice(1).join('/')),
       content,
     });
     snapshot.tests.push({ ...t, content: { ...t.content, id: t.id } });
   }
+  if (!products.length) firstProduct();
   return { snapshot, problems };
 }

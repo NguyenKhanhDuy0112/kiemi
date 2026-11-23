@@ -2,6 +2,7 @@ import type { RepoContext } from '../repo';
 import { DatasetService } from './datasets';
 import { ElementService } from './elements';
 import { EnvironmentService, type SecretCipher } from './environments';
+import { ProductService } from './products';
 import { FolderService, ProjectService } from './projects';
 import { RunService } from './runs';
 import { SavedLoginService } from './saved-logins';
@@ -13,6 +14,7 @@ import { TestCaseService } from './test-cases';
 export * from './datasets';
 export * from './elements';
 export * from './environments';
+export * from './products';
 export * from './projects';
 export * from './runs';
 export * from './saved-logins';
@@ -25,6 +27,7 @@ export * from './workspace';
 export interface Services {
   readonly ctx: RepoContext;
   readonly projects: ProjectService;
+  readonly products: ProductService;
   readonly folders: FolderService;
   readonly testCases: TestCaseService;
   readonly suites: SuiteService;
@@ -42,6 +45,7 @@ export function createServices(ctx: RepoContext, cipher: SecretCipher): Services
   return {
     ctx,
     projects: new ProjectService(ctx),
+    products: new ProductService(ctx),
     folders: new FolderService(ctx),
     testCases: new TestCaseService(ctx),
     suites: new SuiteService(ctx),

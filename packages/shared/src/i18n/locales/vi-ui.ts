@@ -85,6 +85,16 @@ export const viUi = {
     export: 'Xuất',
     import: 'Nhập',
   },
+  product: {
+    newProduct: 'Sản phẩm mới',
+    defaultName: 'Sản phẩm mới',
+    label: 'Sản phẩm',
+    rename: 'Đổi tên sản phẩm',
+    lastProduct: 'Dự án cần ít nhất một sản phẩm.',
+    rootOf: 'Không thư mục ({{name}})',
+    all: 'Mọi sản phẩm',
+    hint: 'Mỗi sản phẩm (web khách hàng, trang quản trị, API…) có test, thư mục và kho phần tử riêng.',
+  },
   tree: {
     newTest: 'Test mới',
     newFolder: 'Thư mục mới',

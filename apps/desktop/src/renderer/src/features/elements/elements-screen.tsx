@@ -11,6 +11,7 @@ import { trpc, trpcClient } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Crosshair, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 /** A ref key derived from an element name: "Nút Lưu" → el_Nut_Luu. */
@@ -36,7 +37,21 @@ export function ElementsScreen() {
   const projectId = useAppStore((s) => s.projectId) ?? '';
   const openTestId = useAppStore((s) => s.openTestId);
   const openTest = useAppStore((s) => s.openTest);
-  const lib = useQuery({ ...trpc.elements.list.queryOptions({ projectId }), enabled: !!projectId });
+  const products = useQuery({
+    ...trpc.products.list.queryOptions({ projectId }),
+    enabled: !!projectId,
+  });
+  // Each product has its own library [O-01]; the open test's product comes first.
+  const [chosenProduct, setChosenProduct] = useState<string | null>(null);
+  const openTestProduct = useQuery({
+    ...trpc.testCases.get.queryOptions({ id: openTestId ?? '' }),
+    enabled: !!openTestId,
+  }).data?.productId;
+  const productId = chosenProduct ?? openTestProduct ?? products.data?.[0]?.id ?? undefined;
+  const lib = useQuery({
+    ...trpc.elements.list.queryOptions({ projectId, ...(productId ? { productId } : {}) }),
+    enabled: !!projectId,
+  });
   const settings = useQuery(trpc.system.settings.queryOptions());
   const advanced = settings.data?.advancedMode === true;
   const test = useQuery({
@@ -64,7 +79,25 @@ export function ElementsScreen() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-auto">
       <header className="border-b px-4 py-3">
-        <h1 className="text-base font-semibold">{tx('ui.elements.title')}</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-base font-semibold">{tx('ui.elements.title')}</h1>
+          {(products.data?.length ?? 0) > 1 && (
+            <div role="radiogroup" aria-label={tx('ui.product.label')} className="flex gap-1">
+              {(products.data ?? []).map((p) => (
+                <Button
+                  key={p.id}
+                  size="sm"
+                  role="radio"
+                  aria-checked={p.id === productId}
+                  variant={p.id === productId ? 'secondary' : 'ghost'}
+                  onClick={() => setChosenProduct(p.id)}
+                >
+                  {p.name}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
       </header>
       <div className="grid gap-6 p-4 lg:grid-cols-2">
         <section aria-labelledby="el-test">

@@ -52,11 +52,30 @@ export const projects = sqliteTable(
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );
 
+/** Products of a project (web, admin, API…) [O-01] (migration 6). */
+export const products = sqliteTable(
+  'products',
+  {
+    ...base,
+    projectId: text('project_id').notNull(),
+    /** Unique in the project; used in `{{app.<key>}}` and as `tests/<key>/`. */
+    key: text('key').notNull(),
+    name: text('name').notNull(),
+    kind: text('kind', { enum: ['web', 'api', 'app', 'module'] })
+      .notNull()
+      .default('web'),
+    sortOrder: integer('sort_order').notNull().default(0),
+  },
+  (t) => [index('products_project_idx').on(t.projectId)],
+);
+
 export const folders = sqliteTable(
   'folders',
   {
     ...base,
     projectId: text('project_id').notNull(),
+    /** Product the folder belongs to [O-01] (migration 6). */
+    productId: text('product_id'),
     parentId: text('parent_id'),
     name: text('name').notNull(),
     sortOrder: integer('sort_order').notNull().default(0),
@@ -69,6 +88,8 @@ export const testCases = sqliteTable(
   {
     ...base,
     projectId: text('project_id').notNull(),
+    /** Product the test belongs to [O-01] (migration 6). */
+    productId: text('product_id'),
     folderId: text('folder_id'),
     name: text('name').notNull(),
     description: text('description'),
@@ -116,6 +137,8 @@ export const sharedSteps = sqliteTable(
   {
     ...base,
     projectId: text('project_id').notNull(),
+    /** `null` = shared by every product of the project [O-07] (migration 6). */
+    productId: text('product_id'),
     name: text('name').notNull(),
     params: json<SharedStep['params']>('params').notNull(),
     steps: json<Step[]>('steps').notNull(),
@@ -128,6 +151,8 @@ export const elements = sqliteTable(
   {
     ...base,
     projectId: text('project_id').notNull(),
+    /** Each product has its own element library [O-01] (migration 6). */
+    productId: text('product_id'),
     name: text('name').notNull(),
     /** Strategies, scope, nth and fingerprint [C-01 → C-05]. */
     locator: json<Locator>('locator').notNull(),
@@ -298,6 +323,7 @@ export const savedLogins = sqliteTable(
 export const ALL_TABLES = {
   workspaces,
   projects,
+  products,
   folders,
   testCases,
   suites,

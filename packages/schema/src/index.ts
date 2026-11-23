@@ -3,6 +3,7 @@ export * from './env';
 export * from './json-schema';
 export * from './locator';
 export * from './migrate';
+export * from './product';
 export * from './run-result';
 export * from './step';
 export * from './test-case';

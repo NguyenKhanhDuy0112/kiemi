@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
   LocatorSchema,
+  ProductSchema,
   ProxySchema,
   SharedStepSchema,
   SshSettingsSchema,
@@ -21,6 +22,7 @@ export const TESTS_DIR = 'tests';
 export const TEST_EXT = '.kiemi.json';
 export const PATHS = {
   project: `${META_DIR}/project.json`,
+  products: `${META_DIR}/products.json`,
   folders: `${META_DIR}/folders.json`,
   environments: `${META_DIR}/environments.json`,
   elements: `${META_DIR}/elements.json`,
@@ -47,8 +49,12 @@ export const ProjectFileSchema = z.object({
   description: z.string().nullish(),
 });
 
+export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
+
 export const FolderEntrySchema = z.object({
   id,
+  /** Missing = the project's first product. */
+  productId: id.nullish(),
   parentId: id.nullable().default(null),
   name: z.string().trim().min(1),
   sortOrder: z.number().int().default(0),
@@ -72,13 +78,15 @@ export const EnvironmentsFileSchema = z.object({
 
 export const ElementEntrySchema = z.object({
   id,
+  productId: id.nullish(),
   name: z.string().trim().min(1),
   locator: LocatorSchema,
   pageUrl: z.string().nullish(),
 });
 export const ElementsFileSchema = z.object({ elements: z.array(ElementEntrySchema).default([]) });
 
-export const SharedStepFileSchema = SharedStepSchema;
+/** `productId` null/missing = shared by every product [O-07]. */
+export const SharedStepFileSchema = SharedStepSchema.extend({ productId: id.nullish() });
 
 export const DatasetFileSchema = z.object({
   id,
@@ -111,6 +119,7 @@ export const SuiteFileSchema = z.object({
     .default([]),
 });
 
+export type ProductEntry = z.infer<typeof ProductSchema>;
 export type FolderEntry = z.infer<typeof FolderEntrySchema>;
 export type EnvironmentEntry = z.infer<typeof EnvironmentEntrySchema>;
 export type ElementEntry = z.infer<typeof ElementEntrySchema>;
@@ -121,8 +130,10 @@ export type SuiteEntry = z.infer<typeof SuiteFileSchema>;
 /** Everything of one project that is shared through its folder. */
 export interface ProjectSnapshot {
   project: { id: string; name: string; description: string | null };
+  /** Ordered; never empty once read from the database. */
+  products: ProductEntry[];
   folders: FolderEntry[];
-  tests: { id: string; folderId: string | null; content: TestCase }[];
+  tests: { id: string; productId: string | null; folderId: string | null; content: TestCase }[];
   environments: EnvironmentEntry[];
   elements: ElementEntry[];
   sharedSteps: SharedStepEntry[];
@@ -148,6 +159,7 @@ export function hashText(text: string): string {
 export function isManagedPath(path: string): boolean {
   if (
     path === PATHS.project ||
+    path === PATHS.products ||
     path === PATHS.folders ||
     path === PATHS.environments ||
     path === PATHS.elements

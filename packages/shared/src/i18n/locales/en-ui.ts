@@ -86,6 +86,16 @@ export const enUi = {
     export: 'Export',
     import: 'Import',
   },
+  product: {
+    newProduct: 'New product',
+    defaultName: 'New product',
+    label: 'Product',
+    rename: 'Rename product',
+    lastProduct: 'A project needs at least one product.',
+    rootOf: 'No folder ({{name}})',
+    all: 'All products',
+    hint: 'Each product (customer site, admin site, API…) has its own tests, folders and element library.',
+  },
   tree: {
     newTest: 'New test',
     newFolder: 'New folder',

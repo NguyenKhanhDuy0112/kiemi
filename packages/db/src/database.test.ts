@@ -26,6 +26,7 @@ describe('database & migrations [M2-01]', () => {
         'elements',
         'environments',
         'folders',
+        'products',
         'projects',
         'run_cases',
         'run_steps',

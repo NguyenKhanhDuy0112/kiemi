@@ -7,10 +7,13 @@ import {
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { DbError, newId, Repo, type RepoContext, validation } from '../repo';
-import { testCases } from '../tables';
+import { folders, testCases } from '../tables';
+import { ProductService } from './products';
 
 export const NewTestCaseSchema = z.object({
   projectId: z.string().min(1),
+  /** Tests at a product's root; inside a folder the folder's product wins [O-01]. */
+  productId: z.string().min(1).nullish(),
   folderId: z.string().min(1).nullish(),
   name: z.string().trim().min(1).max(300),
 });
@@ -58,9 +61,19 @@ export class TestCaseService {
     return this.repo.create({
       id,
       projectId: p.data.projectId,
+      productId: this.#productFor(p.data.projectId, p.data.folderId ?? null, p.data.productId),
       folderId: p.data.folderId ?? null,
       ...this.#columns(content),
     });
+  }
+
+  /** Folder's product, else the given one, else the project's first. */
+  #productFor(projectId: string, folderId: string | null, productId?: string | null): string {
+    if (folderId) {
+      const f = new Repo(this.#ctx, folders, 'folder').get(folderId);
+      if (f.productId) return f.productId;
+    }
+    return new ProductService(this.#ctx).resolve(projectId, productId);
   }
 
   /**
@@ -86,8 +99,14 @@ export class TestCaseService {
     return this.save(id, { ...row.content, name }, expectedVersion);
   }
 
-  move(id: string, folderId: string | null): TestCaseRow {
-    return this.repo.update(id, { folderId });
+  /** To a folder (takes its product) or to the root of a product (default: same product). */
+  move(id: string, folderId: string | null, productId?: string | null): TestCaseRow {
+    const cur = this.get(id);
+    const product =
+      folderId || productId
+        ? this.#productFor(cur.projectId, folderId, productId)
+        : (cur.productId ?? this.#productFor(cur.projectId, null));
+    return this.repo.update(id, { folderId, productId: product });
   }
 
   duplicate(id: string, name?: string): TestCaseRow {
@@ -101,16 +120,28 @@ export class TestCaseService {
     return this.repo.create({
       id: newIdValue,
       projectId: src.projectId,
+      productId: src.productId,
       folderId: src.folderId,
       ...this.#columns(content),
     });
   }
 
   /** Inserts an already-validated document (import) with a fresh id. */
-  insertDocument(projectId: string, folderId: string | null, content: TestCase): TestCaseRow {
+  insertDocument(
+    projectId: string,
+    folderId: string | null,
+    content: TestCase,
+    productId?: string | null,
+  ): TestCaseRow {
     const id = newId();
     return this.#ctx.db.transaction(() =>
-      this.repo.create({ id, projectId, folderId, ...this.#columns({ ...content, id }) }),
+      this.repo.create({
+        id,
+        projectId,
+        productId: this.#productFor(projectId, folderId, productId),
+        folderId,
+        ...this.#columns({ ...content, id }),
+      }),
     );
   }
 

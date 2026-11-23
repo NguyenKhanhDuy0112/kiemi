@@ -55,7 +55,7 @@ describe('project folders in the app [T-01, M9-02]', () => {
     const { c, folders, projectId, root } = setup();
     folders.syncAll();
     await c.testCases.create({ projectId, name: 'Đăng nhập' });
-    const file = join(root, 'Dự án đầu tiên', 'tests', 'Đăng nhập.kiemi.json');
+    const file = join(root, 'Dự án đầu tiên', 'tests', 'web', 'Đăng nhập.kiemi.json');
     expect(existsSync(file)).toBe(false);
     vi.advanceTimersByTime(60);
     expect(JSON.parse(readFileSync(file, 'utf8')).name).toBe('Đăng nhập');
@@ -84,7 +84,7 @@ describe('project folders in the app [T-01, M9-02]', () => {
     await expect(c.testCases.get({ id: t.id })).resolves.toMatchObject({ name: 'Offline' });
     renameSync(moved, dir);
     expect(await c.projects.syncFolder({ id: projectId })).toMatchObject({ state: 'ok' });
-    expect(existsSync(join(dir, 'tests', 'Offline.kiemi.json'))).toBe(true);
+    expect(existsSync(join(dir, 'tests', 'web', 'Offline.kiemi.json'))).toBe(true);
   });
 
   it('loads changes made on disk and tells the renderer', () => {
@@ -149,7 +149,7 @@ describe('project folders in the app [T-01, M9-02]', () => {
     folders.syncAll();
     const t = await c.testCases.create({ projectId, name: 'Chung' });
     folders.flush();
-    const file = join(root, 'Dự án đầu tiên', 'tests', 'Chung.kiemi.json');
+    const file = join(root, 'Dự án đầu tiên', 'tests', 'web', 'Chung.kiemi.json');
     writeFileSync(
       file,
       JSON.stringify({ ...JSON.parse(readFileSync(file, 'utf8')), description: 'B' }),
@@ -158,10 +158,10 @@ describe('project folders in the app [T-01, M9-02]', () => {
     await c.testCases.save({ id: t.id, content: { ...row.content, description: 'A' } });
     folders.flush();
     const status = await c.projects.folder({ id: projectId });
-    expect(status?.conflicts).toEqual(['tests/Chung.kiemi.json']);
+    expect(status?.conflicts).toEqual(['tests/web/Chung.kiemi.json']);
     const done = await c.projects.resolveConflicts({
       id: projectId,
-      choices: { 'tests/Chung.kiemi.json': 'local' },
+      choices: { 'tests/web/Chung.kiemi.json': 'local' },
     });
     expect(done?.conflicts).toEqual([]);
     expect(JSON.parse(readFileSync(file, 'utf8')).description).toBe('A');

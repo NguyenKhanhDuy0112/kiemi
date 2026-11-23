@@ -9,6 +9,7 @@ import {
   importBundle,
   importTestCase,
   NewTestCaseSchema,
+  ProductInputSchema,
   ProjectInputSchema,
   SharedStepInputSchema,
   SuiteInputSchema,
@@ -88,6 +89,24 @@ export const projectsRouter = router({
   }),
 });
 
+/** Products of a project (web, admin, API…) [O-01]. */
+export const productsRouter = router({
+  list: publicProcedure
+    .input(z.object({ projectId: id }))
+    .query(({ ctx, input }) => ctx.services.products.list(input.projectId)),
+  create: publicProcedure
+    .input(ProductInputSchema)
+    .mutation(({ ctx, input }) => ctx.services.products.create(input)),
+  update: publicProcedure
+    .input(z.object({ id, version, patch: ProductInputSchema.omit({ projectId: true }).partial() }))
+    .mutation(({ ctx, input }) =>
+      ctx.services.products.update(input.id, input.patch, input.version),
+    ),
+  remove: publicProcedure
+    .input(z.object({ id }))
+    .mutation(({ ctx, input }) => ctx.services.products.remove(input.id)),
+});
+
 export const foldersRouter = router({
   list: publicProcedure
     .input(z.object({ projectId: id }))
@@ -99,9 +118,16 @@ export const foldersRouter = router({
     .input(z.object({ id, name: z.string(), version }))
     .mutation(({ ctx, input }) => ctx.services.folders.rename(input.id, input.name, input.version)),
   move: publicProcedure
-    .input(z.object({ id, parentId: id.nullable(), sortOrder: z.number().int().optional() }))
+    .input(
+      z.object({
+        id,
+        parentId: id.nullable(),
+        sortOrder: z.number().int().optional(),
+        productId: id.optional(),
+      }),
+    )
     .mutation(({ ctx, input }) =>
-      ctx.services.folders.move(input.id, input.parentId, input.sortOrder),
+      ctx.services.folders.move(input.id, input.parentId, input.sortOrder, input.productId),
     ),
   remove: publicProcedure
     .input(z.object({ id }))
@@ -130,8 +156,10 @@ export const testCasesRouter = router({
       ctx.services.testCases.rename(input.id, input.name, input.version),
     ),
   move: publicProcedure
-    .input(z.object({ id, folderId: id.nullable() }))
-    .mutation(({ ctx, input }) => ctx.services.testCases.move(input.id, input.folderId)),
+    .input(z.object({ id, folderId: id.nullable(), productId: id.optional() }))
+    .mutation(({ ctx, input }) =>
+      ctx.services.testCases.move(input.id, input.folderId, input.productId),
+    ),
   duplicate: publicProcedure
     .input(z.object({ id, name: z.string().optional() }))
     .mutation(({ ctx, input }) => ctx.services.testCases.duplicate(input.id, input.name)),
@@ -188,13 +216,19 @@ export const sharedStepsRouter = router({
 
 export const elementsRouter = router({
   list: publicProcedure
-    .input(z.object({ projectId: id }))
-    .query(({ ctx, input }) => ctx.services.elements.list(input.projectId)),
+    .input(z.object({ projectId: id, productId: id.optional() }))
+    .query(({ ctx, input }) => ctx.services.elements.list(input.projectId, input.productId)),
   create: publicProcedure
     .input(ElementInputSchema)
     .mutation(({ ctx, input }) => ctx.services.elements.create(input)),
   update: publicProcedure
-    .input(z.object({ id, version, patch: ElementInputSchema.omit({ projectId: true }).partial() }))
+    .input(
+      z.object({
+        id,
+        version,
+        patch: ElementInputSchema.omit({ projectId: true, productId: true }).partial(),
+      }),
+    )
     .mutation(({ ctx, input }) =>
       ctx.services.elements.update(input.id, input.patch, input.version),
     ),

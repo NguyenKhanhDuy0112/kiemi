@@ -48,10 +48,10 @@ function openData(): { services: Services; defaultProjectId: string } {
     backupDir: join(userData, 'backups'),
   });
   const seed = ensureDefaultWorkspace(db);
-  return {
-    services: createServices({ db, workspaceId: seed.workspaceId }, keychainCipher),
-    defaultProjectId: seed.projectId,
-  };
+  const services = createServices({ db, workspaceId: seed.workspaceId }, keychainCipher);
+  // v1.0 projects: one "Web" product holding everything [O-01].
+  services.products.backfillAll();
+  return { services, defaultProjectId: seed.projectId };
 }
 
 /** Built demo site shipped with the app, target of the sample tests [L-01]. */

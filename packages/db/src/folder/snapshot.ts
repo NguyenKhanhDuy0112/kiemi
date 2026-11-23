@@ -2,7 +2,7 @@ import { CURRENT_SCHEMA_VERSION } from '@kiemi/schema';
 import { eq } from 'drizzle-orm';
 import { newId, type Repo } from '../repo';
 import type { Services } from '../services';
-import { secrets as secretsTable, testCases } from '../tables';
+import { products as productsTable, secrets as secretsTable, testCases } from '../tables';
 import type { ProjectSnapshot } from './format';
 
 /** Reads what the project folder must contain from the database. */
@@ -10,15 +10,26 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
   const p = services.projects.get(projectId);
   return {
     project: { id: p.id, name: p.name, description: p.description ?? null },
+    products: services.products.list(projectId).map((x) => ({
+      id: x.id,
+      key: x.key,
+      name: x.name,
+      kind: x.kind,
+      sortOrder: x.sortOrder,
+    })),
     folders: services.folders.list(projectId).map((f) => ({
       id: f.id,
+      productId: f.productId,
       parentId: f.parentId,
       name: f.name,
       sortOrder: f.sortOrder,
     })),
-    tests: services.testCases.repo
-      .list(eq(testCases.projectId, projectId))
-      .map((t) => ({ id: t.id, folderId: t.folderId, content: t.content })),
+    tests: services.testCases.repo.list(eq(testCases.projectId, projectId)).map((t) => ({
+      id: t.id,
+      productId: t.productId,
+      folderId: t.folderId,
+      content: t.content,
+    })),
     environments: services.environments.list(projectId).map((e) => ({
       id: e.id,
       name: e.name,
@@ -31,11 +42,18 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
     })),
     elements: services.elements.list(projectId).map((e) => ({
       id: e.id,
+      productId: e.productId,
       name: e.name,
       locator: e.locator,
       pageUrl: e.pageUrl,
     })),
-    sharedSteps: services.sharedSteps.forRun(projectId),
+    sharedSteps: services.sharedSteps.list(projectId).map((x) => ({
+      id: x.id,
+      productId: x.productId,
+      name: x.name,
+      params: x.params,
+      steps: x.steps,
+    })),
     datasets: services.datasets.list(projectId).map((d) => ({
       id: d.id,
       name: d.name,
@@ -85,6 +103,7 @@ interface Row {
 export function applySnapshot(services: Services, input: ProjectSnapshot): void {
   const projectId = input.project.id;
   const repos: Repo<never>[] = [
+    services.products.repo,
     services.folders.repo,
     services.testCases.repo,
     services.environments.repo,
@@ -95,6 +114,7 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
   ] as unknown as Repo<never>[];
   const foreign = new Map<string, string>();
   const all = [
+    ...input.products,
     ...input.folders,
     ...input.tests,
     ...input.environments,
@@ -145,12 +165,42 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
       for (const e of existing) if (!keep.has(e.id)) repo.remove(e.id);
     };
 
+    // Products first: everything else points at them. A project keeps at least one.
+    if (!s.products.length) {
+      const d = services.products.defaultFor(projectId);
+      s.products = [{ id: d.id, key: d.key, name: d.name, kind: d.kind, sortOrder: d.sortOrder }];
+    }
+    reconcile(
+      services.products.repo as unknown as Repo<never>,
+      services.products.repo.list(eq(productsTable.projectId, projectId)),
+      s.products.map((p) => ({
+        id: p.id,
+        values: { key: p.key, name: p.name, kind: p.kind, sortOrder: p.sortOrder },
+      })),
+    );
+    const productIds = new Set(s.products.map((p) => p.id));
+    const first = s.products[0]?.id as string;
+    const known = (id: string | null | undefined) => (id && productIds.has(id) ? id : first);
+    // Sub-folders follow their top folder's product.
+    const byId = new Map(s.folders.map((f) => [f.id, f]));
+    const folderProduct = (id: string | null, depth = 0): string => {
+      const f = id ? byId.get(id) : undefined;
+      if (!f) return first;
+      if (f.parentId && byId.has(f.parentId) && depth < 64)
+        return folderProduct(f.parentId, depth + 1);
+      return known(f.productId);
+    };
     reconcile(
       services.folders.repo as unknown as Repo<never>,
       services.folders.list(projectId),
       s.folders.map((f) => ({
         id: f.id,
-        values: { parentId: f.parentId, name: f.name, sortOrder: f.sortOrder },
+        values: {
+          productId: folderProduct(f.id),
+          parentId: f.parentId,
+          name: f.name,
+          sortOrder: f.sortOrder,
+        },
       })),
     );
 
@@ -163,6 +213,7 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
         return {
           id: t.id,
           values: {
+            productId: t.folderId ? folderProduct(t.folderId) : known(t.productId),
             folderId: t.folderId,
             name: content.name,
             description: content.description ?? null,
@@ -205,7 +256,12 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
       services.elements.list(projectId),
       s.elements.map((e) => ({
         id: e.id,
-        values: { name: e.name, locator: e.locator, pageUrl: e.pageUrl ?? null },
+        values: {
+          productId: known(e.productId),
+          name: e.name,
+          locator: e.locator,
+          pageUrl: e.pageUrl ?? null,
+        },
       })),
     );
     reconcile(
@@ -213,7 +269,12 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
       services.sharedSteps.list(projectId),
       s.sharedSteps.map((x) => ({
         id: x.id,
-        values: { name: x.name, params: x.params, steps: x.steps },
+        values: {
+          productId: x.productId && productIds.has(x.productId) ? x.productId : null,
+          name: x.name,
+          params: x.params,
+          steps: x.steps,
+        },
       })),
     );
     reconcile(

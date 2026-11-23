@@ -288,4 +288,26 @@ CREATE INDEX "saved_logins_project_idx" ON "saved_logins" ("project_id");`,
 ALTER TABLE "projects" ADD COLUMN "folder_state" TEXT;
 ALTER TABLE "environments" ADD COLUMN "secret_names" TEXT;`,
   },
+  {
+    id: 6,
+    name: 'products',
+    sql: `CREATE TABLE "products" (
+  "id" TEXT PRIMARY KEY,
+  "workspace_id" TEXT NOT NULL,
+  "created_at" INTEGER NOT NULL,
+  "updated_at" INTEGER NOT NULL,
+  "deleted_at" INTEGER,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "project_id" TEXT NOT NULL,
+  "key" TEXT NOT NULL,
+  "name" TEXT NOT NULL,
+  "kind" TEXT NOT NULL DEFAULT 'web',
+  "sort_order" INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX "products_project_idx" ON "products" ("project_id");
+ALTER TABLE "folders" ADD COLUMN "product_id" TEXT;
+ALTER TABLE "test_cases" ADD COLUMN "product_id" TEXT;
+ALTER TABLE "shared_steps" ADD COLUMN "product_id" TEXT;
+ALTER TABLE "elements" ADD COLUMN "product_id" TEXT;`,
+  },
 ];
