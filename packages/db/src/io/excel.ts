@@ -80,3 +80,52 @@ export async function writeExcel(table: Table, sheetName = 'Dữ liệu'): Promi
   for (const r of table.rows) ws.addRow(table.columns.map((c) => r[c] ?? ''));
   return new Uint8Array(await wb.xlsx.writeBuffer());
 }
+
+/** One sheet of a report: optional lines above the table, then a header row and the rows. */
+export interface ReportSheet {
+  name: string;
+  /** Lines above the table (title, environment, totals…), one array per line. */
+  intro?: (string | number)[][];
+  columns: string[];
+  rows: (string | number)[][];
+}
+
+const EXCEL_NAME_BAD = /[\\/?*[\]:]/g;
+
+/** Several sheets → .xlsx: bold header with filter, frozen, wrapped text, sensible widths [X-01]. */
+export async function writeWorkbook(sheets: ReportSheet[]): Promise<Uint8Array> {
+  const wb = new ExcelJS.Workbook();
+  const used = new Set<string>();
+  for (const sheet of sheets) {
+    let name = sheet.name.replace(EXCEL_NAME_BAD, ' ').trim().slice(0, 31) || 'Sheet';
+    for (let n = 2; used.has(name.toLowerCase()); n++) name = `${name.slice(0, 28)} ${n}`;
+    used.add(name.toLowerCase());
+    const ws = wb.addWorksheet(name);
+    for (const line of sheet.intro ?? []) ws.addRow(line);
+    if (sheet.intro?.length) ws.addRow([]);
+    const headerRow = ws.addRow(sheet.columns);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F2A5C' } };
+    for (const r of sheet.rows) ws.addRow(r);
+    ws.views = [{ state: 'frozen', ySplit: headerRow.number }];
+    if (sheet.rows.length > 0)
+      ws.autoFilter = {
+        from: { row: headerRow.number, column: 1 },
+        to: { row: headerRow.number, column: sheet.columns.length },
+      };
+    sheet.columns.forEach((title, i) => {
+      const longest = Math.max(
+        title.length,
+        ...sheet.rows.slice(0, 200).map((r) => String(r[i] ?? '').split('\n')[0]?.length ?? 0),
+        ...(sheet.intro ?? []).map((l) => (i === 0 ? String(l[0] ?? '').length : 0)),
+      );
+      const col = ws.getColumn(i + 1);
+      col.width = Math.min(60, Math.max(10, longest + 2));
+      col.alignment = { vertical: 'top', wrapText: true };
+    });
+    sheet.intro?.forEach((_, i) => {
+      ws.getRow(i + 1).font = { bold: i === 0, size: i === 0 ? 14 : 11 };
+    });
+  }
+  return new Uint8Array(await wb.xlsx.writeBuffer());
+}

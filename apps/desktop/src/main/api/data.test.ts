@@ -144,3 +144,18 @@ describe('manual router [X-08]', () => {
     expect(none.warnings[0]).toMatch(/Tên case/);
   });
 });
+
+describe('reports router [X-01]', () => {
+  it('writes a workbook from sheets, and PDF needs the desktop app', async () => {
+    const { c } = caller();
+    const r = await c.reports.workbook({
+      sheets: [
+        { name: 'Tổng hợp', columns: ['Test', 'Kết quả'], rows: [['A', 'Đạt']] },
+        { name: 'Chi tiết', columns: ['x'], rows: [] },
+      ],
+    });
+    // .xlsx is a zip file
+    expect(Buffer.from(r.data, 'base64').subarray(0, 2).toString()).toBe('PK');
+    await expect(c.reports.pdf({ html: '<p>x</p>' })).rejects.toThrow(/desktop/);
+  });
+});

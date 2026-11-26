@@ -28,6 +28,7 @@ function caller(updates?: UpdateService, openExternal = vi.fn()) {
       openExternal,
       openFolder: () => undefined,
       pickFolder: async () => undefined,
+      htmlToPdf: async () => new Uint8Array(),
     },
   });
 }

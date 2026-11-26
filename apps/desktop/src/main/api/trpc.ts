@@ -46,6 +46,8 @@ export interface DesktopBridge {
   openFolder(path: string): void;
   /** Native "choose a folder" dialog; `undefined` when cancelled. */
   pickFolder(title: string): Promise<string | undefined>;
+  /** Prints a self-contained HTML page to PDF (A4) in a hidden window [X-01]. */
+  htmlToPdf(html: string): Promise<Uint8Array>;
 }
 
 const DB_TO_TRPC = {

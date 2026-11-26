@@ -56,7 +56,7 @@ footer{color:var(--muted);font-size:13px;text-align:center;margin-top:24px}
 @media print{body{background:#fff}section{break-inside:avoid}}
 `;
 
-function* walk(
+export function* walk(
   steps: Step[],
   prefix: string,
   depth: number,

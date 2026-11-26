@@ -200,6 +200,26 @@ function registerIpc(data: { services: Services; defaultProjectId: string }): vo
             : await dialog.showOpenDialog(options);
           return r.canceled ? undefined : r.filePaths[0];
         },
+        htmlToPdf: async (html: string) => {
+          // Hidden, locked-down window: no scripts, no Node, only the page text and styles.
+          const win = new BrowserWindow({
+            show: false,
+            webPreferences: {
+              sandbox: true,
+              contextIsolation: true,
+              nodeIntegration: false,
+              javascript: false,
+            },
+          });
+          try {
+            await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+            return new Uint8Array(
+              await win.webContents.printToPDF({ pageSize: 'A4', printBackground: true }),
+            );
+          } finally {
+            win.destroy();
+          }
+        },
       },
     }),
   });

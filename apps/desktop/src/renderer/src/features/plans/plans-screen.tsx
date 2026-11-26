@@ -12,15 +12,25 @@ import {
 import { Button } from '@renderer/components/ui/button';
 import { Input } from '@renderer/components/ui/input';
 import { Textarea } from '@renderer/components/ui/textarea';
+import { downloadBase64, reportFileName } from '@renderer/lib/download';
 import { errorMessage } from '@renderer/lib/errors';
 import { useAppStore } from '@renderer/lib/store';
 import { trpc, trpcClient } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ClipboardCheck, Copy, ListPlus, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import {
+  ClipboardCheck,
+  Copy,
+  FileSpreadsheet,
+  ListPlus,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { addItems, assignUnowned, itemName, newPlan, PLAN_STATUSES, patchItem } from './plan-edit';
+import { buildPlanSheets } from './plan-report';
 
 const TONE: Record<PlanStatus, string> = {
   notrun: 'bg-muted text-muted-foreground',
@@ -171,6 +181,17 @@ function PlanEditor({
       toast.error(errorMessage(err, tx));
     }
   };
+  const exportExcel = async () => {
+    try {
+      const sheets = buildPlanSheets(plan, (it) => itemName(it, names, manual), tx);
+      const r = await trpcClient.reports.workbook.mutate({ sheets });
+      const file = reportFileName(plan.name, 'xlsx');
+      downloadBase64(r.data, file);
+      toast.success(tx('ui.run.reportSaved', { file }));
+    } catch (err) {
+      toast.error(errorMessage(err, tx));
+    }
+  };
   const copyHeadline = async () => {
     await navigator.clipboard.writeText(planHeadline(plan));
     toast.success(tx('ui.plans.copied'));
@@ -285,6 +306,9 @@ function PlanEditor({
           onClick={() => onChange(assignUnowned(plan, who.trim()))}
         >
           {tx('ui.plans.assignRest')}
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => void exportExcel()}>
+          <FileSpreadsheet /> {tx('ui.run.exportExcel')}
         </Button>
         <Button size="sm" variant="ghost" className="ml-auto text-destructive" onClick={onRemove}>
           <Trash2 /> {tx('ui.plans.remove')}

@@ -6,6 +6,7 @@ import { moodForStatus } from '@renderer/components/mascot/mood';
 import { Badge } from '@renderer/components/ui/badge';
 import { Button } from '@renderer/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@renderer/components/ui/dialog';
+import { downloadBase64, reportFileName } from '@renderer/lib/download';
 import { envColor } from '@renderer/lib/environment';
 import { errorMessage } from '@renderer/lib/errors';
 import { useAppStore } from '@renderer/lib/store';
@@ -19,6 +20,8 @@ import {
   CircleAlert,
   Download,
   FileSearch,
+  FileSpreadsheet,
+  FileText,
   FolderOpen,
   Loader2,
   Pause,
@@ -40,6 +43,7 @@ import { FixStepPanel } from './fix-step-panel';
 import { FormMatrixView } from './form-matrix';
 import { outcomesOf } from './form-outcomes';
 import { buildHtmlReport } from './report';
+import { buildReportSheets } from './report-tables';
 import { useStartRun } from './run-dialog';
 import { useRunFixes } from './run-fixes';
 import {
@@ -219,6 +223,41 @@ export function RunScreen({ runId }: { runId: string }) {
   };
   const canFix = current?.status === 'failed' || current?.status === 'error';
 
+  const reportInput = (screenshots: Record<string, string>) => ({
+    run: view,
+    title,
+    environmentName: detail?.environmentName ?? null,
+    environmentColor: detail?.environment ? envColor(detail.environment) : null,
+    environmentProtected: detail?.environment?.protected === true,
+    startedAt: detail?.startedAt ? new Date(detail.startedAt) : null,
+    tests: docs,
+    screenshots,
+    sharedNames,
+    tx,
+  });
+  /** Excel (Tổng hợp + Chi tiết) or PDF of the same report [X-01]. */
+  const exportFile = async (kind: 'xlsx' | 'pdf') => {
+    try {
+      if (kind === 'xlsx') {
+        const sheets = buildReportSheets(reportInput({}));
+        const r = await trpcClient.reports.workbook.mutate({ sheets });
+        const name = reportFileName(title, 'xlsx');
+        downloadBase64(r.data, name);
+        toast.success(tx('ui.run.reportSaved', { file: name }));
+      } else {
+        const screenshots = await trpcClient.runs.screenshots.query({ runId });
+        const r = await trpcClient.reports.pdf.mutate({
+          html: buildHtmlReport(reportInput(screenshots)),
+        });
+        const name = reportFileName(title, 'pdf');
+        downloadBase64(r.data, name, 'application/pdf');
+        toast.success(tx('ui.run.reportSaved', { file: name }));
+      }
+    } catch (err) {
+      toast.error(errorMessage(err, tx));
+    }
+  };
+
   const exportReport = async () => {
     try {
       const screenshots = await trpcClient.runs.screenshots.query({ runId });
@@ -333,6 +372,12 @@ export function RunScreen({ runId }: { runId: string }) {
               </Button>
               <Button size="sm" variant="outline" onClick={() => void exportReport()}>
                 <Download /> {tx('ui.run.exportReport')}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void exportFile('xlsx')}>
+                <FileSpreadsheet /> {tx('ui.run.exportExcel')}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => void exportFile('pdf')}>
+                <FileText /> {tx('ui.run.exportPdf')}
               </Button>
               {canFix && (
                 <Button size="sm" variant="outline" onClick={() => void fixAndRerun()}>
