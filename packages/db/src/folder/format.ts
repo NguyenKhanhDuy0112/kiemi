@@ -3,6 +3,8 @@ import {
   EnvColorSchema,
   EnvTypeSchema,
   LocatorSchema,
+  type PopupRule,
+  PopupRulesSchema,
   ProductSchema,
   ProxySchema,
   SharedStepSchema,
@@ -51,6 +53,8 @@ export const ProjectFileSchema = z.object({
   description: z.string().nullish(),
   /** Project-level variables [O-04]. */
   variables: z.record(VariableNameSchema, z.string()).default({}),
+  /** Popups closed in every test [W-09]. */
+  popupRules: PopupRulesSchema.default([]),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -155,6 +159,7 @@ export interface ProjectSnapshot {
     name: string;
     description: string | null;
     variables: Record<string, string>;
+    popupRules: PopupRule[];
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];

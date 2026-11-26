@@ -64,4 +64,25 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     expect(other.products.get(web.id).variables).toEqual({ timeout: '15' });
     expect(other.datasets.forRun(ds.id, env.id).rows).toEqual([{ ma: 'b' }]);
   });
+
+  it('popup rules of a project are validated and travel through the project folder [W-09]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const rule = {
+      id: 'cookie',
+      name: 'Banner cookie',
+      when: { strategies: [{ kind: 'text', value: 'Chấp nhận cookie' }] },
+      action: { kind: 'click', target: { strategies: [{ kind: 'text', value: 'Đồng ý' }] } },
+    };
+    s.projects.setPopupRules(projectId, [rule]);
+    expect(s.projects.popupRules(projectId)[0]).toMatchObject({ id: 'cookie', enabled: true });
+    expect(() => s.projects.setPopupRules(projectId, [{ id: 'x' }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-popup-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.popupRules(projectId)).toEqual(s.projects.popupRules(projectId));
+  });
 });

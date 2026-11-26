@@ -111,7 +111,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M10-02** Thử lại step · Tiếp tục từ đây · Bỏ qua step · Chạy lại đến bước N rồi dừng [FX-05] [S]
 - [x] **M10-03** Sửa step tại chỗ trên màn Chạy (panel thuộc tính dùng chung với màn Soạn) + chọn lại phần tử trên trang thật (Pick/Highlight) [FX-02, FX-03] [M]
 - [x] **M10-04** Chèn step trước/sau step lỗi: thêm tay hoặc ghi thao tác từ trạng thái hiện tại [FX-04] [S]
-- [ ] **M10-05** Trình xử lý popup toàn cục ("nếu thấy X thì bấm Y", cấp dự án) [W-09] [M]
+- [x] **M10-05** Trình xử lý popup toàn cục ("nếu thấy X thì bấm Y", cấp dự án) [W-09] [M]
 - [ ] **M10-06** Sửa nhanh theo loại lỗi (không tìm thấy → chọn lại/phần tử tương tự theo fingerprint/chờ lâu hơn; sai giá trị; bị popup che → W-09; hết thời gian; lỗi mạng) [FX-06] [M]
 - [ ] **M10-07** Cập nhật kỳ vọng bằng giá trị thực tế + câu hỏi "Thay đổi đúng / Đây là bug"; nút "Copy báo cáo bug" (Markdown) [FX-07, X-02] [S]
 - [ ] **M10-08** Phạm vi sửa: chỉ test này / mọi nơi dùng phần tử / step dùng chung, hiện danh sách test bị ảnh hưởng [FX-08] [S]

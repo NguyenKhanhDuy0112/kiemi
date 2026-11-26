@@ -232,6 +232,7 @@ export class RunManager {
       });
     const settings = s.settings.getAll();
     // Project steps plus the workspace library, called by id [O-07].
+    const popupRules = s.projects.popupRules(projectId).filter((r) => r.enabled);
     const sharedSteps = [
       ...s.sharedSteps.forRun(projectId),
       ...s.sharedResources.sharedStepsForRun(),
@@ -303,6 +304,7 @@ export class RunManager {
         ...(p.dataset ? { dataset: p.dataset } : {}),
         ...(p.rowIndex === undefined ? {} : { rowIndex: p.rowIndex }),
         sharedSteps,
+        ...(popupRules.length ? { popupRules } : {}),
         savedLogins,
         variables: {
           workspace: workspaceVars,

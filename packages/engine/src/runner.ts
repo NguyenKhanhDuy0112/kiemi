@@ -5,6 +5,7 @@ import {
   type Dataset,
   type Diagnostic,
   type Env,
+  type PopupRule,
   type RunError,
   type RunResult,
   type RunStatus,
@@ -24,6 +25,7 @@ import type { EngineEvent, EngineEventListener, LogLevel, StepPhase } from './ev
 import { evaluateCondition } from './flow/condition';
 import { type ResolvedLocator, resolveLocator } from './locator/resolve';
 import type { LiveSessions, RunDebugger } from './run/debug';
+import { closePopups } from './run/popups';
 import { findWriteSteps } from './run/protection';
 import type { SavedLogin } from './run/services';
 import { DialogController, type RunServices } from './run/services';
@@ -54,6 +56,8 @@ export interface RunRequest {
   rowIndex?: number;
   /** Shared steps callable with the `call` action [D-01]. */
   sharedSteps?: SharedStep[];
+  /** Popups to close wherever they show up [W-09]. */
+  popupRules?: PopupRule[];
   /** Suite-level variables [E-02]. */
   suiteVariables?: Record<string, string>;
   /** Inherited variables of the workspace, project and the test's product [O-04]. */
@@ -103,6 +107,9 @@ export interface RunOptions {
    */
   keepSessions?: (pages: SessionPages) => void;
 }
+
+/** How many times a failing step is retried after closing a popup [W-09]. */
+const MAX_POPUP_RETRIES = 2;
 
 interface Parent {
   step: Step;
@@ -542,8 +549,12 @@ class Run {
     let container = false;
     /** Debugger said "continue": the failure stays on record, the run goes on [FX-05]. */
     let keepGoing = false;
+    let popupRounds = 0;
 
     for (;;) {
+      // Popups that appeared since the last step: close them first [W-09].
+      if (!container && popupRounds < MAX_POPUP_RETRIES)
+        await this.#handlePopups(step.session, signal);
       const diagStart = this.#diagnostics.length;
       error = undefined;
       cancelled = false;
@@ -560,6 +571,11 @@ class Run {
       } catch (err) {
         error = this.#maskError(toRunError(err));
         cancelled = error.code === 'RUN_CANCELLED';
+      }
+      // A popup may be what blocked the step: close it and try again [W-09].
+      if (error && !cancelled && !container && popupRounds < MAX_POPUP_RETRIES) {
+        popupRounds++;
+        if (await this.#handlePopups(step.session, signal)) continue;
       }
       const dbg = this.#opts.debugger;
       if (!error || cancelled || container || !dbg?.afterFail) break;
@@ -623,6 +639,20 @@ class Run {
       result,
       stop: cancelled || (error !== undefined && step.mode === 'hard' && !keepGoing),
     };
+  }
+
+  /** Applies the project's popup rules to the session's page; true when one was closed. */
+  async #handlePopups(session: string, signal: AbortSignal): Promise<boolean> {
+    const rules = this.#req.popupRules;
+    if (!rules?.length || !this.#pages.isOpen(session)) return false;
+    try {
+      const page = await this.#pages.page(session);
+      const fired = await closePopups(page, rules, (l) => this.#vars.interpolate(l), signal);
+      for (const name of fired) this.#log('info', `Closed popup "${name}"`);
+      return fired.length > 0;
+    } catch {
+      return false;
+    }
   }
 
   #live(): LiveSessions {

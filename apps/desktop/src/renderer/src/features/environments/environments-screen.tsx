@@ -65,6 +65,7 @@ import {
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { EnvironmentPill } from './environment-badge';
+import { PopupRulesEditor } from './popup-rules';
 
 const NONE = '__none__';
 
@@ -331,6 +332,8 @@ export function EnvironmentsScreen() {
         </Section>
 
         <SharedVariables projectId={projectId} />
+
+        <PopupRulesEditor projectId={projectId} />
 
         {currentId && (
           <EnvironmentDetails key={currentId} id={currentId} onChanged={() => void refresh()} />

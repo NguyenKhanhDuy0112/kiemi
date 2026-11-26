@@ -17,6 +17,7 @@ import {
   SuiteItemInputSchema,
 } from '@kiemi/db';
 import { explainVariables } from '@kiemi/engine';
+import { PopupRulesSchema } from '@kiemi/schema';
 import { z } from 'zod';
 import { publicProcedure, router } from '../trpc';
 
@@ -34,6 +35,10 @@ export const projectsRouter = router({
   setVariables: publicProcedure
     .input(z.object({ id, variables }))
     .mutation(({ ctx, input }) => ctx.services.projects.setVariables(input.id, input.variables)),
+  /** Popups every test of the project closes by itself [W-09]. */
+  setPopupRules: publicProcedure
+    .input(z.object({ id, rules: PopupRulesSchema }))
+    .mutation(({ ctx, input }) => ctx.services.projects.setPopupRules(input.id, input.rules)),
   get: publicProcedure
     .input(z.object({ id }))
     .query(({ ctx, input }) => ctx.services.projects.get(input.id)),
