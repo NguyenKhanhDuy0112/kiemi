@@ -1,5 +1,6 @@
 export * from './dataset';
 export * from './env';
+export * from './form-spec';
 export * from './json-schema';
 export * from './locator';
 export * from './migrate';

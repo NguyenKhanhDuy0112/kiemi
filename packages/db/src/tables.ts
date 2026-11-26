@@ -1,4 +1,5 @@
 import type {
+  FormSpec,
   Locator,
   PopupRule,
   ProxySettings,
@@ -53,6 +54,8 @@ export const projects = sqliteTable(
     variables: json<Record<string, string>>('variables'),
     /** Popups handled in every test of the project [W-09] (migration 11). */
     popupRules: json<PopupRule[]>('popup_rules'),
+    /** Field specs of the project's forms [R-01] (migration 12). */
+    formSpecs: json<FormSpec[]>('form_specs'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );

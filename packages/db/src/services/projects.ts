@@ -1,4 +1,10 @@
-import { type PopupRule, PopupRulesSchema, VariableNameSchema } from '@kiemi/schema';
+import {
+  type FormSpec,
+  FormSpecsSchema,
+  type PopupRule,
+  PopupRulesSchema,
+  VariableNameSchema,
+} from '@kiemi/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { DbError, type Patch, Repo, type RepoContext, validation } from '../repo';
@@ -51,6 +57,15 @@ export class ProjectService {
   }
   popupRules(id: string): PopupRule[] {
     return this.repo.get(id).popupRules ?? [];
+  }
+  /** Field specs of the project's forms [R-01]. */
+  setFormSpecs(id: string, forms: unknown) {
+    const p = FormSpecsSchema.safeParse(forms);
+    if (!p.success) throw validation('formSpec', p.error.issues);
+    return this.repo.update(id, { formSpecs: p.data });
+  }
+  formSpecs(id: string): FormSpec[] {
+    return this.repo.get(id).formSpecs ?? [];
   }
   /** Project-level variables, inherited by every test of the project [O-04]. */
   setVariables(id: string, values: Record<string, string>) {

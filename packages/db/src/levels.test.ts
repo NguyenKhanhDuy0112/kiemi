@@ -111,4 +111,30 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     expect(s.testCases.get(b).content.elements.el_save?.strategies).toEqual(next.strategies);
     expect(s.testCases.get(a).content.elements.el_save?.strategies).toEqual(strategies);
   });
+
+  it('form specs of a project are validated and travel through the project folder [R-01]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const form = {
+      id: 'reg',
+      name: 'Đăng ký',
+      fields: [
+        { key: 'email', label: 'Email', type: 'email', required: true },
+        { key: 'pw', label: 'Mật khẩu', type: 'password', minLength: 8 },
+      ],
+    };
+    s.projects.setFormSpecs(projectId, [form]);
+    expect(s.projects.formSpecs(projectId)[0]?.fields[1]).toMatchObject({
+      key: 'pw',
+      minLength: 8,
+    });
+    expect(() => s.projects.setFormSpecs(projectId, [{ id: 'x', name: '', fields: [] }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-formspec-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.formSpecs(projectId)).toEqual(s.projects.formSpecs(projectId));
+  });
 });

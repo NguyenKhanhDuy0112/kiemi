@@ -17,7 +17,7 @@ import {
   SuiteItemInputSchema,
 } from '@kiemi/db';
 import { explainVariables } from '@kiemi/engine';
-import { LocatorSchema, PopupRulesSchema } from '@kiemi/schema';
+import { FormSpecsSchema, LocatorSchema, PopupRulesSchema } from '@kiemi/schema';
 import { z } from 'zod';
 import { publicProcedure, router } from '../trpc';
 
@@ -39,6 +39,10 @@ export const projectsRouter = router({
   setPopupRules: publicProcedure
     .input(z.object({ id, rules: PopupRulesSchema }))
     .mutation(({ ctx, input }) => ctx.services.projects.setPopupRules(input.id, input.rules)),
+  /** Field specs of the project's forms [R-01]. */
+  setFormSpecs: publicProcedure
+    .input(z.object({ id, forms: FormSpecsSchema }))
+    .mutation(({ ctx, input }) => ctx.services.projects.setFormSpecs(input.id, input.forms)),
   get: publicProcedure
     .input(z.object({ id }))
     .query(({ ctx, input }) => ctx.services.projects.get(input.id)),
