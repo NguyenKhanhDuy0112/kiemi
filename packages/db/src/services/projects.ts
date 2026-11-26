@@ -1,4 +1,4 @@
-import { VariableNameSchema } from '@kiemi/schema';
+import { type PopupRule, PopupRulesSchema, VariableNameSchema } from '@kiemi/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { DbError, type Patch, Repo, type RepoContext, validation } from '../repo';
@@ -42,6 +42,15 @@ export class ProjectService {
   }
   remove(id: string) {
     this.repo.remove(id);
+  }
+  /** Popups every test of the project closes by itself [W-09]. */
+  setPopupRules(id: string, rules: unknown) {
+    const p = PopupRulesSchema.safeParse(rules);
+    if (!p.success) throw validation('popupRule', p.error.issues);
+    return this.repo.update(id, { popupRules: p.data });
+  }
+  popupRules(id: string): PopupRule[] {
+    return this.repo.get(id).popupRules ?? [];
   }
   /** Project-level variables, inherited by every test of the project [O-04]. */
   setVariables(id: string, values: Record<string, string>) {

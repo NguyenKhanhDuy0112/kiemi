@@ -21,6 +21,7 @@ export default defineConfig({
         nested: page('frames/nested.html'),
         dialogs: page('dialogs.html'),
         popup: page('popup.html'),
+        fixes: page('fixes.html'),
       },
     },
   },

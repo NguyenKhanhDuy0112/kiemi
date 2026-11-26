@@ -15,6 +15,7 @@ import { cn } from '@renderer/lib/utils';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
+  Bug,
   CircleAlert,
   Download,
   FileSearch,
@@ -26,14 +27,19 @@ import {
   ShieldAlert,
   Square,
   StepForward,
+  Wrench,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { childLists } from '../editor/doc-model';
 import { StepSentence } from '../editor/step-sentence';
 import { EnvironmentPill } from '../environments/environment-badge';
+import { copyBugReport } from './copy-bug';
+import { FixLog } from './fix-log';
+import { FixStepPanel } from './fix-step-panel';
 import { buildHtmlReport } from './report';
 import { useStartRun } from './run-dialog';
+import { useRunFixes } from './run-fixes';
 import {
   fromDetail,
   isFinished,
@@ -112,8 +118,16 @@ export function RunScreen({ runId }: { runId: string }) {
   const control = useRunStore((s) => s.control);
   const breakpoints = useRunStore((s) => s.breakpoints);
   const toggleBreakpoint = useRunStore((s) => s.toggleBreakpoint);
+  const decide = useRunStore((s) => s.decide);
+  const runTo = useRunStore((s) => s.runTo);
+  const fixCount = useRunFixes((s) => s.byRun[runId]?.length ?? 0);
   const startRun = useStartRun();
   const [selected, setSelected] = useState<string | null>(null);
+  /** Step opened in the "Sửa bước" panel while the run waits; default = the waiting step [FX-02]. */
+  const [fixPick, setFixPick] = useState<string | null>(null);
+  const waitingStep = view?.paused?.stepId;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: forget the pick when the run moves on.
+  useEffect(() => setFixPick(null), [waitingStep]);
   const [shot, setShot] = useState<{ src: string; title: string } | null>(null);
 
   const testIds = useMemo(
@@ -176,6 +190,20 @@ export function RunScreen({ runId }: { runId: string }) {
     await startRun(t);
   };
 
+  /** Runs the failed test again, same data row and environment, and waits at the failure [FX-09]. */
+  const fixAndRerun = async () => {
+    if (!current) return;
+    await startRun(
+      {
+        kind: 'test',
+        testCaseId: current.testCaseId,
+        ...(current.rowIndex === undefined ? {} : { rowIndex: current.rowIndex }),
+      },
+      { prefs: { environmentId: detail?.environmentId ?? null, headless: false } },
+    );
+  };
+  const canFix = current?.status === 'failed' || current?.status === 'error';
+
   const exportReport = async () => {
     try {
       const screenshots = await trpcClient.runs.screenshots.query({ runId });
@@ -232,7 +260,26 @@ export function RunScreen({ runId }: { runId: string }) {
         <div className="ml-auto flex items-center gap-1">
           {running ? (
             <>
-              {view.paused ? (
+              {view.paused?.error ? (
+                <>
+                  <Button size="sm" onClick={() => void decide(runId, 'retry')}>
+                    <RotateCcw /> {tx('ui.run.retryStep')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void decide(runId, 'continue')}
+                  >
+                    <Play /> {tx('ui.run.continueAfter')}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void decide(runId, 'skip')}>
+                    <StepForward /> {tx('ui.run.skipStep')}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void decide(runId, 'stop')}>
+                    <Square /> {tx('ui.run.endTest')}
+                  </Button>
+                </>
+              ) : view.paused ? (
                 <>
                   <Button size="sm" onClick={() => void control(runId, 'resume')}>
                     <Play /> {tx('ui.run.resume')}
@@ -272,6 +319,11 @@ export function RunScreen({ runId }: { runId: string }) {
               <Button size="sm" variant="outline" onClick={() => void exportReport()}>
                 <Download /> {tx('ui.run.exportReport')}
               </Button>
+              {canFix && (
+                <Button size="sm" variant="outline" onClick={() => void fixAndRerun()}>
+                  <Wrench /> {tx('ui.run.fixAndRerun')}
+                </Button>
+              )}
               <Button size="sm" onClick={() => void rerun()}>
                 <RotateCcw /> {tx('ui.run.rerun')}
               </Button>
@@ -298,7 +350,17 @@ export function RunScreen({ runId }: { runId: string }) {
             view.paused ? 'bg-warning/10' : 'bg-primary/5',
           )}
         >
-          {view.paused ? (
+          {view.paused?.error ? (
+            <>
+              <CircleAlert className="size-4 shrink-0 text-fail-text" />
+              <span>
+                {tx('ui.run.failedAt', { step: view.paused.stepNo })}{' '}
+                <span className="font-medium">
+                  {describeRunError(view.paused.error, tx).message}
+                </span>
+              </span>
+            </>
+          ) : view.paused ? (
             <>
               <Pause className="size-4 text-warning-text" />
               {tx('ui.run.pausedAt', { step: view.paused.stepNo })}
@@ -318,6 +380,19 @@ export function RunScreen({ runId }: { runId: string }) {
                     : tx('ui.run.preparing')}
             </>
           )}
+        </div>
+      )}
+
+      {!running && fixCount > 0 && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-3 border-b bg-info-soft px-4 py-2 text-sm"
+        >
+          <span className="flex-1">{tx('ui.run.confirmAfterFix', { count: fixCount })}</span>
+          <Button size="sm" onClick={() => void rerun()}>
+            <RotateCcw /> {tx('ui.run.rerunFromStart')}
+          </Button>
+          <FixLog runId={runId} className="w-full" />
         </div>
       )}
 
@@ -383,10 +458,50 @@ export function RunScreen({ runId }: { runId: string }) {
               paused={view.paused?.runCaseId === current.runCaseId ? view.paused.stepId : undefined}
               breakpoints={single ? (breakpoints[current.testCaseId] ?? []) : undefined}
               onToggleBreakpoint={(stepId) => toggleBreakpoint(current.testCaseId, stepId, runId)}
+              fixStepId={single && view.paused ? (fixPick ?? view.paused.stepId) : undefined}
+              onSelectStep={single && view.paused ? setFixPick : undefined}
+              onCopyBug={(stepId) => {
+                const doc = docs[current.testCaseId];
+                const error = current.steps[stepId]?.error;
+                if (doc && error)
+                  void copyBugReport({
+                    doc,
+                    stepId,
+                    error,
+                    environmentName: detail?.environmentName,
+                    screenshots: current.steps[stepId]?.artifacts
+                      .filter((a) => a.kind === 'screenshot')
+                      .map((a) => a.path),
+                    sharedNames,
+                    tx,
+                  });
+              }}
+              onRunTo={
+                view.paused?.runCaseId === current.runCaseId && single
+                  ? (stepId) => void runTo(runId, stepId)
+                  : undefined
+              }
               onShot={setShot}
             />
           ) : null}
         </div>
+        {single && view.paused && current && docs[current.testCaseId] && (
+          <FixStepPanel
+            runId={runId}
+            testCaseId={current.testCaseId}
+            doc={docs[current.testCaseId] as TestCase}
+            version={tests[testIds.indexOf(current.testCaseId)]?.data?.version ?? 0}
+            projectId={detail?.projectId ?? ''}
+            environmentName={detail?.environmentName ?? null}
+            screenshots={current.steps[view.paused.stepId]?.artifacts.map((x) => x.path)}
+            error={view.paused.error}
+            stepId={fixPick ?? view.paused.stepId}
+            failed={
+              view.paused.error !== undefined &&
+              (fixPick ?? view.paused.stepId) === view.paused.stepId
+            }
+          />
+        )}
       </div>
 
       <Dialog open={shot !== null} onOpenChange={(o) => !o && setShot(null)}>
@@ -409,6 +524,10 @@ function CaseView({
   paused,
   breakpoints,
   onToggleBreakpoint,
+  onRunTo,
+  onCopyBug,
+  fixStepId,
+  onSelectStep,
   onShot,
 }: {
   runId: string;
@@ -418,6 +537,13 @@ function CaseView({
   paused: string | undefined;
   breakpoints: string[] | undefined;
   onToggleBreakpoint: (stepId: string) => void;
+  /** Set while the run is paused: run to a later step and pause there [FX-05]. */
+  onRunTo: ((stepId: string) => void) | undefined;
+  /** "Copy báo cáo bug" of a failed step [X-02]. */
+  onCopyBug: (stepId: string) => void;
+  /** Step shown in the "Sửa bước" panel, and how to open another one [FX-02]. */
+  fixStepId: string | undefined;
+  onSelectStep: ((stepId: string) => void) | undefined;
   onShot: (s: { src: string; title: string }) => void;
 }) {
   const tx = useTx();
@@ -459,7 +585,8 @@ function CaseView({
               data-status={r?.status ?? 'none'}
               className={cn(
                 'flex flex-col border-b py-1.5 pr-4 text-sm',
-                paused === step.id && 'bg-warning/10',
+                paused === step.id && 'bg-warning/10 ring-1 ring-inset ring-warning/40',
+                fixStepId === step.id && paused !== step.id && 'bg-primary/5',
                 r?.status === 'running' && 'bg-primary/5',
               )}
               style={{ paddingLeft: `${depth * 24 + 8}px` }}
@@ -485,13 +612,36 @@ function CaseView({
                 <span className="w-9 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
                   {no}
                 </span>
-                <div className={cn('min-w-0 flex-1', !step.enabled && 'opacity-55')}>
+                <div
+                  className={cn('min-w-0 flex-1', !step.enabled && 'opacity-55')}
+                  {...(onSelectStep
+                    ? {
+                        role: 'button',
+                        tabIndex: 0,
+                        title: tx('ui.run.fixTitle'),
+                        onClick: () => onSelectStep(step.id),
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') onSelectStep(step.id);
+                        },
+                      }
+                    : {})}
+                >
                   <StepSentence
                     step={step}
                     elements={doc?.elements ?? {}}
                     sharedNames={sharedNames}
                   />
                 </div>
+                {onRunTo && top && !r && paused !== step.id && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 shrink-0 px-2 text-xs"
+                    onClick={() => onRunTo(step.id)}
+                  >
+                    <Play /> {tx('ui.run.runToHere')}
+                  </Button>
+                )}
                 {r?.durationMs !== undefined && (
                   <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                     {tx('ui.run.duration', { seconds: seconds(r.durationMs) })}
@@ -504,6 +654,14 @@ function CaseView({
                   <p className="text-xs text-muted-foreground">
                     {describeRunError(r.error, tx).hint}
                   </p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="mt-1 h-6 px-2 text-xs"
+                    onClick={() => onCopyBug(step.id)}
+                  >
+                    <Bug /> {tx('ui.bug.copy')}
+                  </Button>
                 </div>
               )}
               {r?.artifacts.some((a) => a.kind === 'screenshot') && (

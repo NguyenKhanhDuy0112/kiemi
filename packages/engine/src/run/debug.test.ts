@@ -14,7 +14,20 @@ const note = defineAction({
     calls.push(value);
   },
 });
-const registry = new ActionRegistry([note]);
+let failsLeft = 0;
+const flaky = defineAction({
+  type: 'flaky',
+  params: z.object({ value: z.string() }),
+  ui: { label: 'actions.flaky', icon: 'pencil', group: 'test' },
+  execute: ({ value }) => {
+    calls.push(value);
+    if (failsLeft > 0) {
+      failsLeft--;
+      throw new Error('boom');
+    }
+  },
+});
+const registry = new ActionRegistry([note, flaky]);
 const tick = () => new Promise((r) => setTimeout(r, 5));
 
 const tc = (steps: StepInput[], cleanup: StepInput[] = []) =>
@@ -79,5 +92,151 @@ describe('debugging a run [H-03]', () => {
     );
     expect(calls).toEqual(['b', 'c']);
     expect(result.steps.map((s) => s.status)).toEqual(['skipped', 'passed', 'passed']);
+  });
+
+  describe('pause on failure [FX-01, FX-05]', () => {
+    const steps = (): StepInput[] => [
+      { id: 'a', action: 'note', params: { value: 'a' } },
+      { id: 'f', action: 'flaky', params: { value: 'f' } },
+      { id: 'c', action: 'note', params: { value: 'c' } },
+    ];
+    const start = (failures: number, signal?: AbortSignal) => {
+      calls.length = 0;
+      failsLeft = failures;
+      const seen: Array<string | undefined> = [];
+      const dbg = new DebugController(
+        { pauseOnFail: true },
+        { onPause: (s, e) => seen.push(`${s.stepId}:${e?.message ?? ''}`) },
+      );
+      const done = runTestCase(
+        { runId: 'r', testCase: tc(steps(), notes('z')) },
+        { registry, debugger: dbg, ...(signal ? { signal } : {}) },
+      );
+      return { dbg, done, seen };
+    };
+
+    it('keeps the run open on the failed step until the tester decides', async () => {
+      const { dbg, seen, done } = start(5);
+      await tick();
+      expect(dbg.failed?.step.stepId).toBe('f');
+      expect(seen).toEqual(['f:boom']);
+      expect(calls).toEqual(['a', 'f']);
+      dbg.decide('stop');
+      const result = await done;
+      expect(result.status).toBe('failed');
+      expect(calls).toEqual(['a', 'f', 'z']);
+    });
+
+    it('retry runs the step again and the run goes on when it now passes', async () => {
+      const { dbg, done } = start(1);
+      await tick();
+      dbg.step();
+      const result = await done;
+      expect(calls).toEqual(['a', 'f', 'f', 'c', 'z']);
+      expect(result.status).toBe('passed');
+    });
+
+    it('skip marks the step skipped and keeps going', async () => {
+      const { dbg, done } = start(5);
+      await tick();
+      dbg.decide('skip');
+      const result = await done;
+      expect(result.steps.map((s) => s.status)).toEqual(['passed', 'skipped', 'passed']);
+      expect(calls).toEqual(['a', 'f', 'c', 'z']);
+    });
+
+    it('continue keeps the failure on record but runs the next steps', async () => {
+      const { dbg, done } = start(5);
+      await tick();
+      dbg.resume();
+      const result = await done;
+      expect(result.steps.map((s) => s.status)).toEqual(['passed', 'failed', 'passed']);
+      expect(result.status).toBe('failed');
+      expect(calls).toEqual(['a', 'f', 'c', 'z']);
+    });
+
+    it('retry runs the edited step; edits also apply to steps not run yet', async () => {
+      const { dbg, done } = start(5);
+      await tick();
+      dbg.editStep({
+        id: 'f',
+        action: 'note',
+        params: { value: 'fixed' },
+        session: 'default',
+        enabled: true,
+        mode: 'hard',
+      } as never);
+      dbg.editStep({
+        id: 'c',
+        action: 'note',
+        params: { value: 'c2' },
+        session: 'default',
+        enabled: true,
+        mode: 'hard',
+      } as never);
+      dbg.decide('retry');
+      const result = await done;
+      expect(calls).toEqual(['a', 'f', 'fixed', 'c2', 'z']);
+      expect(result.status).toBe('passed');
+    });
+
+    it('runs steps added before / after the failed step, then retries it [FX-04]', async () => {
+      const { dbg, done } = start(1);
+      await tick();
+      const extra = (id: string): never =>
+        ({
+          id,
+          action: 'note',
+          params: { value: id },
+          session: 'default',
+          enabled: true,
+          mode: 'hard',
+        }) as never;
+      dbg.insert('f', 'before', [extra('popup')]);
+      dbg.insert('f', 'after', [extra('after')]);
+      dbg.decide('retry');
+      const result = await done;
+      expect(calls).toEqual(['a', 'f', 'popup', 'f', 'after', 'c', 'z']);
+      expect(result.status).toBe('passed');
+      expect(result.steps.map((r) => r.stepId)).toEqual(['a', 'popup', 'f', 'after', 'c']);
+    });
+
+    it('cancel releases a run paused on a failure', async () => {
+      const ac = new AbortController();
+      const { done } = start(5, ac.signal);
+      await tick();
+      ac.abort();
+      const result = await done;
+      expect(result.status).toBe('cancelled');
+    });
+
+    it('does not pause when pauseOnFail is off', async () => {
+      calls.length = 0;
+      failsLeft = 5;
+      const result = await runTestCase(
+        { runId: 'r', testCase: tc(steps()) },
+        { registry, debugger: new DebugController() },
+      );
+      expect(result.status).toBe('failed');
+      expect(calls).toEqual(['a', 'f']);
+    });
+
+    it('runTo pauses before the chosen step', async () => {
+      calls.length = 0;
+      failsLeft = 0;
+      const dbg = new DebugController({ pauseAtStart: true });
+      const done = runTestCase(
+        { runId: 'r', testCase: tc(notes('a', 'b', 'c', 'd')) },
+        { registry, debugger: dbg },
+      );
+      await tick();
+      dbg.runTo('c');
+      await tick();
+      expect(calls).toEqual(['a', 'b']);
+      expect(dbg.paused?.stepId).toBe('c');
+      dbg.resume();
+      await done;
+      expect(calls).toEqual(['a', 'b', 'c', 'd']);
+    });
   });
 });

@@ -1,4 +1,12 @@
 import { readFileSync } from 'node:fs';
+import {
+  ElementRefSchema,
+  ElementSchema,
+  LocatorSchema,
+  PopupRulesSchema,
+  type Step,
+  StepSchema,
+} from '@kiemi/schema';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { resolveInside } from '../../results/artifact-path';
@@ -26,6 +34,24 @@ export const runsRouter = router({
           z.object({ type: z.literal('resume') }),
           z.object({ type: z.literal('step') }),
           z.object({
+            type: z.literal('decide'),
+            decision: z.enum(['retry', 'skip', 'continue', 'stop']),
+          }),
+          z.object({ type: z.literal('runTo'), stepId: z.string().min(1) }),
+          z.object({
+            type: z.literal('edit'),
+            step: z.custom<Step>((v) => StepSchema.safeParse(v).success).optional(),
+            elements: z.record(ElementRefSchema, ElementSchema).optional(),
+            popupRules: PopupRulesSchema.optional(),
+            insert: z
+              .object({
+                stepId: z.string().min(1),
+                where: z.enum(['before', 'after']),
+                steps: z.array(z.custom<Step>((v) => StepSchema.safeParse(v).success)).max(50),
+              })
+              .optional(),
+          }),
+          z.object({
             type: z.literal('breakpoints'),
             stepIds: z.array(z.string().min(1)).max(500),
           }),
@@ -33,6 +59,32 @@ export const runsRouter = router({
       }),
     )
     .mutation(({ ctx, input }) => ({ ok: ctx.runs.control(input.runId, input.command) })),
+
+  /** Click an element on the page of the paused run [FX-03]. */
+  livePick: publicProcedure
+    .input(runId)
+    .mutation(async ({ ctx, input }) => ({ locator: await ctx.runs.livePick(input.runId) })),
+
+  /** Record the tester's actions on the page of the paused run, then take the steps [FX-04]. */
+  liveRecord: publicProcedure
+    .input(runId.extend({ action: z.enum(['start', 'stop']) }))
+    .mutation(async ({ ctx, input }) =>
+      input.action === 'start'
+        ? { steps: [] as Step[], ok: ctx.runs.liveRecordStart(input.runId) }
+        : { steps: await ctx.runs.liveRecordStop(input.runId), ok: true },
+    ),
+
+  /** Elements that look like the one a step lost, from its fingerprint [FX-06]. */
+  liveSimilar: publicProcedure
+    .input(runId.extend({ locator: LocatorSchema }))
+    .mutation(async ({ ctx, input }) => ({
+      candidates: await ctx.runs.liveSimilar(input.runId, input.locator),
+    })),
+
+  /** Show where a locator points on the page of the paused run [FX-03]. */
+  liveHighlight: publicProcedure
+    .input(runId.extend({ locator: LocatorSchema }))
+    .mutation(({ ctx, input }) => ctx.runs.liveHighlight(input.runId, input.locator)),
 
   /** Stored run with its cases, steps and files [S-04]. */
   get: publicProcedure.input(runId).query(({ ctx, input }) => {

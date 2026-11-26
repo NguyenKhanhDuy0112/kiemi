@@ -426,6 +426,105 @@ describe('RunManager [M4-01, N-05]', () => {
     expect(await caller.runs.control({ runId, command: { type: 'pause' } })).toEqual({ ok: false });
   });
 
+  it('pauses on a failed step and goes on after the tester decides [FX-01, FX-05]', async () => {
+    const { runs, caller, testId } = setup([
+      { id: 's1', action: 'note', params: { value: 'a' } },
+      { id: 's2', action: 'fail', params: {} },
+      { id: 's3', action: 'note', params: { value: 'c' } },
+    ]);
+    const { runId } = await caller.runs.start({
+      target: { kind: 'test', testCaseId: testId },
+      options: { pauseOnFail: true },
+    });
+    const events: RunFeedEvent[] = [];
+    const feed = (async () => {
+      for await (const e of runs.events(runId)) events.push(e);
+    })();
+    for (let i = 0; i < 100; i++) {
+      if (events.some((e) => e.type === 'debug' && e.error)) break;
+      await new Promise((r) => setTimeout(r, 5));
+    }
+    const paused = events.find((e) => e.type === 'debug' && e.error);
+    expect(paused).toMatchObject({ state: 'paused', stepId: 's2' });
+    expect(seen).toEqual(['a']);
+    await caller.runs.control({ runId, command: { type: 'decide', decision: 'skip' } });
+    await feed;
+    expect(seen).toEqual(['a', 'c']);
+    expect(finalStatus(events)).toBe('passed');
+  });
+
+  it('retries a failed step after it was edited in place [FX-02]', async () => {
+    const { runs, caller, testId } = setup([
+      { id: 's1', action: 'fail', params: {} },
+      { id: 's2', action: 'note', params: { value: 'after' } },
+    ]);
+    const { runId } = await caller.runs.start({
+      target: { kind: 'test', testCaseId: testId },
+      options: { pauseOnFail: true },
+    });
+    const events: RunFeedEvent[] = [];
+    const feed = (async () => {
+      for await (const e of runs.events(runId)) events.push(e);
+    })();
+    for (let i = 0; i < 100; i++) {
+      if (events.some((e) => e.type === 'debug' && e.error)) break;
+      await new Promise((r) => setTimeout(r, 5));
+    }
+    await caller.runs.control({
+      runId,
+      command: {
+        type: 'edit',
+        step: {
+          id: 's1',
+          action: 'note',
+          params: { value: 'fixed' },
+          session: 'default',
+          enabled: true,
+          mode: 'hard',
+        },
+      },
+    });
+    await caller.runs.control({ runId, command: { type: 'decide', decision: 'retry' } });
+    await feed;
+    expect(seen).toEqual(['fixed', 'after']);
+    expect(finalStatus(events)).toBe('passed');
+  });
+
+  it('runs a step added before the failed one, then retries it [FX-04]', async () => {
+    const { runs, caller, testId } = setup([{ id: 's1', action: 'fail', params: {} }]);
+    const { runId } = await caller.runs.start({
+      target: { kind: 'test', testCaseId: testId },
+      options: { pauseOnFail: true },
+    });
+    const events: RunFeedEvent[] = [];
+    const feed = (async () => {
+      for await (const e of runs.events(runId)) events.push(e);
+    })();
+    for (let i = 0; i < 100; i++) {
+      if (events.some((e) => e.type === 'debug' && e.error)) break;
+      await new Promise((r) => setTimeout(r, 5));
+    }
+    const step = (id: string, action: string, params: Record<string, unknown>) => ({
+      id,
+      action,
+      params,
+      session: 'default',
+      enabled: true,
+      mode: 'hard' as const,
+    });
+    const control = (command: Parameters<typeof caller.runs.control>[0]['command']) =>
+      caller.runs.control({ runId, command });
+    await control({
+      type: 'edit',
+      insert: { stepId: 's1', where: 'before', steps: [step('s2', 'note', { value: 'popup' })] },
+    });
+    await control({ type: 'edit', step: step('s1', 'note', { value: 'main' }) });
+    await control({ type: 'decide', decision: 'retry' });
+    await feed;
+    expect(seen).toEqual(['popup', 'main']);
+    expect(finalStatus(events)).toBe('passed');
+  });
+
   it('runs from a chosen step', async () => {
     const { runs, testId } = setup([
       { id: 's1', action: 'note', params: { value: 'a' } },

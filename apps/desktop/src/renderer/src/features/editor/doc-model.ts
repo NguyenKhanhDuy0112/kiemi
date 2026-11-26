@@ -111,9 +111,16 @@ const clone = (doc: TestCase): TestCase => structuredClone(doc);
 export function insertStep(
   doc: TestCase,
   step: Step,
-  where: { afterId?: string | null; list?: ListRef } = {},
+  where: { afterId?: string | null; beforeId?: string | null; list?: ListRef } = {},
 ): TestCase {
   const next = clone(doc);
+  if (where.beforeId) {
+    const at = locate(next, where.beforeId);
+    if (at) {
+      at.list.splice(at.index, 0, step);
+      return next;
+    }
+  }
   if (where.afterId) {
     const at = locate(next, where.afterId);
     if (at) {

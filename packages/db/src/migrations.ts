@@ -372,4 +372,9 @@ ALTER TABLE "datasets" ADD COLUMN "env_rows" TEXT;`,
 );
 CREATE INDEX "shared_resources_workspace_idx" ON "shared_resources" ("workspace_id");`,
   },
+  {
+    id: 11,
+    name: 'popup-rules',
+    sql: `ALTER TABLE "projects" ADD COLUMN "popup_rules" TEXT;`,
+  },
 ];

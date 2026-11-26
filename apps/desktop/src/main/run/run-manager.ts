@@ -5,19 +5,25 @@ import {
   environmentSkip,
   type RunRequest,
   type SavedLogin,
+  type SimilarCandidate,
   type StepPhase,
 } from '@kiemi/engine';
+import type { HighlightResult } from '@kiemi/recorder';
 import type {
   ArtifactRef,
   Dataset,
   Env,
+  Locator,
   RunError,
   RunResult,
   Secrets,
+  Step,
   TestCase,
 } from '@kiemi/schema';
+import { translations } from '@kiemi/shared';
+import { v7 as uuidv7 } from 'uuid';
 import { type OpenTunnel, prepareNetwork, type TunnelLike, usedProducts } from '../tunnel/network';
-import type { HostToWorker, WorkerToHost } from './protocol';
+import type { EditCommand, HostToWorker, WorkerToHost } from './protocol';
 import { type StartRunInput, StartRunInputSchema } from './start-input';
 
 export type { StartRunInput } from './start-input';
@@ -70,6 +76,7 @@ export type RunFeedEvent =
       state: 'paused' | 'running';
       stepId: string;
       stepNo: string;
+      error?: RunError | undefined;
     }
   | { type: 'engine'; runId: string; runCaseId: string; event: EngineEvent };
 
@@ -94,6 +101,8 @@ interface ActiveRun {
   /** Artifact sub-folder of each case, relative to the run folder ('' = the run folder). */
   caseDirs: Map<string, string>;
   steps: Map<string, StepInfo>;
+  /** Pick / Highlight answers still awaited from the engine process [FX-03]. */
+  waiting: Map<string, { resolve: (value: unknown) => void; fallback: unknown }>;
 }
 
 interface CasePlan {
@@ -224,6 +233,7 @@ export class RunManager {
       });
     const settings = s.settings.getAll();
     // Project steps plus the workspace library, called by id [O-07].
+    const popupRules = s.projects.popupRules(projectId).filter((r) => r.enabled);
     const sharedSteps = [
       ...s.sharedSteps.forRun(projectId),
       ...s.sharedResources.sharedStepsForRun(),
@@ -252,6 +262,7 @@ export class RunManager {
       openCases: new Set(),
       caseDirs: new Map(),
       steps: new Map(),
+      waiting: new Map(),
     };
     this.#runs.set(run.id, active);
     this.#trim();
@@ -294,6 +305,7 @@ export class RunManager {
         ...(p.dataset ? { dataset: p.dataset } : {}),
         ...(p.rowIndex === undefined ? {} : { rowIndex: p.rowIndex }),
         sharedSteps,
+        ...(popupRules.length ? { popupRules } : {}),
         savedLogins,
         variables: {
           workspace: workspaceVars,
@@ -323,6 +335,10 @@ export class RunManager {
       return { runId: run.id };
     }
     const debugging = (opts.breakpoints?.length ?? 0) > 0 || opts.pauseAtStart === true;
+    // Only when asked (the UI asks for a hand-run single test) and the browser is
+    // visible: stop on a failure and keep it open for fixing it [FX-01].
+    const headless = debugging ? false : (opts.headless ?? settings.headless);
+    const pauseOnFail = opts.pauseOnFail === true && !headless;
     void this.#execute(
       active,
       {
@@ -332,7 +348,7 @@ export class RunManager {
           settings: {
             browser: settings.browser,
             // Debugging needs a visible browser [S-03].
-            headless: debugging ? false : (opts.headless ?? settings.headless),
+            headless,
             ...(opts.slowMoMs ? { slowMoMs: opts.slowMoMs } : {}),
           },
           browsersPath: this.#d.browsersPath,
@@ -341,6 +357,7 @@ export class RunManager {
         debug: {
           breakpoints: opts.breakpoints ?? [],
           pauseAtStart: opts.pauseAtStart === true,
+          pauseOnFail,
         },
       },
       env,
@@ -371,12 +388,73 @@ export class RunManager {
       | { type: 'pause' }
       | { type: 'resume' }
       | { type: 'step' }
-      | { type: 'breakpoints'; stepIds: string[] },
+      | { type: 'breakpoints'; stepIds: string[] }
+      | { type: 'decide'; decision: 'retry' | 'skip' | 'continue' | 'stop' }
+      | { type: 'runTo'; stepId: string }
+      | EditCommand,
   ): boolean {
     const active = this.#runs.get(runId);
     if (!active || active.finished || !active.worker) return false;
     active.worker.send(cmd);
     return true;
+  }
+
+  /** Lets the tester click an element on the page of the paused run [FX-03]. */
+  livePick(runId: string): Promise<Locator | null> {
+    return this.#ask<Locator | null>(runId, null, (requestId, strings) => ({
+      type: 'livePick',
+      requestId,
+      strings,
+    }));
+  }
+
+  /** Shows a locator on the page of the paused run [FX-03]. */
+  liveHighlight(runId: string, locator: Locator): Promise<HighlightResult> {
+    return this.#ask<HighlightResult>(runId, { count: 0 }, (requestId, strings) => ({
+      type: 'liveHighlight',
+      requestId,
+      strings,
+      locator,
+    }));
+  }
+
+  /** Elements on the paused page that look like the one a step lost [FX-06]. */
+  liveSimilar(runId: string, locator: Locator): Promise<SimilarCandidate[]> {
+    return this.#ask<SimilarCandidate[]>(runId, [], (requestId) => ({
+      type: 'liveSimilar',
+      requestId,
+      locator,
+    }));
+  }
+
+  /** Starts recording the tester's actions on the page of the paused run [FX-04]. */
+  liveRecordStart(runId: string): boolean {
+    const active = this.#runs.get(runId);
+    if (!active || active.finished || !active.worker) return false;
+    const lang = this.#d.services.settings.getAll().language;
+    active.worker.send({ type: 'liveRecordStart', strings: { ...translations[lang].recorder } });
+    return true;
+  }
+
+  /** Stops that recording; resolves with the steps recorded [FX-04]. */
+  liveRecordStop(runId: string): Promise<Step[]> {
+    return this.#ask<Step[]>(runId, [], (requestId) => ({ type: 'liveRecordStop', requestId }));
+  }
+
+  #ask<T>(
+    runId: string,
+    fallback: T,
+    msg: (requestId: string, strings: Record<string, string>) => HostToWorker,
+  ): Promise<T> {
+    const active = this.#runs.get(runId);
+    if (!active || active.finished || !active.worker) return Promise.resolve(fallback);
+    const requestId = uuidv7();
+    const lang = this.#d.services.settings.getAll().language;
+    const answer = new Promise<T>((resolve) =>
+      active.waiting.set(requestId, { resolve: (v) => resolve(v as T), fallback }),
+    );
+    active.worker.send(msg(requestId, { ...translations[lang].recorder }));
+    return answer;
   }
 
   isRunning(runId: string): boolean {
@@ -503,7 +581,24 @@ export class RunManager {
           state: msg.state,
           stepId: msg.stepId,
           stepNo: msg.stepNo,
+          ...(msg.error ? { error: msg.error } : {}),
         });
+        return;
+      case 'similarResult':
+        active.waiting.get(msg.requestId)?.resolve(msg.candidates);
+        active.waiting.delete(msg.requestId);
+        return;
+      case 'liveRecorded':
+        active.waiting.get(msg.requestId)?.resolve(msg.steps);
+        active.waiting.delete(msg.requestId);
+        return;
+      case 'pickResult':
+        active.waiting.get(msg.requestId)?.resolve(msg.locator);
+        active.waiting.delete(msg.requestId);
+        return;
+      case 'highlightResult':
+        active.waiting.get(msg.requestId)?.resolve(msg.result);
+        active.waiting.delete(msg.requestId);
         return;
       case 'event': {
         const caseId = msg.event.runId;
@@ -606,6 +701,8 @@ export class RunManager {
 
   #finish(active: ActiveRun, status: FinalStatus, error?: RunError): void {
     if (active.finished) return;
+    for (const w of active.waiting.values()) w.resolve(w.fallback);
+    active.waiting.clear();
     const s = this.#d.services.runs;
     for (const caseId of active.openCases) {
       try {

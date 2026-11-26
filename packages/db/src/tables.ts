@@ -1,5 +1,6 @@
 import type {
   Locator,
+  PopupRule,
   ProxySettings,
   SharedStep,
   SshSettings,
@@ -50,6 +51,8 @@ export const projects = sqliteTable(
     folderState: json<Record<string, string>>('folder_state'),
     /** Project-level variables [O-04] (migration 9). */
     variables: json<Record<string, string>>('variables'),
+    /** Popups handled in every test of the project [W-09] (migration 11). */
+    popupRules: json<PopupRule[]>('popup_rules'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );

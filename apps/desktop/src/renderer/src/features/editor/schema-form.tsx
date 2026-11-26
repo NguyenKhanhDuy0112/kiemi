@@ -17,6 +17,7 @@ import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 import { toLocator } from '../record/apply-changes';
 import { useEditorStore } from './editor-store';
+import { usePickSource } from './pick-context';
 import { ROLES, type TargetKind, targetKindsFor, useAdvancedMode } from './strategies';
 import { StrategiesEditor } from './strategies-editor';
 import { VariableInput } from './variable-input';
@@ -586,16 +587,20 @@ function PickButtons({
 }) {
   const tx = useTx();
   const testId = useEditorStore((s) => s.testId);
+  const source = usePickSource();
   const [busy, setBusy] = useState<'pick' | 'show' | null>(null);
   const locator = toLocator(value, elements);
-  if (!testId) return null;
+  if (!testId && !source) return null;
   const pick = async () => {
     setBusy('pick');
     const hint = toast.info(tx('ui.record.pickHint'));
     try {
       // Loaded on use: keeps the form free of the IPC client (tests, storybook-like use).
-      const { useRecordStore } = await import('../record/record-store');
-      const picked = await useRecordStore.getState().pick(testId);
+      const picked = source
+        ? await source.pick()
+        : testId
+          ? await (await import('../record/record-store')).useRecordStore.getState().pick(testId)
+          : null;
       if (picked) {
         onChange(picked);
         toast.success(tx('ui.record.picked'));
@@ -611,8 +616,13 @@ function PickButtons({
     if (!locator) return;
     setBusy('show');
     try {
-      const { useRecordStore } = await import('../record/record-store');
-      const r = await useRecordStore.getState().highlight(testId, locator);
+      const r = source
+        ? await source.highlight(locator)
+        : testId
+          ? await (await import('../record/record-store')).useRecordStore
+              .getState()
+              .highlight(testId, locator)
+          : { count: 0 };
       if (r.count === 1) toast.success(tx('ui.record.found'));
       else if (r.count > 1) toast.warning(tx('ui.record.ambiguous', { count: r.count }));
       else toast.error(tx('ui.record.notFound'));

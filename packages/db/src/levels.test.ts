@@ -64,4 +64,51 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     expect(other.products.get(web.id).variables).toEqual({ timeout: '15' });
     expect(other.datasets.forRun(ds.id, env.id).rows).toEqual([{ ma: 'b' }]);
   });
+
+  it('popup rules of a project are validated and travel through the project folder [W-09]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const rule = {
+      id: 'cookie',
+      name: 'Banner cookie',
+      when: { strategies: [{ kind: 'text', value: 'Chấp nhận cookie' }] },
+      action: { kind: 'click', target: { strategies: [{ kind: 'text', value: 'Đồng ý' }] } },
+    };
+    s.projects.setPopupRules(projectId, [rule]);
+    expect(s.projects.popupRules(projectId)[0]).toMatchObject({ id: 'cookie', enabled: true });
+    expect(() => s.projects.setPopupRules(projectId, [{ id: 'x' }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-popup-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.popupRules(projectId)).toEqual(s.projects.popupRules(projectId));
+  });
+
+  it('finds and replaces the same element in every test of the project [FX-08]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const strategies = [{ kind: 'css' as const, value: '#save' }];
+    const make = (name: string, elName = 'Nút Lưu', value = '#save') => {
+      const t = s.testCases.create({ projectId, name });
+      s.testCases.save(t.id, {
+        ...t.content,
+        elements: { el_save: { name: elName, strategies: [{ kind: 'css', value }] } },
+        steps: [{ id: 's1', action: 'click', params: { target: { ref: 'el_save' } } }],
+      });
+      return t.id;
+    };
+    const a = make('A');
+    const b = make('B');
+    make('C', 'Nút Lưu', '#other');
+    make('D', 'Nút Xóa');
+    expect(s.testCases.usersOfElement(projectId, 'Nút Lưu', strategies).map((u) => u.id)).toEqual([
+      a,
+      b,
+    ]);
+    const next = { strategies: [{ kind: 'css' as const, value: '#btn-save' }] };
+    expect(s.testCases.replaceElement(projectId, 'Nút Lưu', strategies, next, a)).toEqual([b]);
+    expect(s.testCases.get(b).content.elements.el_save?.strategies).toEqual(next.strategies);
+    expect(s.testCases.get(a).content.elements.el_save?.strategies).toEqual(strategies);
+  });
 });

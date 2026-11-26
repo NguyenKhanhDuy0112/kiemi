@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lỗi để sửa — Kiemi Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Trang để thử sửa khi test lỗi</h1>
+      <p class="muted">
+        Mở bằng <code>?mode=</code>: <code>renamed</code> (nút đổi tên) · <code>slow</code> (nút hiện chậm) ·
+        <code>popup</code> (banner cookie che nút) · <code>wrongvalue</code> (kết quả khác kỳ vọng) ·
+        <code>api</code> (lỗi máy chủ).
+      </p>
+      <div class="card" id="stage"></div>
+      <p>Kết quả: <strong id="fix-result">—</strong></p>
+    </main>
+    <script type="module" src="/src/fixes.ts"></script>
+  </body>
+</html>

@@ -37,6 +37,9 @@ interface RunStore {
   watch(runId: string): void;
   stop(runId: string): Promise<void>;
   control(runId: string, type: 'pause' | 'resume' | 'step'): Promise<void>;
+  /** What to do with a failed step the run is waiting on [FX-05]. */
+  decide(runId: string, decision: 'retry' | 'skip' | 'continue' | 'stop'): Promise<void>;
+  runTo(runId: string, stepId: string): Promise<void>;
   toggleBreakpoint(testId: string, stepId: string, runId?: string): void;
   setPrefs(prefs: RunPrefs): void;
 }
@@ -91,6 +94,14 @@ export const useRunStore = create<RunStore>((set, get) => {
 
     async control(runId, type) {
       await trpcClient.runs.control.mutate({ runId, command: { type } });
+    },
+
+    async decide(runId, decision) {
+      await trpcClient.runs.control.mutate({ runId, command: { type: 'decide', decision } });
+    },
+
+    async runTo(runId, stepId) {
+      await trpcClient.runs.control.mutate({ runId, command: { type: 'runTo', stepId } });
     },
 
     toggleBreakpoint(testId, stepId, runId) {

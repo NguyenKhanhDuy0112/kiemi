@@ -5,6 +5,7 @@ import {
   type Dataset,
   type Diagnostic,
   type Env,
+  type PopupRule,
   type RunError,
   type RunResult,
   type RunStatus,
@@ -23,7 +24,8 @@ import { EngineError, StepFailure, toRunError } from './errors';
 import type { EngineEvent, EngineEventListener, LogLevel, StepPhase } from './events';
 import { evaluateCondition } from './flow/condition';
 import { type ResolvedLocator, resolveLocator } from './locator/resolve';
-import type { RunDebugger } from './run/debug';
+import type { LiveSessions, RunDebugger } from './run/debug';
+import { closePopups } from './run/popups';
 import { findWriteSteps } from './run/protection';
 import type { SavedLogin } from './run/services';
 import { DialogController, type RunServices } from './run/services';
@@ -54,6 +56,8 @@ export interface RunRequest {
   rowIndex?: number;
   /** Shared steps callable with the `call` action [D-01]. */
   sharedSteps?: SharedStep[];
+  /** Popups to close wherever they show up [W-09]. */
+  popupRules?: PopupRule[];
   /** Suite-level variables [E-02]. */
   suiteVariables?: Record<string, string>;
   /** Inherited variables of the workspace, project and the test's product [O-04]. */
@@ -104,6 +108,9 @@ export interface RunOptions {
   keepSessions?: (pages: SessionPages) => void;
 }
 
+/** How many times a failing step is retried after closing a popup [W-09]. */
+const MAX_POPUP_RETRIES = 2;
+
 interface Parent {
   step: Step;
   stepNo: string;
@@ -112,7 +119,8 @@ interface Parent {
   topNo: number;
 }
 
-type Outcome = { result: StepResult; stop: boolean };
+/** `redo`: the step waits for steps inserted before it; run those, then it again [FX-04]. */
+type Outcome = { result: StepResult; stop: boolean; redo?: boolean };
 
 /** Runs a test case's steps sequentially, then its cleanup steps, streaming events. */
 export async function runTestCase(request: RunRequest, options: RunOptions): Promise<RunResult> {
@@ -396,9 +404,18 @@ class Run {
     let stopped = false;
     let firstHard: RunError | undefined;
     for (const [index, step] of list.entries()) {
-      const outcome: Outcome = stopped
-        ? { result: this.#skipped(step), stop: true }
-        : await this.#runOne(step, index, phase, signal, parent);
+      let outcome: Outcome;
+      for (;;) {
+        if (
+          !stopped &&
+          (await this.#runInserted(step, 'before', index, phase, signal, parent, out))
+        )
+          stopped = true;
+        outcome = stopped
+          ? { result: this.#skipped(step), stop: true }
+          : await this.#runOne(step, index, phase, signal, parent);
+        if (!outcome.redo) break;
+      }
       out.push(outcome.result);
       this.#emit({
         type: 'stepEnd',
@@ -412,10 +429,45 @@ class Run {
         stopped = true;
         if (outcome.result.error && !firstHard) firstHard = outcome.result.error;
       }
+      if (!stopped && (await this.#runInserted(step, 'after', index, phase, signal, parent, out)))
+        stopped = true;
       if (!parent && phase === 'steps' && step.id === this.#req.options?.stopAfterStepId)
         stopped = true;
     }
     return firstHard;
+  }
+
+  /**
+   * Steps the tester added next to `host` while the run waited [FX-04]. Numbered
+   * `3+1`, `3+2`… after their neighbour. Returns true when one failed hard.
+   */
+  async #runInserted(
+    host: Step,
+    where: 'before' | 'after',
+    index: number,
+    phase: StepPhase,
+    signal: AbortSignal,
+    parent: Parent | undefined,
+    out: StepResult[],
+  ): Promise<boolean> {
+    const extra = this.#opts.debugger?.takeInserted?.(host.id, where) ?? [];
+    let failed = false;
+    for (const [k, step] of extra.entries()) {
+      if (failed || signal.aborted) break;
+      const no = `${parent ? `${parent.stepNo}.` : ''}${index + 1}${where === 'before' ? '-' : '+'}${k + 1}`;
+      const outcome = await this.#runOne(step, index, phase, signal, parent, no);
+      out.push(outcome.result);
+      this.#emit({
+        type: 'stepEnd',
+        runId: this.#req.runId,
+        phase,
+        index,
+        result: outcome.result,
+        ...(parent ? { parentStepId: parent.step.id } : {}),
+      });
+      if (outcome.stop) failed = true;
+    }
+    return failed;
   }
 
   #skipped(step: Step, error?: RunError): StepResult {
@@ -437,7 +489,11 @@ class Run {
     phase: StepPhase,
     signal: AbortSignal,
     parent: Parent | undefined,
+    /** Number shown for a step inserted during the run. */
+    label?: string,
   ): Promise<Outcome> {
+    // Edited while the run waited on an earlier step [FX-02].
+    step = this.#opts.debugger?.stepEdit?.(step.id) ?? step;
     if (!step.enabled) return { result: this.#skipped(step), stop: false };
     if (signal.aborted) {
       return {
@@ -450,12 +506,19 @@ class Run {
       return { result: this.#skipped(step), stop: false };
     }
 
-    const stepNo = parent ? `${parent.stepNo}.${index + 1}` : `${index + 1}`;
+    const stepNo = label ?? (parent ? `${parent.stepNo}.${index + 1}` : `${index + 1}`);
     const topNo = parent ? parent.topNo : index + 1;
     if (this.#opts.debugger) {
       await this.#opts.debugger.beforeStep(
-        { stepId: step.id, stepNo, phase, ...(parent ? { parentStepId: parent.step.id } : {}) },
+        {
+          stepId: step.id,
+          stepNo,
+          phase,
+          session: step.session,
+          ...(parent ? { parentStepId: parent.step.id } : {}),
+        },
         signal,
+        this.#live(),
       );
       if (signal.aborted) {
         return {
@@ -479,24 +542,66 @@ class Run {
     });
 
     const self: Parent = { step, stepNo, children: [], topNo };
-    const diagStart = this.#diagnostics.length;
     let lastLocator: PwLocator | undefined;
     let error: RunError | undefined;
     let cancelled = false;
     let skipped = false;
     let container = false;
+    /** Debugger said "continue": the failure stays on record, the run goes on [FX-05]. */
+    let keepGoing = false;
+    let popupRounds = 0;
 
-    try {
-      const action = this.#opts.registry.get(step.action);
-      container = action?.container === true;
-      const run = await this.#executeStep(step, stepNo, topNo, signal, self, (l) => {
-        lastLocator = l;
-      });
-      skipped = run === 'skipped';
-      if (!skipped && !container) this.#checkDiagnostics(diagStart, topNo, stepNo);
-    } catch (err) {
-      error = this.#maskError(toRunError(err));
-      cancelled = error.code === 'RUN_CANCELLED';
+    for (;;) {
+      // Popups that appeared since the last step: close them first [W-09].
+      if (!container && popupRounds < MAX_POPUP_RETRIES)
+        await this.#handlePopups(step.session, signal);
+      const diagStart = this.#diagnostics.length;
+      error = undefined;
+      cancelled = false;
+      skipped = false;
+      self.children = [];
+      try {
+        const action = this.#opts.registry.get(step.action);
+        container = action?.container === true;
+        const run = await this.#executeStep(step, stepNo, topNo, signal, self, (l) => {
+          lastLocator = l;
+        });
+        skipped = run === 'skipped';
+        if (!skipped && !container) this.#checkDiagnostics(diagStart, topNo, stepNo);
+      } catch (err) {
+        error = this.#maskError(toRunError(err));
+        cancelled = error.code === 'RUN_CANCELLED';
+      }
+      // A popup may be what blocked the step: close it and try again [W-09].
+      if (error && !cancelled && !container && popupRounds < MAX_POPUP_RETRIES) {
+        popupRounds++;
+        if (await this.#handlePopups(step.session, signal)) continue;
+      }
+      const dbg = this.#opts.debugger;
+      if (!error || cancelled || container || !dbg?.afterFail) break;
+      // Failed with the browser still open: wait for the tester's decision [FX-01].
+      const gate = {
+        stepId: step.id,
+        stepNo,
+        phase,
+        session: step.session,
+        ...(parent ? { parentStepId: parent.step.id } : {}),
+      };
+      const restore = await this.#outline(step.session, lastLocator);
+      const decision = await dbg.afterFail(gate, error, signal, this.#live());
+      await restore?.();
+      if (decision === 'retry' && !signal.aborted) {
+        // Steps added before it must run first [FX-04].
+        if (dbg.hasInserted?.(step.id, 'before'))
+          return { result: this.#skipped(step), stop: false, redo: true };
+        step = dbg.stepEdit?.(step.id) ?? step;
+        continue;
+      }
+      if (decision === 'skip') {
+        error = undefined;
+        skipped = true;
+      } else if (decision === 'continue') keepGoing = true;
+      break;
     }
 
     const status: StepResult['status'] =
@@ -530,7 +635,65 @@ class Run {
       ...(self.children.length > 0 ? { children: self.children } : {}),
     };
     if (error) this.#log(cancelled ? 'warn' : 'error', error.message, step.id);
-    return { result, stop: cancelled || (error !== undefined && step.mode === 'hard') };
+    return {
+      result,
+      stop: cancelled || (error !== undefined && step.mode === 'hard' && !keepGoing),
+    };
+  }
+
+  /** Applies the project's popup rules to the session's page; true when one was closed. */
+  async #handlePopups(session: string, signal: AbortSignal): Promise<boolean> {
+    const rules = this.#opts.debugger?.popupRulesEdit?.() ?? this.#req.popupRules;
+    if (!rules?.length || !this.#pages.isOpen(session)) return false;
+    try {
+      const page = await this.#pages.page(session);
+      const fired = await closePopups(page, rules, (l) => this.#vars.interpolate(l), signal);
+      for (const name of fired) this.#log('info', `Closed popup "${name}"`);
+      return fired.length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  #live(): LiveSessions {
+    return {
+      context: (session) => this.#pages.context(session),
+      page: (session) => this.#pages.page(session),
+    };
+  }
+
+  /** Red frame on the failed element while the run waits; returns the undo [FX-01]. */
+  async #outline(
+    session: string,
+    locator: PwLocator | undefined,
+  ): Promise<(() => Promise<void>) | undefined> {
+    if (!locator || !this.#pages.isOpen(session)) return undefined;
+    const prev = await locator
+      .evaluate(
+        (el) => {
+          const h = el as HTMLElement;
+          const before = { outline: h.style.outline, offset: h.style.outlineOffset };
+          h.style.outline = '3px solid #E5484D';
+          h.style.outlineOffset = '2px';
+          return before;
+        },
+        undefined,
+        { timeout: 1000 },
+      )
+      .catch(() => undefined);
+    if (!prev) return undefined;
+    return async () => {
+      await locator
+        .evaluate(
+          (el, r) => {
+            (el as HTMLElement).style.outline = r.outline;
+            (el as HTMLElement).style.outlineOffset = r.offset;
+          },
+          prev,
+          { timeout: 1000 },
+        )
+        .catch(() => undefined);
+    };
   }
 
   #checkDiagnostics(from: number, topNo: number, stepNo: string): void {
@@ -657,7 +820,10 @@ class Run {
       vars: this.#vars,
       run: this.#services,
       resolve: async (target, opts) => {
-        const { locator, name } = toLocator(target, this.#req.testCase.elements);
+        const { locator, name } = toLocator(
+          target,
+          this.#opts.debugger?.elementsEdit?.() ?? this.#req.testCase.elements,
+        );
         const page = await this.#pages.page(step.session);
         const resolved: ResolvedLocator = await resolveLocator(
           () => [page.mainFrame(), ...page.frames().filter((f) => f !== page.mainFrame())],

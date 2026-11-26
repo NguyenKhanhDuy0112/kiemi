@@ -107,17 +107,17 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M9-11** Demo-site: 2 app khác domain (admin/web) + e2e: 1 test đi qua 2 sản phẩm, đổi môi trường lấy đúng URL/tài khoản; test cả milestone M9 + app thật + mở PR [L]
 
 ## M10 — Sửa khi fail
-- [ ] **M10-01** Tạm dừng khi lỗi: giữ trình duyệt + mọi tab/phiên, chọn sẵn step lỗi, highlight phần tử (bật mặc định khi chạy tay, tắt khi suite/CLI) [FX-01] [S]
-- [ ] **M10-02** Thử lại step · Tiếp tục từ đây · Bỏ qua step · Chạy lại đến bước N rồi dừng [FX-05] [S]
-- [ ] **M10-03** Sửa step tại chỗ trên màn Chạy (panel thuộc tính dùng chung với màn Soạn) + chọn lại phần tử trên trang thật (Pick/Highlight) [FX-02, FX-03] [M]
-- [ ] **M10-04** Chèn step trước/sau step lỗi: thêm tay hoặc ghi thao tác từ trạng thái hiện tại [FX-04] [S]
-- [ ] **M10-05** Trình xử lý popup toàn cục ("nếu thấy X thì bấm Y", cấp dự án) [W-09] [M]
-- [ ] **M10-06** Sửa nhanh theo loại lỗi (không tìm thấy → chọn lại/phần tử tương tự theo fingerprint/chờ lâu hơn; sai giá trị; bị popup che → W-09; hết thời gian; lỗi mạng) [FX-06] [M]
-- [ ] **M10-07** Cập nhật kỳ vọng bằng giá trị thực tế + câu hỏi "Thay đổi đúng / Đây là bug"; nút "Copy báo cáo bug" (Markdown) [FX-07, X-02] [S]
-- [ ] **M10-08** Phạm vi sửa: chỉ test này / mọi nơi dùng phần tử / step dùng chung, hiện danh sách test bị ảnh hưởng [FX-08] [S]
-- [ ] **M10-09** "Sửa và chạy lại" từ màn Kết quả (cùng dòng dữ liệu, cùng môi trường) → vào trạng thái tạm dừng [FX-09] [S]
-- [ ] **M10-10** Nhật ký sửa + Hoàn tác trong phiên sửa lỗi; đề nghị "Chạy lại từ đầu để xác nhận" [FX-11] [S]
-- [ ] **M10-11** Demo-site: popup ngẫu nhiên + trang lỗi theo từng loại; e2e luồng sửa khi fail
+- [x] **M10-01** Tạm dừng khi lỗi: giữ trình duyệt + mọi tab/phiên, chọn sẵn step lỗi, highlight phần tử (bật mặc định khi chạy tay, tắt khi suite/CLI) [FX-01] [S]
+- [x] **M10-02** Thử lại step · Tiếp tục từ đây · Bỏ qua step · Chạy lại đến bước N rồi dừng [FX-05] [S]
+- [x] **M10-03** Sửa step tại chỗ trên màn Chạy (panel thuộc tính dùng chung với màn Soạn) + chọn lại phần tử trên trang thật (Pick/Highlight) [FX-02, FX-03] [M]
+- [x] **M10-04** Chèn step trước/sau step lỗi: thêm tay hoặc ghi thao tác từ trạng thái hiện tại [FX-04] [S]
+- [x] **M10-05** Trình xử lý popup toàn cục ("nếu thấy X thì bấm Y", cấp dự án) [W-09] [M]
+- [x] **M10-06** Sửa nhanh theo loại lỗi (không tìm thấy → chọn lại/phần tử tương tự theo fingerprint/chờ lâu hơn; sai giá trị; bị popup che → W-09; hết thời gian; lỗi mạng) [FX-06] [M]
+- [x] **M10-07** Cập nhật kỳ vọng bằng giá trị thực tế + câu hỏi "Thay đổi đúng / Đây là bug"; nút "Copy báo cáo bug" (Markdown) [FX-07, X-02] [S]
+- [x] **M10-08** Phạm vi sửa: chỉ test này / mọi nơi dùng phần tử / step dùng chung, hiện danh sách test bị ảnh hưởng [FX-08] [S]
+- [x] **M10-09** "Sửa và chạy lại" từ màn Kết quả (cùng dòng dữ liệu, cùng môi trường) → vào trạng thái tạm dừng [FX-09] [S]
+- [x] **M10-10** Nhật ký sửa + Hoàn tác trong phiên sửa lỗi; đề nghị "Chạy lại từ đầu để xác nhận" [FX-11] [S]
+- [x] **M10-11** Demo-site: popup ngẫu nhiên + trang lỗi theo từng loại; e2e luồng sửa khi fail
 
 ## M11 — Validate form, thiết kế test & đo độ phủ
 - [ ] **M11-01** Bảng đặc tả field (kiểu + quy tắc, phụ thuộc, so sánh giữa field, file) + lưu trữ `FieldSpec`/`FieldRule` [R-01]
