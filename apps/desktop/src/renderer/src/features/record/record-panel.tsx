@@ -2,6 +2,7 @@ import { secretRef, suggestSecretName } from '@kiemi/recorder/pure';
 import { Button } from '@renderer/components/ui/button';
 import { Input } from '@renderer/components/ui/input';
 import { errorMessage } from '@renderer/lib/errors';
+import { useAppStore } from '@renderer/lib/store';
 import { trpc } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
 import { useMutation } from '@tanstack/react-query';
@@ -25,6 +26,14 @@ export function RecordPanel({ testId }: { testId: string }) {
       onNotice: (n) => {
         const t = txRef.current;
         if (n.kind === 'loginSaved') toast.success(t('ui.record.loginSaved', { name: n.name }));
+        else if (n.count > 0)
+          toast.success(t('ui.record.stopped', { count: n.count }), {
+            description: t('ui.record.moreCasesHint'),
+            action: {
+              label: t('ui.record.moreCases'),
+              onClick: () => useAppStore.getState().setView('forms'),
+            },
+          });
         else toast.success(t('ui.record.stopped', { count: n.count }));
       },
     });

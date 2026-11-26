@@ -1,4 +1,4 @@
-import { type CoverageTest, computeCoverage } from '@kiemi/schema';
+import { type CoverageTest, computeCoverage, signatureOf } from '@kiemi/schema';
 import { z } from 'zod';
 import { publicProcedure, router } from '../trpc';
 
@@ -22,6 +22,17 @@ export function gotoUrls(steps: unknown): string[] {
 
 /** Coverage of the project's declared pages and of the tests' design labels [CV-01, CV-02, CV-04]. */
 export const coverageRouter = router({
+  /** Fingerprint of each test's steps, to spot duplicates in the quality check [CV-07]. */
+  signatures: publicProcedure
+    .input(z.object({ projectId: z.string().min(1) }))
+    .query(({ ctx, input }) =>
+      Object.fromEntries(
+        ctx.services.testCases
+          .list(input.projectId)
+          .map((t) => [t.id, signatureOf(ctx.services.testCases.get(t.id).content)]),
+      ),
+    ),
+
   get: publicProcedure.input(z.object({ projectId: z.string().min(1) })).query(({ ctx, input }) => {
     const s = ctx.services;
     const products = s.products.list(input.projectId);

@@ -649,6 +649,41 @@ export const viUi = {
       numbers: 'Số liệu tổng hợp',
     },
   },
+  lint: {
+    title: 'Chất lượng test',
+    clean: 'Không có cảnh báo — test này ổn.',
+    removeStep: 'Xóa bước chờ này',
+    rules: {
+      noAssertion: {
+        title: 'Chưa có bước kiểm tra',
+        why: 'Test chỉ thao tác mà không kiểm tra kết quả nên luôn "đạt" dù trang sai. Thêm ít nhất một bước Kiểm tra.',
+      },
+      fixedWait: {
+        title: 'Chờ cố định {{seconds}} giây',
+        why: 'Chờ cố định làm test chậm và vẫn dễ lỗi. Kiemi tự chờ phần tử; nếu cần chờ điều kiện, dùng "Chờ đến khi".',
+      },
+      weakSelector: {
+        title: 'Cách tìm phần tử dễ hỏng',
+        why: 'Phần tử chỉ được tìm theo vị trí/đường dẫn dài, đổi giao diện là hỏng. Chọn lại phần tử để Kiemi lưu thêm nhãn hoặc tên.',
+      },
+      noCleanup: {
+        title: 'Ghi dữ liệu nhưng không dọn',
+        why: 'Test nhập dữ liệu mà không có bước dọn nên chạy lần sau có thể bị trùng. Thêm bước dọn ở mục "Dọn dẹp".',
+      },
+      tooLong: {
+        title: 'Test quá dài ({{count}} bước)',
+        why: 'Hơn {{max}} bước khó đọc và khó sửa. Tách đoạn lặp lại thành bước dùng chung.',
+      },
+      duplicate: {
+        title: 'Trùng với test khác',
+        why: 'Một test khác có đúng các bước này. Xóa bớt hoặc gộp lại.',
+      },
+      hardCodedData: {
+        title: 'Dữ liệu viết cứng: {{value}}',
+        why: 'Giá trị này nên là biến hoặc cột dữ liệu để đổi được theo môi trường và chạy nhiều dòng.',
+      },
+    },
+  },
   popups: {
     title: 'Popup tự đóng',
     hint: 'Nếu trang hiện popup này thì tự bấm đóng — áp dụng cho mọi test của dự án, popup bất chợt không làm test fail.',
@@ -959,6 +994,8 @@ export const viUi = {
     newSteps: '{{count}} bước mới',
     prefixFailed: 'Có bước trước bước chèn bị lỗi — trang có thể chưa đúng trạng thái.',
     stopped: 'Đã dừng ghi · thêm {{count}} bước',
+    moreCases: 'Sinh thêm case',
+    moreCasesHint: 'Test này mới là luồng chính. Sinh thêm case lỗi/biên từ đặc tả form?',
     loginSaved: 'Đã lưu đăng nhập “{{name}}”',
     download: 'Đang tải trình duyệt… {{percent}}%',
     suggestTitle: 'Gợi ý kiểm tra',

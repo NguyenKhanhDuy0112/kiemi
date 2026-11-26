@@ -16,4 +16,5 @@ export * from './product';
 export * from './run-result';
 export * from './step';
 export * from './test-case';
+export * from './test-lint';
 export * from './version';

@@ -651,6 +651,41 @@ export const enUi = {
       numbers: 'Totals',
     },
   },
+  lint: {
+    title: 'Test quality',
+    clean: 'No warnings — this test looks fine.',
+    removeStep: 'Remove this wait',
+    rules: {
+      noAssertion: {
+        title: 'No check step',
+        why: 'The test only acts and never checks the result, so it passes even when the page is wrong. Add at least one Check step.',
+      },
+      fixedWait: {
+        title: 'Fixed wait of {{seconds}} s',
+        why: 'A fixed wait slows the test and is still fragile. Kiemi waits for elements by itself; to wait for a condition use "Wait until".',
+      },
+      weakSelector: {
+        title: 'Fragile way to find an element',
+        why: 'The element is found only by position / a long path, so a layout change breaks it. Pick it again so Kiemi also stores a label or name.',
+      },
+      noCleanup: {
+        title: 'Writes data but does not clean up',
+        why: 'The test enters data with no cleanup step, so the next run may hit duplicates. Add a step under "Cleanup".',
+      },
+      tooLong: {
+        title: 'Test too long ({{count}} steps)',
+        why: 'More than {{max}} steps are hard to read and fix. Move repeated parts into a shared step.',
+      },
+      duplicate: {
+        title: 'Same as another test',
+        why: 'Another test has exactly these steps. Delete one or merge them.',
+      },
+      hardCodedData: {
+        title: 'Hard-coded data: {{value}}',
+        why: 'This value should be a variable or a data column so it can change per environment and run on many rows.',
+      },
+    },
+  },
   popups: {
     title: 'Auto-close popups',
     hint: 'If the page shows this popup, close it by itself — for every test of the project, so a random popup does not fail a run.',
@@ -963,6 +998,9 @@ export const enUi = {
     newSteps: '{{count}} new steps',
     prefixFailed: 'A step before the insert point failed — the page may not be in the right state.',
     stopped: 'Recording stopped · {{count}} steps added',
+    moreCases: 'Generate more cases',
+    moreCasesHint:
+      'This is only the main flow. Generate error/boundary cases from a form specification?',
     loginSaved: 'Login “{{name}}” saved',
     download: 'Downloading the browser… {{percent}}%',
     suggestTitle: 'Suggested checks',
