@@ -20,5 +20,8 @@
   "exports": {
     "./server": "./server/index.ts",
     "./sample": "./server/sample-site.ts"
+  },
+  "dependencies": {
+    "exceljs": "4.4.0"
   }
 }

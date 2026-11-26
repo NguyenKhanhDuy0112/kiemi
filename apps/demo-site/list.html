@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Nhân sự — Kiemi Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Danh sách nhân sự</h1>
+      <p class="muted">
+        500 dòng: tìm kiếm, lọc phòng ban, bấm tiêu đề cột để sắp xếp, phân trang 20 dòng.
+        Lỗi cố ý: <code>?bug=sort</code> (một dòng sai thứ tự) · <code>?bug=filter</code> (lọc phòng ban lọt một dòng lạ).
+      </p>
+      <div class="actions" style="margin-bottom: 12px">
+        <input type="text" id="q" placeholder="Tìm theo tên hoặc mã" aria-label="Tìm nhân viên" />
+        <label for="dept">Phòng ban</label>
+        <select id="dept"><option value="">Tất cả</option></select>
+        <span id="loading" hidden>Đang tải…</span>
+      </div>
+      <table class="table" id="people-table">
+        <thead>
+          <tr>
+            <th><button type="button" class="btn" data-sort="code">Mã</button></th>
+            <th><button type="button" class="btn" data-sort="name">Họ tên</button></th>
+            <th><button type="button" class="btn" data-sort="dept">Phòng ban</button></th>
+            <th><button type="button" class="btn" data-sort="salary">Lương</button></th>
+            <th><button type="button" class="btn" data-sort="joined">Ngày vào</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <nav class="pagination" aria-label="Phân trang">
+        <button type="button" class="btn" id="prev">Trước</button>
+        <span id="page-label"></span>
+        <button type="button" class="btn" id="next">Sau</button>
+        <strong id="total-label"></strong>
+      </nav>
+    </main>
+    <script type="module" src="/src/list.ts"></script>
+  </body>
+</html>

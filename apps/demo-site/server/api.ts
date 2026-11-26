@@ -1,4 +1,15 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import {
+  DEPARTMENTS,
+  payroll,
+  payrollPdf,
+  payrollXlsx,
+  queryPeople,
+  readUpload,
+  type SortKey,
+  sumOf,
+  validateImport,
+} from './data-pages';
 import { type DemoStore, LEAVE_TYPES, type RequestStatus, type User } from './store';
 import { handleWebForms } from './webforms';
 
@@ -17,6 +28,12 @@ async function readBody(req: IncomingMessage): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(chunk as Buffer);
   return Buffer.concat(chunks).toString('utf8');
+}
+
+async function readBytes(req: IncomingMessage): Promise<Uint8Array> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) chunks.push(chunk as Buffer);
+  return new Uint8Array(Buffer.concat(chunks));
 }
 
 async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
@@ -110,6 +127,76 @@ export async function handleRequest(
         ...(q ? { q } : {}),
       }),
     );
+    return true;
+  }
+  if (path === '/api/people' && method === 'GET') {
+    const bugs = (url.searchParams.get('bug') ?? '').split(',');
+    const sort = url.searchParams.get('sort') as SortKey | null;
+    await new Promise((r) => setTimeout(r, 100));
+    send(res, 200, {
+      ...queryPeople(store.people, {
+        q: url.searchParams.get('q') ?? '',
+        dept: url.searchParams.get('dept') ?? '',
+        ...(sort ? { sort } : {}),
+        dir: url.searchParams.get('dir') === 'desc' ? 'desc' : 'asc',
+        page: Number(url.searchParams.get('page') ?? 1),
+        pageSize: Number(url.searchParams.get('pageSize') ?? 20),
+        bugSort: bugs.includes('sort'),
+        bugFilter: bugs.includes('filter'),
+      }),
+      departments: DEPARTMENTS,
+    });
+    return true;
+  }
+  if (path === '/api/payroll' && method === 'GET') {
+    const rows = payroll();
+    send(res, 200, {
+      rows,
+      totals: {
+        base: sumOf(rows, 'base'),
+        allowance: sumOf(rows, 'allowance'),
+        bonus: sumOf(rows, 'bonus'),
+        net: sumOf(rows, 'net'),
+      },
+    });
+    return true;
+  }
+  if (path === '/api/payroll/export.xlsx' && method === 'GET') {
+    res.writeHead(200, {
+      'content-type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'content-disposition': 'attachment; filename="bang-luong-2026-11.xlsx"',
+    });
+    res.end(Buffer.from(await payrollXlsx(payroll())));
+    return true;
+  }
+  if (path === '/api/payroll/export.pdf' && method === 'GET') {
+    res.writeHead(200, {
+      'content-type': 'application/pdf',
+      'content-disposition': 'attachment; filename="bang-luong-2026-11.pdf"',
+    });
+    res.end(Buffer.from(payrollPdf(payroll())));
+    return true;
+  }
+  if (path === '/api/import' && method === 'GET') {
+    send(res, 200, { imported: store.imported });
+    return true;
+  }
+  if (path === '/api/import' && method === 'POST') {
+    const name = decodeURIComponent(String(req.headers['x-file-name'] ?? 'file.csv'));
+    try {
+      const result = validateImport(
+        await readUpload(await readBytes(req), name),
+        store.imported.map((r) => r.code),
+      );
+      store.imported.push(...result.imported);
+      send(res, 200, {
+        total: result.total,
+        imported: result.imported.length,
+        errors: result.errors,
+      });
+    } catch {
+      send(res, 400, { error: 'Không đọc được file (chỉ nhận .xlsx hoặc .csv)' });
+    }
     return true;
   }
   if (path === '/api/meta' && method === 'GET') {

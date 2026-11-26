@@ -249,3 +249,13 @@ iframe {
 [hidden] {
   display: none;
 }
+#summary .row {
+  display: flex;
+  justify-content: space-between;
+  max-width: 360px;
+  padding: 4px 0;
+}
+#summary dt,
+#summary dd {
+  margin: 0;
+}

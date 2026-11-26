@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Nhập nhân viên từ Excel — Kiemi Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Nhập nhân viên từ Excel / CSV</h1>
+      <p class="muted">
+        File cần cột <code>Mã</code>, <code>Họ tên</code>, <code>Email</code>, <code>Lương</code>. Dòng sai được báo kèm số dòng trong file; dòng đúng vẫn được nhập.
+      </p>
+      <section class="card">
+        <div class="field">
+          <label for="file">Chọn file (.xlsx hoặc .csv)</label>
+          <input id="file" type="file" accept=".xlsx,.csv" />
+        </div>
+        <button type="button" class="btn primary" id="upload">Nhập</button>
+        <p id="result" role="status"></p>
+        <ul id="errors"></ul>
+      </section>
+      <section class="card">
+        <h2>Đã nhập</h2>
+        <table class="table" id="imported-table">
+          <thead><tr><th>Mã</th><th>Họ tên</th><th>Email</th><th>Lương</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p id="imported-count" data-testid="imported-count">Đã nhập 0 nhân viên</p>
+      </section>
+    </main>
+    <script type="module" src="/src/import.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Bảng lương — Kiemi Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Bảng lương tháng 11/2026</h1>
+      <p class="muted">Thực lĩnh = Lương cơ bản + Phụ cấp + Thưởng − 10,5% bảo hiểm trên lương cơ bản.</p>
+      <div class="actions" style="margin-bottom: 12px">
+        <a class="btn" id="export-xlsx" href="/api/payroll/export.xlsx" download>Xuất Excel</a>
+        <a class="btn" id="export-pdf" href="/api/payroll/export.pdf" download>Xuất PDF</a>
+      </div>
+      <table class="table" id="payroll-table">
+        <thead><tr><th>Họ tên</th><th>Phòng ban</th><th>Lương cơ bản</th><th>Phụ cấp</th><th>Thưởng</th><th>Thực lĩnh</th></tr></thead>
+        <tbody></tbody>
+        <tfoot></tfoot>
+      </table>
+    </main>
+    <script type="module" src="/src/payroll.ts"></script>
+  </body>
+</html>

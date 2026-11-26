@@ -145,7 +145,8 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M12-06** Kiểm tra bảng: mọi dòng thỏa điều kiện, đã sắp xếp (thứ tự tiếng Việt), duyệt mọi trang + tổng khớp nhãn [Q-01, Q-02, Q-03]
 - [x] **M12-07** File tải về: tên/loại/dung lượng, đọc Excel/CSV/PDF → biến [Q-04]
 - [x] **M12-08** Sinh file Excel/CSV từ dataset + file mẫu để upload [P-09]
-- [ ] **M12-09** Demo-site: Shop (giỏ hàng, mã giảm, VAT, ship), Bảng lương (xuất Excel, PDF), Danh sách 500 dòng, Import/Export có dòng lỗi; mẫu L-03 #1, #2, #4, #5 [L-03]
+- [x] **M12-09a** Demo-site: Shop (giỏ hàng, mã giảm, VAT, ship), Bảng lương (xuất Excel, PDF), Danh sách 500 dòng, Import/Export có dòng lỗi [L-03]
+- [ ] **M12-09b** Bộ test mẫu L-03 #1, #2, #4, #5 trong dự án mẫu + kiểm tra app thật + PR [L-03]
 
 ## M13 — Web thực tế & kiểm tra chéo
 - [ ] **M13-01** Tab có tên: mở/bắt tab do thao tác mở, đặt tên, chuyển theo tên, nhãn tab trên step, recorder tự đặt tên [V-01]

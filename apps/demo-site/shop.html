@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cửa hàng — Kiemi Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Cửa hàng</h1>
+      <p class="muted">
+        Giỏ hàng, mã giảm giá (<code>GIAM10</code>, <code>GIAM50K</code>, <code>FREESHIP</code>), VAT 8%, phí ship
+        30.000 ₫ (miễn phí từ 500.000 ₫). Lỗi cố ý: <code>?bug=vat</code> (tính VAT trước khi giảm).
+      </p>
+      <section class="card" aria-label="Sản phẩm">
+        <h2>Sản phẩm</h2>
+        <table class="table" id="catalog">
+          <thead><tr><th>Mã</th><th>Sản phẩm</th><th>Đơn giá</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+      <section class="card" aria-label="Giỏ hàng">
+        <h2>Giỏ hàng</h2>
+        <table class="table" id="cart">
+          <thead><tr><th>Sản phẩm</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p id="cart-empty" class="empty">Giỏ hàng trống</p>
+        <div class="field">
+          <label for="coupon">Mã giảm giá</label>
+          <div class="actions">
+            <input id="coupon" type="text" autocomplete="off" />
+            <button type="button" class="btn" id="apply-coupon">Áp dụng</button>
+          </div>
+          <span class="error-text" id="coupon-error" role="alert"></span>
+          <span class="hint" id="coupon-ok"></span>
+        </div>
+        <dl id="summary">
+          <div class="row"><dt>Tạm tính</dt><dd data-testid="subtotal">0 ₫</dd></div>
+          <div class="row"><dt>Giảm giá</dt><dd data-testid="discount">0 ₫</dd></div>
+          <div class="row"><dt>VAT (8%)</dt><dd data-testid="vat">0 ₫</dd></div>
+          <div class="row"><dt>Phí vận chuyển</dt><dd data-testid="shipping">0 ₫</dd></div>
+          <div class="row"><dt><strong>Tổng cộng</strong></dt><dd data-testid="total"><strong>0 ₫</strong></dd></div>
+        </dl>
+      </section>
+    </main>
+    <script type="module" src="/src/shop.ts"></script>
+  </body>
+</html>
