@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M13** đang làm trên nhánh `milestone/m13-real-web`: xong M13-01 → M13-07b. Tiếp: M13-08 → M13-09. Việc còn treo của v1.0: `docs/RELEASE-CHECKLIST.md` mục C và D.
+**M13** đang làm trên nhánh `milestone/m13-real-web`: xong M13-01 → M13-08. Tiếp: M13-09. Việc còn treo của v1.0: `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
+- M13-08 xong: `upload` thêm `via: auto|input|chooser|drop` — tự thử ô file (chính nó / label.control / input con) → hộp thoại file (chờ ≤3s) → thả file giả lập `DragEvent` (File dựng từ base64, MIME theo đuôi). Test dùng trang `data:`.
 - M13-07b xong: `collector.ts` `mergePick` + `optionOf` (click mở [+ fill tìm] + click mục role option/menuitem/treeitem hoặc `li` class option/suggestion → 1 `pickOption`; 'xóa rồi thêm' qua `removeLast`). Rich text (contenteditable) vẫn ghi là `fill`; ô mặt nạ ghi `fill` giá trị cuối — đổi 'Cách gõ' sang từng phím bằng tay nếu mặt nạ chặn dán. Chưa nhận diện tự động date-range của thư viện (ghi là fill ô).
 - M13-07a xong (M13-07 chia a/b): `actions/pick-option.ts` (`pickOption`: bấm mở → gõ `search` → chọn mục khớp đúng tên trước, chứa tên sau; role=option hoặc li/class Select2/Chosen/Ant), `pickDateRange` (1 ô `a - b` hoặc 2 ô + nút Áp dụng; trong `pick-date.ts`), `fill{typing:'keys'}` cho ô mặt nạ/rich text. e2e dùng trang `data:` mô phỏng (`data.e2e.test.ts`); trang demo thật làm ở M13-09. M13-07b: recorder gộp click mở + fill tìm + click mục (role=option) thành 1 `pickOption` ở `collector.ts`.
 - M13-06b xong: `actions/grid.ts` — `gridRow` (where{column,value} + do select|unselect|expand|collapse|edit|click, cuộn ảo tới dòng rồi dùng locator động theo ô khớp, không đánh dấu DOM vì grid vẽ lại) và `gridFilter` (ô lọc dưới tiêu đề, fill + Enter). Quét cả lưới ~4s/1.000 dòng → test đặt timeout bước 30s.

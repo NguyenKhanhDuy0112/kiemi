@@ -1259,6 +1259,7 @@ export const viUi = {
     unknown: { label: 'Thao tác khác', sentence: 'Thao tác {{action}}' },
   },
   params: {
+    via: 'Cách tải lên',
     search: 'Gõ để tìm',
     targetEnd: 'Ô ngày kết thúc',
     separator: 'Dấu ngăn giữa 2 ngày',
@@ -1352,6 +1353,10 @@ export const viUi = {
     ttlHours: 'Dùng lại trong (giờ)',
   },
   enums: {
+    auto: 'Tự chọn (ô nhập → hộp thoại → kéo thả)',
+    input: 'Ô nhập file',
+    chooser: 'Hộp thoại chọn file',
+    drop: 'Kéo thả',
     fill: 'Dán một lần',
     keys: 'Từng phím (ô có mặt nạ)',
     load: 'Tải xong',

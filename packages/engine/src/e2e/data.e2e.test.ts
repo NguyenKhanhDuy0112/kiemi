@@ -1,4 +1,4 @@
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -712,5 +712,52 @@ describe('complex controls [W-04]', () => {
     expect(sm[5]).toBe('6 failed ELEMENT_NOT_FOUND');
     expect(sm.slice(6, 14)).toEqual(Array.from({ length: 8 }, (_, i) => `${i + 7} passed`));
     expect(sm[14]).toBe('15 failed INVALID_PARAMS');
+  });
+});
+
+describe('upload through hidden inputs and drag-and-drop [W-06]', () => {
+  const page = (body: string) => `data:text/html;charset=utf-8,${encodeURIComponent(body)}`;
+  const shows = `<p id="out"></p><script>
+    const show = (files) => { out.textContent = [...files].map(x => x.name + ':' + x.size + ':' + x.type).join(','); };
+  </script>`;
+  const hidden = page(`${shows}
+    <label id="pick" style="padding:8px;border:1px solid #999">Kéo hoặc bấm để chọn
+      <input type="file" id="f" hidden></label>
+    <button id="btn" onclick="g.click()">Tải lên…</button><input type="file" id="g" hidden>
+    <div id="zone" style="width:200px;height:80px;border:2px dashed #999">Thả file vào đây</div>
+    <script>
+      f.onchange = () => show(f.files); g.onchange = () => show(g.files);
+      zone.addEventListener('dragover', (e) => e.preventDefault());
+      zone.addEventListener('drop', (e) => { e.preventDefault(); show(e.dataTransfer.files); });
+    </script>`);
+
+  async function withFile<T>(run: (path: string) => Promise<T>): Promise<T> {
+    const dir = await mkdtemp(join(tmpdir(), 'kiemi-w06-'));
+    const path = join(dir, 'bao-cao.csv');
+    await writeFile(path, 'a,b\n1,2\n');
+    return run(path);
+  }
+
+  it('sets files on an input hidden inside a label, via a file dialog and by dropping them', async () => {
+    const r = await withFile((path) =>
+      e.run([
+        step('goto', { url: hidden }),
+        step('upload', { target: { css: '#pick' }, files: path }),
+        step('assertText', { target: { css: '#out' }, value: 'bao-cao.csv:8:text/csv' }),
+        step('upload', { target: { css: '#btn' }, files: path }),
+        step('assertText', { target: { css: '#out' }, value: 'bao-cao.csv:8:text/csv' }),
+        step('goto', { url: hidden }),
+        step('upload', { target: { css: '#zone' }, files: path, via: 'drop' }),
+        step('assertText', { target: { css: '#out' }, value: 'bao-cao.csv:8:text/csv' }),
+        step('goto', { url: hidden }),
+        step('upload', { target: { css: '#zone' }, files: path }), // auto: no dialog opens → drop
+        step('assertText', { target: { css: '#out' }, value: 'bao-cao.csv:8:text/csv' }),
+        step('upload', { target: { css: '#zone' }, files: path, via: 'input' }, { mode: 'soft' }),
+      ]),
+    );
+    expect(summary(r)).toEqual([
+      ...Array.from({ length: 11 }, (_, i) => `${i + 1} passed`),
+      '12 failed ELEMENT_NOT_FOUND',
+    ]);
   });
 });

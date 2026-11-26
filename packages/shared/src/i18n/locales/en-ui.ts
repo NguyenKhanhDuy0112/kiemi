@@ -1263,6 +1263,7 @@ export const enUi = {
     unknown: { label: 'Other action', sentence: 'Action {{action}}' },
   },
   params: {
+    via: 'Upload via',
     search: 'Type to search',
     targetEnd: 'End date box',
     separator: 'Separator between the dates',
@@ -1356,6 +1357,10 @@ export const enUi = {
     ttlHours: 'Reuse for (hours)',
   },
   enums: {
+    auto: 'Automatic (input → dialog → drop)',
+    input: 'File input',
+    chooser: 'File dialog',
+    drop: 'Drag and drop',
     fill: 'Paste at once',
     keys: 'Key by key (masked boxes)',
     load: 'Fully loaded',

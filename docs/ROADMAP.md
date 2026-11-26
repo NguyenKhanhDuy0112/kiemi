@@ -158,7 +158,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M13-06b** Grid phức tạp — thao tác: sửa ô inline, chọn dòng, mở dòng con, lọc ở header (action `gridRow`/`gridFilter`) [W-03]
 - [x] **M13-07a** Control phức tạp — engine: `pickOption` (Select2/Chosen/Ant Select/autocomplete), `pickDateRange`, gõ từng phím cho ô mặt nạ (`fill` `typing: keys`), soạn thảo rich text (contenteditable/iframe) [W-04]
 - [x] **M13-07b** Control phức tạp — recorder: gộp click mở + gõ tìm + chọn mục thành 1 step `pickOption`, ghi rich text/ô mặt nạ đúng [W-04]
-- [ ] **M13-08** Upload qua input ẩn và kéo thả [W-06]
+- [x] **M13-08** Upload qua input ẩn và kéo thả [W-06]
 - [ ] **M13-09** Demo-site: control phức tạp, Basic auth, khuyến mãi theo ngày + đếm ngược; mẫu L-03 #8 [L-03]
 
 ## M14 — Team & quy trình QA (→ phát hành v1.1)
