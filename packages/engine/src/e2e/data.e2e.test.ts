@@ -330,3 +330,80 @@ describe('table rules [Q-01, Q-02, Q-03]', () => {
     expect(summary(r)).toEqual(['1 passed', '2 passed', '3 passed']);
   });
 });
+
+describe('generate files to upload [P-09]', () => {
+  const uploadPage = encodeURIComponent(
+    '<input type="file" id="f" aria-label="Chọn file"><p id="out"></p><script>f.onchange=()=>{const x=f.files[0];out.textContent=x.name+" "+x.size}</script>',
+  );
+  const open = step('goto', { url: `data:text/html;charset=utf-8,${uploadPage}` });
+
+  it('makes a 200-row Excel with fresh random values, then uploads it', async () => {
+    const r = await e.run([
+      step('generateFile', {
+        into: 'f',
+        fileName: 'nhan-vien',
+        format: 'xlsx',
+        count: 200,
+        columns: {
+          STT: '{{loop.index}}',
+          Email: '{{randomString(8)}}@example.com',
+          Mã: 'NV{{random}}',
+        },
+      }),
+      step('assertNumber', { actual: '{{f.count}}', op: 'eq', value: 200 }),
+      step('assertNumber', { actual: '{{f.rows[199].STT}}', op: 'eq', value: 200 }),
+      step('assertNumber', { actual: "{{COUNTIF(f.rows, 'Email', '<>')}}", op: 'eq', value: 200 }),
+      open,
+      step('upload', { target: { label: 'Chọn file' }, files: '{{f.path}}' }),
+      step('assertText', { target: { css: '#out' }, op: 'contains', value: 'nhan-vien.xlsx' }),
+    ]);
+    expect(summary(r).filter((x) => !x.endsWith('passed'))).toEqual([]);
+  });
+
+  it('writes CSV from a list variable, and from the test data', async () => {
+    const dataset = {
+      id: 'd',
+      name: 'D',
+      columns: ['maBo'],
+      rows: [{ maBo: 'B1' }],
+      children: [
+        {
+          name: 'SanPham',
+          key: 'maBo',
+          parentKey: 'maBo',
+          columns: ['maSp', 'maBo'],
+          rows: [
+            { maSp: 'S1', maBo: 'B1' },
+            { maSp: 'S2', maBo: 'B1' },
+          ],
+        },
+      ],
+    };
+    const r = await e.run(
+      [
+        step('generateFile', {
+          into: 'c',
+          format: 'csv',
+          from: 'list',
+          list: '{{children.SanPham}}',
+        }),
+        step('assertNumber', { actual: '{{c.count}}', op: 'eq', value: 2 }),
+        step('generateFile', { into: 'd', format: 'csv', from: 'data' }),
+        step('assertNumber', { actual: '{{d.count}}', op: 'eq', value: 1 }),
+        step(
+          'generateFile',
+          { into: 'x', from: 'columns', columns: { a: '1' }, template: 'khong-co.xlsx' },
+          { mode: 'soft' },
+        ),
+      ],
+      { request: { dataset, rowIndex: 0 } },
+    );
+    expect(summary(r)).toEqual([
+      '1 passed',
+      '2 passed',
+      '3 passed',
+      '4 passed',
+      '5 failed FILE_NOT_FOUND',
+    ]);
+  });
+});

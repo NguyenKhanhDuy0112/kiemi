@@ -1142,6 +1142,10 @@ export const viUi = {
     useSession: { label: 'Dùng đăng nhập đã lưu', sentence: 'Dùng đăng nhập đã lưu {{name}}' },
     wait: { label: 'Chờ cố định', sentence: 'Chờ {{seconds}} giây' },
     extract: { label: 'Lưu giá trị vào biến', sentence: 'Lưu {{target}} vào biến {{into}}' },
+    generateFile: {
+      label: 'Tạo file Excel/CSV để tải lên',
+      sentence: 'Tạo file {{fileName}} lưu vào biến {{into}}',
+    },
     download: {
       label: 'Tải file về',
       sentence: 'Bấm {{target}} để tải file, lưu vào biến {{into}}',
@@ -1241,6 +1245,10 @@ export const viUi = {
     regex: 'Chỉ lấy phần khớp (biểu thức)',
     into: 'Tên biến',
     allPages: 'Duyệt mọi trang',
+    fileName: 'Tên file (không đuôi)',
+    count: 'Số dòng',
+    list: 'Danh sách dòng',
+    template: 'File mẫu (xlsx/csv)',
     expectName: 'Tên file phải chứa',
     expectType: 'Loại file (xlsx, csv, pdf…)',
     minBytes: 'Dung lượng tối thiểu (byte)',

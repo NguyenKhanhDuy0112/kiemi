@@ -1149,6 +1149,10 @@ export const enUi = {
       label: 'Save value to variable',
       sentence: 'Save {{target}} into variable {{into}}',
     },
+    generateFile: {
+      label: 'Create an Excel/CSV file to upload',
+      sentence: 'Create file {{fileName}} into variable {{into}}',
+    },
     download: {
       label: 'Download a file',
       sentence: 'Click {{target}} to download a file into variable {{into}}',
@@ -1245,6 +1249,10 @@ export const enUi = {
     regex: 'Keep only the matching part (pattern)',
     into: 'Variable name',
     allPages: 'Go through every page',
+    fileName: 'File name (no extension)',
+    count: 'Number of rows',
+    list: 'List of rows',
+    template: 'Sample file (xlsx/csv)',
     expectName: 'File name must contain',
     expectType: 'File type (xlsx, csv, pdf…)',
     minBytes: 'Minimum size (bytes)',
