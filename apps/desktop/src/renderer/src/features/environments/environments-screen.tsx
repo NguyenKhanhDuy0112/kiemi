@@ -64,6 +64,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { DbConnectionsForm } from './db-connections';
 import { EnvironmentPill } from './environment-badge';
 import { HttpAuthForm } from './http-auth';
 import { PopupRulesEditor } from './popup-rules';
@@ -802,6 +803,13 @@ function EnvironmentDetails({ id, onChanged }: { id: string; onChanged: () => vo
           value={e.httpAuth}
           secretNames={e.secrets.map((s) => s.name)}
           onSave={(httpAuth) => void update({ httpAuth })}
+        />
+        <DbConnectionsForm
+          key={JSON.stringify(e.dbConnections ?? null)}
+          environmentId={id}
+          value={e.dbConnections ?? undefined}
+          secretNames={e.secrets.map((s) => s.name)}
+          onSave={(dbConnections) => void update({ dbConnections })}
         />
         <div className="flex items-start justify-between gap-4 rounded-md border p-3">
           <div>

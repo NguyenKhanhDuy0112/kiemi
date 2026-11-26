@@ -1,4 +1,8 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createMemoryServices, writeCsv } from '@kiemi/db';
+import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
 import { createTestRunManager } from '../run/testing';
 import { createCaller } from './root';
@@ -157,5 +161,38 @@ describe('reports router [X-01]', () => {
     // .xlsx is a zip file
     expect(Buffer.from(r.data, 'base64').subarray(0, 2).toString()).toBe('PK');
     await expect(c.reports.pdf({ html: '<p>x</p>' })).rejects.toThrow(/desktop/);
+  });
+});
+
+describe('dbQuery router [X-05]', () => {
+  it('tests a SQLite connection and explains a missing secret or file', async () => {
+    const { c } = caller();
+    const projectId = (await c.projects.list())[0]?.id ?? '';
+    const env = await c.environments.create({ projectId, name: 'UAT', baseUrl: 'http://x' });
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-dbtest-'));
+    const file = join(dir, 'a.db');
+    new Database(file).close();
+    const ok = await c.dbQuery.test({
+      environmentId: env.id,
+      connection: { name: 'qa', kind: 'sqlite', database: file, ssl: false },
+    });
+    expect(ok).toEqual({ ok: true, message: 'Kết nối được' });
+    const missing = await c.dbQuery.test({
+      environmentId: env.id,
+      connection: { name: 'qa', kind: 'sqlite', database: join(dir, 'none.db'), ssl: false },
+    });
+    expect(missing.ok).toBe(false);
+    const noSecret = await c.dbQuery.test({
+      environmentId: env.id,
+      connection: {
+        name: 'p',
+        kind: 'postgres',
+        host: 'h',
+        database: 'd',
+        passwordSecret: 'DB_PW',
+        ssl: false,
+      },
+    });
+    expect(noSecret).toEqual({ ok: false, message: 'Chưa nhập giá trị cho bí mật “DB_PW”' });
   });
 });

@@ -28,6 +28,7 @@ Quy trình kỹ thuật: ADR 0015 (đóng gói, ký, workflow) và ADR 0016 (t�
 - [ ] **Portable cập nhật**: chỉ thông báo, nút "Tải bản mới" mở trang Releases.
 - [ ] **Báo lỗi**: mặc định tắt. Bật → mở lại app → gây lỗi thử → sự kiện trên Sentry **không** chứa tên người dùng, đường dẫn home, URL trang, email.
 - [ ] Đổi ngôn ngữ English: không còn chuỗi tiếng Việt sót.
+- [ ] **Query DB (X-05)**: thử 'Thử kết nối' + một bước 'Hỏi cơ sở dữ liệu' với Postgres, MySQL và SQL Server thật (đọc được; câu UPDATE bị chặn; môi trường Production chặn bước ghi).
 - [ ] **CLI (X-04)**: trên bản cài Windows chạy `resources\cli\kiemi.cmd version` → in số phiên bản; `kiemi run <thư-mục-dự-án-mẫu> --suite … --junit kq.xml` → mã thoát 0 và có file JUnit; trên macOS thử `kiemi.sh` trong `Kiemi.app/Contents/Resources/cli/`.
 
 ## D. Riêng v1.0

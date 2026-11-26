@@ -12,6 +12,7 @@ import {
   suitesRouter,
   testCasesRouter,
 } from './routers/data';
+import { dbQueryRouter } from './routers/db-query';
 import { formulasRouter } from './routers/formulas';
 import { manualRouter } from './routers/manual';
 import { notifyRouter } from './routers/notify';
@@ -49,6 +50,7 @@ export const rootRouter = router({
   permissions: permissionsRouter,
   reports: reportsRouter,
   notify: notifyRouter,
+  dbQuery: dbQueryRouter,
   savedLogins: savedLoginsRouter,
   updates: updatesRouter,
   sharedResources: sharedResourcesRouter,

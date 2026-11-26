@@ -1,6 +1,7 @@
 import {
   type ActionRegistry,
   createDefaultRegistry,
+  type DbClient,
   DebugController,
   findSimilar,
   type LaunchBrowserOptions,
@@ -14,6 +15,7 @@ import {
 import { type Recorder, type RecorderOptions, startRecorder } from '@kiemi/recorder';
 import type { RunResult } from '@kiemi/schema';
 import type { BrowserContext } from 'playwright-core';
+import { createDbClient } from '../db-query';
 import { createRecordSession } from '../record/record-core';
 import type { HostToWorker, WorkerToHost } from './protocol';
 
@@ -23,6 +25,8 @@ export interface WorkerDeps {
   registry?: ActionRegistry;
   /** Recorder factory (tests use a fake one). */
   startRecorder?: (context: BrowserContext, options: RecorderOptions) => Promise<Recorder>;
+  /** Database access for `queryDb` (default: the real drivers) [X-05]. */
+  db?: DbClient;
 }
 
 /**
@@ -34,6 +38,7 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
   const launch = deps.launch ?? launchBrowser;
   const run = deps.run ?? runTestCase;
   const registry = deps.registry ?? createDefaultRegistry();
+  const db = deps.db ?? createDbClient();
   const abort = new AbortController();
   let started = false;
   /** Request (run case) currently running, for debug messages. */
@@ -123,6 +128,7 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
               })
             ).browser,
           signal: abort.signal,
+          db,
           debugger: debug,
           onEvent: (event) => post({ type: 'event', event }),
         });
