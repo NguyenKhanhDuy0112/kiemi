@@ -2,10 +2,11 @@ import type { FormSpec } from '@kiemi/schema';
 import { Button } from '@renderer/components/ui/button';
 import { Input } from '@renderer/components/ui/input';
 import { Textarea } from '@renderer/components/ui/textarea';
+import { fileToBase64 } from '@renderer/features/editor/editor-tabs';
 import { errorMessage } from '@renderer/lib/errors';
 import { trpcClient } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
-import { Globe, ScanSearch } from 'lucide-react';
+import { Download, FileSpreadsheet, Globe, ScanSearch } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -73,6 +74,34 @@ export function InferPanel({
       setScanId(null);
     });
 
+  const fileRef = useRef<HTMLInputElement>(null);
+  const readExcelFile = (file: File) =>
+    guard(async () => {
+      const { form, warnings } = await trpcClient.forms.fromExcel.mutate({
+        data: await fileToBase64(file),
+        fileName: file.name,
+      });
+      if (form.fields.length === 0) {
+        toast.info(tx('ui.forms.excelNone'));
+        return;
+      }
+      onAdd([form as FormSpec]);
+      toast.success(tx('ui.forms.scanDone', { count: 1 }));
+      for (const w of warnings.slice(0, 5)) toast.warning(w);
+    });
+
+  const downloadTemplate = () =>
+    guard(async () => {
+      const r = await trpcClient.forms.specTemplate.query();
+      const bytes = Uint8Array.from(atob(r.data), (c) => c.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'kiemi-dac-ta-field-mau.xlsx';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    });
+
   const readSchema = () =>
     guard(async () => {
       const forms = await trpcClient.forms.fromSchema.mutate({ text: schemaText });
@@ -129,6 +158,35 @@ export function InferPanel({
             onClick={() => void readSchema()}
           >
             {tx('ui.forms.readSchema')}
+          </Button>
+        </div>
+        <h2 className="mt-2 flex items-center gap-2 text-sm font-semibold">
+          <FileSpreadsheet className="size-4 text-muted-foreground" aria-hidden />
+          {tx('ui.forms.fromExcel')}
+        </h2>
+        <p className="text-xs text-muted-foreground">{tx('ui.forms.fromExcelHint')}</p>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".xlsx"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) void readExcelFile(file);
+          }}
+        />
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => fileRef.current?.click()}
+          >
+            {tx('ui.forms.chooseExcel')}
+          </Button>
+          <Button size="sm" variant="ghost" disabled={busy} onClick={() => void downloadTemplate()}>
+            <Download /> {tx('ui.forms.downloadTemplate')}
           </Button>
         </div>
       </div>

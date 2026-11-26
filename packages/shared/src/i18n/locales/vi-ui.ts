@@ -533,6 +533,12 @@ export const viUi = {
         bad: 'Dữ liệu xấu',
       },
     },
+    fromExcel: 'Từ file Excel',
+    fromExcelHint:
+      'Mỗi dòng là một ô nhập: kiểu, bắt buộc, tối thiểu/tối đa, định dạng… Tải file mẫu để điền theo.',
+    chooseExcel: 'Chọn file Excel',
+    downloadTemplate: 'Tải file mẫu',
+    excelNone: 'File không có dòng ô nhập nào.',
     fileTypesHint: 'pdf, png',
     pathHint: '/dang-ky',
     fileSize: 'Dung lượng tối đa (KB)',

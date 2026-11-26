@@ -128,7 +128,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M11-05** Bộ dữ liệu xấu chuẩn, bật/tắt theo field, nhãn giải thích tiếng Việt [R-04]
 - [x] **M11-06** Kiểm tra thông báo lỗi theo field (vị trí, nội dung theo catalog, focus, không xóa dữ liệu, không gửi form) + round-trip lưu rồi đọc lại [R-05, R-07]
 - [x] **M11-07** Ma trận kết quả Field × Quy tắc (xem ảnh/chi tiết, xuất Excel) [R-09]
-- [ ] **M11-08** Import đặc tả field từ Excel (file mẫu) [R-14]
+- [x] **M11-08** Import đặc tả field từ Excel (file mẫu) [R-14]
 - [ ] **M11-09** Nhãn kỹ thuật thiết kế + đặc tính ISO 25010 cho test/case (tự gắn với case sinh tự động) [CV-01]
 - [ ] **M11-10** Độ phủ trang (khai báo danh sách trang) + độ phủ theo checklist `QC-COVERAGE.md` [CV-02, CV-04]
 - [ ] **M11-11** Lint chất lượng test (có nút sửa nhanh/giải thích) + nhắc sinh thêm case sau khi ghi [CV-07, CV-08]

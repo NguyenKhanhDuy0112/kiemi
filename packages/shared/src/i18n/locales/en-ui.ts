@@ -535,6 +535,12 @@ export const enUi = {
         bad: 'Bad data',
       },
     },
+    fromExcel: 'From an Excel file',
+    fromExcelHint:
+      'One row per field: type, required, min/max, format… Download the sample file to fill in.',
+    chooseExcel: 'Choose Excel file',
+    downloadTemplate: 'Download sample',
+    excelNone: 'The file has no field rows.',
     fileTypesHint: 'pdf, png',
     pathHint: '/sign-up',
     fileSize: 'Maximum size (KB)',

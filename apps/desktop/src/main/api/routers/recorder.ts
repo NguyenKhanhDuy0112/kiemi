@@ -1,4 +1,4 @@
-import { writeExcel } from '@kiemi/db';
+import { FIELD_SPEC_TEMPLATE, formFromTable, readExcel, writeExcel } from '@kiemi/db';
 import { formSpecsFromSchema, inferForm } from '@kiemi/engine';
 import { LocatorSchema } from '@kiemi/schema';
 import { TRPCError } from '@trpc/server';
@@ -82,6 +82,26 @@ export const savedLoginsRouter = router({
 
 /** Field specs derived without a browser [R-02], tests generated from them [R-03]. */
 export const formsRouter = router({
+  /** Sample file for the field-specification import (.xlsx, base64) [R-14]. */
+  specTemplate: publicProcedure.query(async () => ({
+    data: Buffer.from(await writeExcel(FIELD_SPEC_TEMPLATE, 'Đặc tả')).toString('base64'),
+  })),
+
+  /** Field specification from an Excel file → a form to review [R-14]. */
+  fromExcel: publicProcedure
+    .input(
+      z.object({
+        data: z.string().max(50 * 1024 * 1024),
+        fileName: z.string().max(260),
+        sheet: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const table = await readExcel(new Uint8Array(Buffer.from(input.data, 'base64')), input.sheet);
+      const name = input.fileName.replace(/\.xlsx$/i, '') || table.sheet;
+      return formFromTable(table, name, `excel-${Date.now().toString(36)}`);
+    }),
+
   /** A simple table → .xlsx (base64), e.g. the result matrix [R-09]. */
   tableToExcel: publicProcedure
     .input(
