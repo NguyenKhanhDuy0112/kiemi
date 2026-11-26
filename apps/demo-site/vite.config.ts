@@ -27,6 +27,7 @@ export default defineConfig({
         payroll: page('payroll.html'),
         list: page('list.html'),
         import: page('import.html'),
+        grid: page('grid.html'),
       },
     },
   },

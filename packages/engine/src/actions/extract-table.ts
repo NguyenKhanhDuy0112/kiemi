@@ -16,6 +16,8 @@ export const extractTableAction = defineAction({
     .object({
       target,
       into: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/),
+      /** Virtual-scroll grid: scroll it to read every row [W-03]. */
+      virtual: z.boolean().default(false),
       allPages: z.boolean().default(false),
       /** The "next page" button (required with `allPages`). */
       next: target.optional(),

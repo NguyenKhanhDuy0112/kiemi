@@ -1246,6 +1246,7 @@ export const viUi = {
     unknown: { label: 'Thao tác khác', sentence: 'Thao tác {{action}}' },
   },
   params: {
+    virtual: 'Lưới cuộn ảo (cuộn để đọc hết dòng)',
     amount: 'Lượng',
     unit: 'Đơn vị',
     time: 'Ngày giờ',

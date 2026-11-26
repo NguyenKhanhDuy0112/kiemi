@@ -279,9 +279,38 @@ export const tableCheck = defineCheck({
     column: z.string().min(1),
     op: TextOpSchema.default('equals'),
     value: z.unknown().optional(),
+    /** Virtual-scroll grid: scroll it to find the row [W-03]. */
+    virtual: z.boolean().default(false),
     ...TextMatchOptions,
   }),
   async check(p, ctx) {
+    if (p.virtual) {
+      const { rows } = await readRows(ctx, { target: p.target, virtual: true, once: true });
+      const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLocaleLowerCase('vi');
+      const cell = (r: Record<string, unknown>, column: string) => {
+        const key = Object.keys(r).find((k) => norm(k) === norm(column));
+        return key === undefined ? undefined : stringify(r[key]);
+      };
+      const row = rows.find((r) =>
+        cell(r, p.where.column) === undefined
+          ? false
+          : norm(cell(r, p.where.column) as string) === norm(stringify(p.where.value)),
+      );
+      if (!row)
+        return {
+          pass: false,
+          actual: `no row with ${p.where.column} = ${stringify(p.where.value)} (${rows.length} rows read)`,
+          expected: p.value,
+          final: true,
+        };
+      const actual = cell(row, p.column) ?? '';
+      return {
+        pass: compareText(actual, p.op, p.value, p),
+        actual,
+        expected: p.value,
+        final: true,
+      };
+    }
     const { locator } = await ctx.resolve(p.target, once);
     const table = await locator.evaluate((el) => {
       const rowsOf = (root: Element) => [...root.querySelectorAll('tr, [role="row"]')];
@@ -319,6 +348,8 @@ export const tableCheck = defineCheck({
 /** Shared by the checks that read a whole table, optionally every page [Q-01 → Q-03]. */
 const tableScope = {
   target,
+  /** Virtual-scroll grid: scroll it to read every row [W-03]. */
+  virtual: z.boolean().default(false),
   allPages: z.boolean().default(false),
   next: target.optional(),
   maxPages: z.coerce.number().int().positive().max(200).default(50),
@@ -443,6 +474,7 @@ export const tableCompareCheck = defineCheck({
       key: z.string().min(1),
       /** Columns to compare (default: all columns of the expected rows). */
       columns: z.array(z.string().min(1)).optional(),
+      virtual: z.boolean().default(false),
       allPages: z.boolean().default(false),
       next: target.optional(),
       maxPages: z.coerce.number().int().positive().max(200).default(50),

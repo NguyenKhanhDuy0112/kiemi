@@ -1250,6 +1250,7 @@ export const enUi = {
     unknown: { label: 'Other action', sentence: 'Action {{action}}' },
   },
   params: {
+    virtual: 'Virtual-scroll grid (scroll to read every row)',
     amount: 'Amount',
     unit: 'Unit',
     time: 'Date and time',

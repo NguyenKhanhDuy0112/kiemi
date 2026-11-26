@@ -518,3 +518,78 @@ describe('fake time [Y-01]', () => {
     ]);
   });
 });
+
+describe('virtual-scroll grid [W-03]', () => {
+  const grid = { css: '#grid' };
+  const open = [
+    step('goto', { url: '/grid.html' }),
+    step('waitUntil', {
+      condition: { assert: 'visible', target: { css: '#viewport [aria-rowindex="2"]' } },
+      timeoutSec: 5,
+    }),
+  ];
+
+  it('reads every row of a grid that only draws what is in view', async () => {
+    const r = await e.run(
+      [
+        ...open,
+        // Without `virtual` only the rows in the window are in the page.
+        step('extractTable', { target: grid, into: 'few' }),
+        step('assertNumber', { actual: '{{few.length}}', op: 'lt', value: 50 }),
+        step('extractTable', { target: grid, into: 'all', virtual: true }),
+        step('assertNumber', { actual: '{{all.length}}', op: 'eq', value: 1000 }),
+        step('assertNumber', { actual: '{{all[0]["Số lượng"]}}', op: 'eq', value: 0 }),
+        step('assertNumber', { actual: '{{all[999]["Số lượng"]}}', op: 'eq', value: 43 }),
+        step('assertNumber', { actual: '{{all[776]["Số lượng"]}}', op: 'eq', value: 32 }),
+        step('assertAllRows', {
+          target: grid,
+          virtual: true,
+          column: 'Số lượng',
+          op: 'lt',
+          value: 50,
+        }),
+        step('assertSorted', {
+          target: grid,
+          virtual: true,
+          column: 'Mã',
+          direction: 'asc',
+          kind: 'text',
+        }),
+        step('assertTable', {
+          target: grid,
+          virtual: true,
+          where: { column: 'Mã', value: 'SP0777' },
+          column: 'Đơn giá',
+          value: '7.000',
+        }),
+        step(
+          'assertTable',
+          {
+            target: grid,
+            virtual: true,
+            where: { column: 'Mã', value: 'SP0777' },
+            column: 'Đơn giá',
+            value: '9.999',
+          },
+          { mode: 'soft', timeoutMs: 15_000 },
+        ),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 30_000 } } },
+    );
+    expect(summary(r)).toEqual([
+      '1 passed',
+      '2 passed',
+      '3 passed',
+      '4 passed',
+      '5 passed',
+      '6 passed',
+      '7 passed',
+      '8 passed',
+      '9 passed',
+      '10 passed',
+      '11 passed',
+      '12 passed',
+      '13 failed ASSERTION_FAILED',
+    ]);
+  });
+});
