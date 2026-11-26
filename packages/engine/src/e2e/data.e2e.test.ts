@@ -648,3 +648,69 @@ describe('grid rows and header filters [W-03]', () => {
     expect(sm.slice(15)).toEqual(['16 failed ELEMENT_NOT_FOUND', '17 failed INVALID_PARAMS']);
   });
 });
+
+describe('complex controls [W-04]', () => {
+  const page = (body: string) => `data:text/html;charset=utf-8,${encodeURIComponent(body)}`;
+  const controls = page(`
+    <div id="city" tabindex="0" role="combobox" aria-label="Thành phố">Chọn…</div>
+    <div id="box" hidden><input id="q" aria-label="Tìm"><ul id="list"></ul></div>
+    <script>
+      const cities = ['Hà Nội', 'Hải Phòng', 'Đà Nẵng', 'Hà Nội 2'];
+      const draw = (f) => list.innerHTML = cities.filter(c => c.toLowerCase().includes(f.toLowerCase())).map(c => '<li role="option">' + c + '</li>').join('');
+      city.onclick = () => { box.hidden = false; draw(''); q.focus(); };
+      q.oninput = () => draw(q.value);
+      list.onclick = (e) => { city.textContent = e.target.textContent; box.hidden = true; };
+    </script>
+    <input id="phone" aria-label="Điện thoại" placeholder="0000 000 000">
+    <script>
+      phone.addEventListener('keydown', (e) => {
+        if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault();
+      });
+      phone.addEventListener('input', () => {
+        const d = phone.value.replace(/\\D/g, '').slice(0, 10);
+        phone.value = d.replace(/^(\\d{4})(\\d{0,3})(\\d{0,3}).*/, (_, a, b, c) => [a, b, c].filter(Boolean).join(' '));
+      });
+    </script>
+    <div id="editor" contenteditable="true" aria-label="Nội dung" style="border:1px solid #999;min-height:40px"></div>
+    <input id="range" aria-label="Khoảng ngày">
+    <button id="apply" onclick="applied.textContent = 'ok:' + range.value">Áp dụng</button><p id="applied"></p>
+  `);
+
+  it('chooses in a searchable list, types masked and rich text, and picks a date range', async () => {
+    const r = await e.run([
+      step('goto', { url: controls }),
+      step('pickOption', { target: { css: '#city' }, search: 'hà', option: 'Hà Nội' }),
+      step('assertText', { target: { css: '#city' }, value: 'Hà Nội' }),
+      step('pickOption', { target: { css: '#city' }, option: 'Đà Nẵng' }),
+      step('assertText', { target: { css: '#city' }, value: 'Đà Nẵng' }),
+      step(
+        'pickOption',
+        { target: { css: '#city' }, option: 'Huế' },
+        { mode: 'soft', timeoutMs: 1500 },
+      ),
+      step('fill', { target: { css: '#phone' }, value: '0912345678', typing: 'keys' }),
+      step('assertValue', { target: { css: '#phone' }, value: '0912 345 678' }),
+      step('fill', { target: { css: '#editor' }, value: 'Xin chào các bạn' }),
+      step('assertText', { target: { css: '#editor' }, value: 'Xin chào các bạn' }),
+      step('fill', { target: { css: '#editor' }, value: '!', clear: false, typing: 'keys' }),
+      step('assertText', { target: { css: '#editor' }, value: 'Xin chào các bạn!' }),
+      step('pickDateRange', {
+        target: { css: '#range' },
+        from: '05/03/2030',
+        to: '09/03/2030',
+        apply: { css: '#apply' },
+      }),
+      step('assertText', { target: { css: '#applied' }, value: 'ok:05/03/2030 - 09/03/2030' }),
+      step(
+        'pickDateRange',
+        { target: { css: '#range' }, from: '09/03/2030', to: '05/03/2030' },
+        { mode: 'soft' },
+      ),
+    ]);
+    const sm = summary(r);
+    expect(sm.slice(0, 5)).toEqual(Array.from({ length: 5 }, (_, i) => `${i + 1} passed`));
+    expect(sm[5]).toBe('6 failed ELEMENT_NOT_FOUND');
+    expect(sm.slice(6, 14)).toEqual(Array.from({ length: 8 }, (_, i) => `${i + 7} passed`));
+    expect(sm[14]).toBe('15 failed INVALID_PARAMS');
+  });
+});

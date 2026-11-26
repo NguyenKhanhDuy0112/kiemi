@@ -1247,10 +1247,23 @@ export const viUi = {
       sentence: 'Lưới {{target}}: {{do}} dòng có {{where}}',
     },
     gridFilter: { label: 'Lọc ở tiêu đề cột', sentence: 'Lọc cột {{column}} = {{value}}' },
+    pickOption: {
+      label: 'Chọn trong danh sách tùy biến',
+      sentence: 'Chọn “{{option}}” trong {{target}}',
+    },
+    pickDateRange: {
+      label: 'Chọn khoảng ngày',
+      sentence: 'Chọn ngày từ {{from}} đến {{to}} ở {{target}}',
+    },
     assertVariable: { label: 'Kiểm tra biến', sentence: 'Kiểm tra biến {{name}} {{op}} {{value}}' },
     unknown: { label: 'Thao tác khác', sentence: 'Thao tác {{action}}' },
   },
   params: {
+    search: 'Gõ để tìm',
+    targetEnd: 'Ô ngày kết thúc',
+    separator: 'Dấu ngăn giữa 2 ngày',
+    apply: 'Nút “Áp dụng”',
+    typing: 'Cách gõ',
     do: 'Việc cần làm',
     virtual: 'Lưới cuộn ảo (cuộn để đọc hết dòng)',
     amount: 'Lượng',
@@ -1339,6 +1352,8 @@ export const viUi = {
     ttlHours: 'Dùng lại trong (giờ)',
   },
   enums: {
+    fill: 'Dán một lần',
+    keys: 'Từng phím (ô có mặt nạ)',
     load: 'Tải xong',
     domcontentloaded: 'Hiện nội dung',
     networkidle: 'Hết tải dữ liệu',

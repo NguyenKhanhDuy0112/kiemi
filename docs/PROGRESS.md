@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M13** đang làm trên nhánh `milestone/m13-real-web`: xong M13-01 → M13-06b. Tiếp: M13-07 → M13-09. Việc còn treo của v1.0: `docs/RELEASE-CHECKLIST.md` mục C và D.
+**M13** đang làm trên nhánh `milestone/m13-real-web`: xong M13-01 → M13-07a. Tiếp: M13-07b → M13-09. Việc còn treo của v1.0: `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
+- M13-07a xong (M13-07 chia a/b): `actions/pick-option.ts` (`pickOption`: bấm mở → gõ `search` → chọn mục khớp đúng tên trước, chứa tên sau; role=option hoặc li/class Select2/Chosen/Ant), `pickDateRange` (1 ô `a - b` hoặc 2 ô + nút Áp dụng; trong `pick-date.ts`), `fill{typing:'keys'}` cho ô mặt nạ/rich text. e2e dùng trang `data:` mô phỏng (`data.e2e.test.ts`); trang demo thật làm ở M13-09. M13-07b: recorder gộp click mở + fill tìm + click mục (role=option) thành 1 `pickOption` ở `collector.ts`.
 - M13-06b xong: `actions/grid.ts` — `gridRow` (where{column,value} + do select|unselect|expand|collapse|edit|click, cuộn ảo tới dòng rồi dùng locator động theo ô khớp, không đánh dấu DOM vì grid vẽ lại) và `gridFilter` (ô lọc dưới tiêu đề, fill + Enter). Quét cả lưới ~4s/1.000 dòng → test đặt timeout bước 30s.
 - M13-06a xong (M13-06 chia a/b): `virtual:true` trên extractTable + assertTable/AllRows/Sorted/RowTotal/TableCompare → `readVirtual` (`actions/_table.ts`: cuộn vùng cuộn, gom dòng theo `aria-rowindex` hoặc nội dung, ~4s/1.000 dòng → đặt timeout bước lớn). Demo `grid.html` + `src/grid.ts` ĐÃ có sẵn sửa ô (bấm đúp Số lượng/Đơn giá, Enter), tick chọn dòng, nút ▸ mở dòng chi tiết, ô lọc dưới tiêu đề → M13-06b chỉ cần action `gridRow`/`gridFilter` + e2e.
 - M13-05 xong: `Env.httpAuth {username, passwordSecret, origin?}` (cột `environments.http_auth`, migration 18, theo khuôn `locale`), engine `httpAuthFor` → `newContext({httpCredentials})`, UI `features/environments/http-auth.tsx`; demo `/secure/basic` (demo/demo-pass, `BASIC_AUTH`). Chỉ 1 bộ đăng nhập cho cả môi trường (không theo sản phẩm); Windows tích hợp (SSO không nhập mật khẩu) chưa làm — NTLM chạy qua cùng httpCredentials.

@@ -1251,6 +1251,11 @@ export const enUi = {
       label: 'Filter under a column header',
       sentence: 'Filter column {{column}} = {{value}}',
     },
+    pickOption: { label: 'Choose in a custom list', sentence: 'Choose “{{option}}” in {{target}}' },
+    pickDateRange: {
+      label: 'Pick a date range',
+      sentence: 'Pick dates {{from}} to {{to}} in {{target}}',
+    },
     assertVariable: {
       label: 'Check variable',
       sentence: 'Check variable {{name}} {{op}} {{value}}',
@@ -1258,6 +1263,11 @@ export const enUi = {
     unknown: { label: 'Other action', sentence: 'Action {{action}}' },
   },
   params: {
+    search: 'Type to search',
+    targetEnd: 'End date box',
+    separator: 'Separator between the dates',
+    apply: '“Apply” button',
+    typing: 'Typing mode',
     do: 'What to do',
     virtual: 'Virtual-scroll grid (scroll to read every row)',
     amount: 'Amount',
@@ -1346,6 +1356,8 @@ export const enUi = {
     ttlHours: 'Reuse for (hours)',
   },
   enums: {
+    fill: 'Paste at once',
+    keys: 'Key by key (masked boxes)',
     load: 'Fully loaded',
     domcontentloaded: 'Content shown',
     networkidle: 'No more loading',

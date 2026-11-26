@@ -19,7 +19,8 @@ import { hoverAction } from './hover';
 import { ifAction } from './if';
 import { loopAction } from './loop';
 import { navigateAction } from './navigate';
-import { pickDateAction } from './pick-date';
+import { pickDateAction, pickDateRangeAction } from './pick-date';
+import { pickOptionAction } from './pick-option';
 import { pressAction } from './press';
 import { saveSessionAction, useSessionAction } from './saved-login';
 import { scrollAction } from './scroll';
@@ -50,6 +51,8 @@ export const builtinActions: ActionDefinition[] = [
   selectAction,
   checkAction,
   pickDateAction,
+  pickDateRangeAction,
+  pickOptionAction,
   pressAction,
   scrollAction,
   uploadAction,
