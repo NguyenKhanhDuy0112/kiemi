@@ -86,7 +86,7 @@ describe('products [O-01]', () => {
     writeFileSync(
       join(dir, 'tests', 'api', 'Đơn', 'x.kiemi.json'),
       JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         id: '01890000-0000-7000-8000-0000000000c1',
         name: 'Tạo đơn',
       }),
@@ -108,5 +108,14 @@ describe('products [O-01]', () => {
     openProjectFolder(other, dir);
     expect(other.products.list(projectId).map((p) => p.key)).toEqual(['web', 'admin', 'api']);
     expect(other.testCases.get(t.id).productId).toBe(api?.id);
+  });
+
+  it('a test runs with its product as {{app}} unless the file names one [O-02]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const admin = s.products.create({ projectId, name: 'Admin' });
+    const t = s.testCases.create({ projectId, productId: admin.id, name: 'Duyệt' });
+    expect(s.testCases.forRun(t.id).product).toBe('admin');
+    s.testCases.save(t.id, { ...t.content, product: 'web' });
+    expect(s.testCases.forRun(t.id).product).toBe('web');
   });
 });

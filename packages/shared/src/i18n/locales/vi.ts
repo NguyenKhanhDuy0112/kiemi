@@ -72,6 +72,10 @@ export const vi = {
         message: 'Bước gặp lỗi: {{reason}}',
         hint: 'Thử chạy lại. Nếu vẫn lỗi, xem ảnh chụp màn hình của bước này.',
       },
+      ENV_SKIPPED: {
+        message: 'Bỏ qua: test này không chạy trên môi trường {{environment}}.',
+        hint: 'Muốn chạy, sửa phần “Giới hạn môi trường” của test.',
+      },
       RUN_CANCELLED: { message: 'Lần chạy đã bị dừng.', hint: 'Bấm Chạy để chạy lại.' },
       ELEMENT_NOT_FOUND: {
         message: 'Không tìm thấy {{element}} sau {{seconds}} giây.',
@@ -104,6 +108,19 @@ export const vi = {
       PROXY_SECRET_MISSING: {
         message: 'Chưa có mật khẩu proxy (bí mật “{{secret}}”).',
         hint: 'Vào Môi trường → Bí mật để nhập mật khẩu.',
+      },
+      APP_NOT_AVAILABLE: {
+        message: 'Sản phẩm “{{product}}” chưa có ở môi trường “{{environment}}”.',
+        hint: 'Vào Môi trường, nhập địa chỉ của sản phẩm này ở cột môi trường đó — hoặc chọn môi trường khác khi chạy.',
+      },
+      UNKNOWN_PRODUCT: {
+        message: 'Dự án không có sản phẩm “{{product}}”.',
+        hint: 'Kiểm tra lại tên sản phẩm sau “app.”, hoặc thêm sản phẩm này vào dự án.',
+      },
+      PROTECTED_ENVIRONMENT: {
+        message:
+          'Môi trường “{{environment}}” đang được bảo vệ nên Kiemi không chạy test có bước ghi dữ liệu (bước dọn dẹp, gọi API thêm/sửa/xóa).',
+        hint: 'Chạy trên môi trường khác, hoặc bỏ các bước ghi dữ liệu khỏi test này. Chỉ tắt bảo vệ khi chắc chắn.',
       },
       UNKNOWN_VARIABLE: {
         message: 'Chưa có biến “{{name}}”.',

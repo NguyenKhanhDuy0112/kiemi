@@ -19,6 +19,10 @@ export const ENGINE_ERROR_CODES = [
   'NO_BROWSER',
   'PROXY_SECRET_MISSING',
   'UNKNOWN_VARIABLE',
+  /** `{{app.<key>}}`: the product has no cell in the environment of the run [O-02]. */
+  'APP_NOT_AVAILABLE',
+  /** `{{app.<key>}}`: no product with this key in the project [O-02]. */
+  'UNKNOWN_PRODUCT',
   'INVALID_EXPRESSION',
   'CONSOLE_ERROR',
   'HTTP_ERROR',
@@ -30,6 +34,10 @@ export const ENGINE_ERROR_CODES = [
   'LOGIN_NOT_SAVED',
   'LOGIN_EXPIRED',
   'UNKNOWN_SHARED_STEP',
+  /** A step may write data and the environment is protected (Production) [W-10]. */
+  'PROTECTED_ENVIRONMENT',
+  /** The test is limited to other environments (`environments.only/except`) [O-06]. */
+  'ENV_SKIPPED',
   'ACTION_FAILED',
   'ENGINE_ERROR',
   /** The engine process stopped unexpectedly (raised by the host). */

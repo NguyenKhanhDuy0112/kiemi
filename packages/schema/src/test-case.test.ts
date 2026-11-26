@@ -27,11 +27,11 @@ describe('StepSchema', () => {
 });
 
 describe('TestCaseSchema [N-08]', () => {
-  const base = { schemaVersion: 1, id: ID, name: 'T' };
+  const base = { schemaVersion: 2, id: ID, name: 'T' };
 
-  it('requires schemaVersion 1 and a uuid id', () => {
+  it('requires schemaVersion 2 and a uuid id', () => {
     expect(TestCaseSchema.safeParse(base).success).toBe(true);
-    expect(TestCaseSchema.safeParse({ ...base, schemaVersion: 2 }).success).toBe(false);
+    expect(TestCaseSchema.safeParse({ ...base, schemaVersion: 1 }).success).toBe(false);
     expect(TestCaseSchema.safeParse({ id: ID, name: 'T' }).success).toBe(false);
     expect(TestCaseSchema.safeParse({ ...base, id: 'abc' }).success).toBe(false);
   });
@@ -140,6 +140,28 @@ describe('EnvSchema', () => {
       false,
     );
   });
+
+  it('holds one cell per product key [O-02]', () => {
+    const env = EnvSchema.parse({
+      id: 'e1',
+      name: 'UAT',
+      defaultProduct: 'web',
+      apps: {
+        web: { name: 'Web', url: 'https://uat.example.com' },
+        admin: { name: 'Admin', missing: true },
+      },
+    });
+    expect(env.apps.web).toEqual({
+      name: 'Web',
+      url: 'https://uat.example.com',
+      variables: {},
+      missing: false,
+    });
+    expect(env.apps.admin?.missing).toBe(true);
+    expect(EnvSchema.safeParse({ id: 'e', name: 'e', apps: { Web: { name: 'W' } } }).success).toBe(
+      false,
+    );
+  });
 });
 
 describe('RunResultSchema', () => {
@@ -218,5 +240,24 @@ describe('Env proxy [G-06]', () => {
     ];
     for (const proxy of bad)
       expect(EnvSchema.safeParse({ ...base, proxy }).success, proxy.server).toBe(false);
+  });
+});
+
+describe('guessEnvType [O-03]', () => {
+  it('reads the usual names', async () => {
+    const { guessEnvType } = await import('./env');
+    expect(['Production', 'PROD', 'Chính thức', 'Live 2'].map(guessEnvType)).toEqual([
+      'production',
+      'production',
+      'production',
+      'production',
+    ]);
+    expect(['UAT', 'Staging', 'DEV', 'QA', 'Máy Lan'].map(guessEnvType)).toEqual([
+      'uat',
+      'staging',
+      'dev',
+      'test',
+      'other',
+    ]);
   });
 });

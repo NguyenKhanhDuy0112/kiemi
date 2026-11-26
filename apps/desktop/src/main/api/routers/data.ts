@@ -1,4 +1,5 @@
 import {
+  CellInputSchema,
   DatasetInputSchema,
   ElementInputSchema,
   EnvironmentInputSchema,
@@ -15,6 +16,7 @@ import {
   SuiteInputSchema,
   SuiteItemInputSchema,
 } from '@kiemi/db';
+import { explainVariables } from '@kiemi/engine';
 import { z } from 'zod';
 import { publicProcedure, router } from '../trpc';
 
@@ -24,8 +26,14 @@ const version = z.number().int().positive().optional();
 const base64 = z.string().max(150 * 1024 * 1024);
 const bytes = (b64: string) => new Uint8Array(Buffer.from(b64, 'base64'));
 
+const variables = z.record(z.string(), z.string().max(10_000));
+
 export const projectsRouter = router({
   list: publicProcedure.query(({ ctx }) => ctx.services.projects.list()),
+  /** Project-level variables [O-04]. */
+  setVariables: publicProcedure
+    .input(z.object({ id, variables }))
+    .mutation(({ ctx, input }) => ctx.services.projects.setVariables(input.id, input.variables)),
   get: publicProcedure
     .input(z.object({ id }))
     .query(({ ctx, input }) => ctx.services.projects.get(input.id)),
@@ -91,6 +99,10 @@ export const projectsRouter = router({
 
 /** Products of a project (web, admin, API…) [O-01]. */
 export const productsRouter = router({
+  /** Product-level variables [O-04]. */
+  setVariables: publicProcedure
+    .input(z.object({ id, variables }))
+    .mutation(({ ctx, input }) => ctx.services.products.setVariables(input.id, input.variables)),
   list: publicProcedure
     .input(z.object({ projectId: id }))
     .query(({ ctx, input }) => ctx.services.products.list(input.projectId)),
@@ -135,6 +147,49 @@ export const foldersRouter = router({
 });
 
 export const testCasesRouter = router({
+  /**
+   * "Giá trị hiệu lực" [O-04]: every variable the test sees on an environment
+   * (and suite / data row), with the level it comes from. Secrets are not included.
+   */
+  effectiveVariables: publicProcedure
+    .input(
+      z.object({
+        testCaseId: id,
+        environmentId: id.nullable(),
+        suiteId: id.nullish(),
+        rowIndex: z.number().int().nonnegative().nullish(),
+      }),
+    )
+    .query(({ ctx, input }) => {
+      const s = ctx.services;
+      const row = s.testCases.get(input.testCaseId);
+      const tc = s.testCases.forRun(row.id);
+      const env = input.environmentId ? s.environments.envOf(input.environmentId) : undefined;
+      const productKey =
+        tc.product ?? env?.defaultProduct ?? s.products.list(row.projectId)[0]?.key;
+      const product = s.products.list(row.projectId).find((p) => p.key === productKey);
+      let dataRow: Record<string, string> | undefined;
+      if (input.rowIndex != null && tc.dataset) {
+        const src = tc.dataset;
+        const rows =
+          src.source === 'table'
+            ? src.rows
+            : src.source === 'saved'
+              ? s.datasets.forRun(src.datasetId, input.environmentId).rows
+              : [];
+        dataRow = rows[input.rowIndex];
+      }
+      return explainVariables({
+        env,
+        product: tc.product,
+        workspace: s.settings.getAll().workspaceVariables,
+        project: s.projects.get(row.projectId).variables ?? {},
+        productVariables: product?.variables ?? {},
+        suite: input.suiteId ? s.suites.get(input.suiteId).variables : undefined,
+        test: tc.variables,
+        row: dataRow,
+      });
+    }),
   list: publicProcedure
     .input(z.object({ projectId: id, folderId: id.nullable().optional() }))
     .query(({ ctx, input }) => ctx.services.testCases.list(input.projectId, input.folderId)),
@@ -271,10 +326,36 @@ export const environmentsRouter = router({
   removeSecret: publicProcedure
     .input(z.object({ id, name: z.string() }))
     .mutation(({ ctx, input }) => ctx.services.environments.removeSecret(input.id, input.name)),
+  /** Every cell of the Environment × Product matrix of a project [O-02]. */
+  matrix: publicProcedure
+    .input(z.object({ projectId: id }))
+    .query(({ ctx, input }) => ctx.services.environments.matrix(input.projectId)),
+  /** `cell: null` = the product is not available in that environment. */
+  setCell: publicProcedure
+    .input(z.object({ environmentId: id, productId: id, cell: CellInputSchema.nullable() }))
+    .mutation(({ ctx, input }) =>
+      ctx.services.environments.setCell(input.environmentId, input.productId, input.cell),
+    ),
+  /** "Nhân bản môi trường": cells, variables and secret names (not values) [O-02]. */
+  duplicate: publicProcedure
+    .input(z.object({ id, name: z.string().trim().min(1).max(100) }))
+    .mutation(({ ctx, input }) => ctx.services.environments.duplicate(input.id, input.name)),
 });
 
 /** Test data [E-03]. */
 export const datasetsRouter = router({
+  /** Own rows on one environment; `rows: null` = back to the default rows [O-05]. */
+  setEnvironmentRows: publicProcedure
+    .input(
+      z.object({
+        id,
+        environmentId: id,
+        rows: z.array(z.record(z.string(), z.string())).max(100_000).nullable(),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      ctx.services.datasets.setEnvironmentRows(input.id, input.environmentId, input.rows),
+    ),
   list: publicProcedure
     .input(z.object({ projectId: id }))
     .query(({ ctx, input }) => ctx.services.datasets.list(input.projectId)),

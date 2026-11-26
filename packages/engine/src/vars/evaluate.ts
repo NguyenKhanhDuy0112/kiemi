@@ -1,4 +1,5 @@
 import { EngineError } from '../errors';
+import { AppValue } from './app';
 import { addDuration, formatDate, parseDate } from './dates';
 import { type Duration, type Node, parseExpression } from './expression';
 import { FAKE, GENERATORS, randomInt, randomString } from './generators';
@@ -42,6 +43,7 @@ export function toNumber(v: unknown): number | undefined {
 /** Converts a value to the text typed into the page. */
 export function stringify(v: unknown): string {
   if (v === undefined || v === null) return '';
+  if (v instanceof AppValue) return v.url();
   if (v instanceof Date) return formatDate(v);
   if (typeof v === 'number') return String(Number(v.toFixed(10)));
   if (typeof v === 'string') return v;
@@ -148,6 +150,8 @@ export function evaluate(node: Node, env: EvalEnv): unknown {
         name += `.${key}`;
         if (value !== null && typeof value === 'object' && Object.hasOwn(value, key)) {
           value = (value as Record<string, unknown>)[key];
+        } else if (value instanceof AppValue && name === `app.${key}`) {
+          throw new EngineError('UNKNOWN_PRODUCT', `Unknown product "${key}"`, { product: key });
         } else {
           throw fail('UNKNOWN_VARIABLE', `Unknown variable "${name}"`, { name });
         }

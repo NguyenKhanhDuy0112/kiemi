@@ -2,8 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -14,8 +15,41 @@ permissions:
   contents: read
 
 jobs:
-  check:
-    name: lint · typecheck · test (${{ matrix.os }})
+  # Push to feature branches: fast check on Linux only (lint + typecheck + unit tests)
+  quick:
+    name: quick · lint · typecheck · test (ubuntu)
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+  # PR to main or push to main: full check on Windows + macOS
+  full:
+    name: full · lint · typecheck · test (${{ matrix.os }})
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:

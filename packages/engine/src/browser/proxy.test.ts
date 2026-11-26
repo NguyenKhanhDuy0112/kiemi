@@ -41,7 +41,7 @@ const registry = new ActionRegistry([
 ]);
 
 const testCase = (url: string): TestCase => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: '0193a5b2-7c4e-7d1a-9f3b-2c8e4a6d1f0a',
   name: 'proxy',
   tags: [],

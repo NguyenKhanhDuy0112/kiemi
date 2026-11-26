@@ -19,6 +19,9 @@ export const ProductSchema = z.object({
   name: z.string().trim().min(1).max(100),
   kind: ProductKindSchema.default('web'),
   sortOrder: z.number().int().default(0),
+  /** Product-level variables, inherited by its tests [O-04]. */
+  // Same rule as `VariableNameSchema` (env.ts imports this file: no import back).
+  variables: z.record(z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/), z.string()).default({}),
 });
 export type Product = z.infer<typeof ProductSchema>;
 

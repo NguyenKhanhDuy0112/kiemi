@@ -22,6 +22,16 @@ export type TestCaseRow = typeof testCases.$inferSelect;
 /** List item without the (possibly large) content. */
 export type TestCaseSummary = Omit<TestCaseRow, 'content'> & { stepCount: number };
 
+/** True if any `call` step (at any nesting depth) of `value` runs the shared step `sharedId`. */
+function callsShared(value: unknown, sharedId: string): boolean {
+  if (Array.isArray(value)) return value.some((v) => callsShared(v, sharedId));
+  if (typeof value !== 'object' || value === null) return false;
+  const o = value as Record<string, unknown>;
+  const params = o.params as Record<string, unknown> | undefined;
+  if (o.action === 'call' && params?.shared === sharedId) return true;
+  return Object.values(o).some((v) => callsShared(v, sharedId));
+}
+
 export class TestCaseService {
   readonly repo: Repo<typeof testCases>;
   readonly #ctx: RepoContext;
@@ -43,8 +53,27 @@ export class TestCaseService {
       .map(({ content, ...rest }) => ({ ...rest, stepCount: content.steps.length }));
   }
 
+  /** Tests of the whole workspace that call a shared step — what an edit would affect [O-07]. */
+  usersOfSharedStep(sharedId: string): { id: string; name: string; projectId: string }[] {
+    return this.repo
+      .list(undefined, testCases.name)
+      .filter((r) => callsShared([r.content.steps, r.content.cleanup], sharedId))
+      .map((r) => ({ id: r.id, name: r.name, projectId: r.projectId }));
+  }
+
   get(id: string): TestCaseRow {
     return this.repo.get(id);
+  }
+
+  /**
+   * Content to run/record: `product` defaults to the key of the product the
+   * test lives in, so `{{app}}` is that product's URL [O-01, O-02].
+   */
+  forRun(id: string): TestCase {
+    const row = this.repo.get(id);
+    if (row.content.product || !row.productId) return row.content;
+    const product = new ProductService(this.#ctx).repo.find(row.productId);
+    return product ? { ...row.content, product: product.key } : row.content;
   }
 
   /** New empty test with a ready-to-use `.kiemi.json` document. */

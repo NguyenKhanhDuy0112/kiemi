@@ -10,6 +10,9 @@ export interface ReportInput {
   run: LiveRun;
   title: string;
   environmentName: string | null;
+  /** Colour stripe of the environment [O-03]. */
+  environmentColor?: string | null;
+  environmentProtected?: boolean;
   startedAt: Date | null;
   /** Test documents by id (for step sentences). */
   tests: Record<string, TestCase | undefined>;
@@ -32,6 +35,7 @@ const CSS = `
 :root{--ink:#1F2A5C;--pass:#13803f;--fail:#c8282e;--muted:#5b6280;--line:#e5e7eb;--bg:#fff}
 *{box-sizing:border-box}body{margin:0;font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#111827;background:#f6f7fb}
 main{max-width:980px;margin:0 auto;padding:32px 20px}
+.env{color:#111827;background:#fff;font-weight:600;padding:6px 16px;border-left:10px solid;border-radius:10px;margin-bottom:8px}
 header{background:var(--ink);color:#fff;border-radius:12px;padding:20px 24px;margin-bottom:20px}
 header h1{margin:0 0 4px;font-size:22px}header p{margin:0;opacity:.85}
 .badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600;border:1px solid}
@@ -125,7 +129,7 @@ export function buildHtmlReport(input: ReportInput): string {
 <html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(`${tx('ui.report.title')} — ${input.title}`)}</title><style>${CSS}</style></head>
 <body><main>
-<header><h1>${esc(input.title)} <span class="badge ${run.status}">${esc(statusLabel)}</span></h1><p>${meta}</p>
+${input.environmentColor && /^#[0-9a-fA-F]{6}$/.test(input.environmentColor) ? `<div class="env" style="border-left-color:${input.environmentColor}">${esc(input.environmentName ?? '')}${input.environmentProtected ? ` · ${esc(tx('ui.environments.protectedBadge'))}` : ''}</div>` : ''}<header><h1>${esc(input.title)} <span class="badge ${run.status}">${esc(statusLabel)}</span></h1><p>${meta}</p>
 <div class="summary"><span>${esc(tx('ui.run.summary', { passed: n('passed'), total: run.cases.length }))}</span></div></header>
 ${runErr}${run.cases.map((c) => caseSection(c, input)).join('\n')}
 <footer>${esc(tx('ui.report.generated', { at: fmtDate(input.now ?? new Date()) }))}</footer>

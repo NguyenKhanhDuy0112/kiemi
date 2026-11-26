@@ -57,16 +57,17 @@ export const systemRouter = router({
     return next;
   }),
 
-  /** "Kiểm tra kết nối" for an environment's SSH tunnel [G-07]. */
+  /** "Kiểm tra kết nối" for the SSH tunnel of one cell (environment, product) [G-07, O-02]. */
   testSsh: publicProcedure
-    .input(z.object({ environmentId: z.string().min(1) }))
+    .input(z.object({ environmentId: z.string().min(1), productId: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      const { env, secrets } = ctx.services.environments.forRun(input.environmentId);
-      if (!env.ssh)
+      const { secrets } = ctx.services.environments.forRun(input.environmentId);
+      const ssh = ctx.services.environments.cell(input.environmentId, input.productId)?.ssh;
+      if (!ssh)
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'This environment has no SSH settings',
         });
-      return testSshConnection(env.ssh, secrets);
+      return testSshConnection(ssh, secrets);
     }),
 });

@@ -1,5 +1,5 @@
 import type { Services } from '@kiemi/db';
-import type { RunRequest, SavedLogin } from '@kiemi/engine';
+import { mainAppUrl, type RunRequest, type SavedLogin } from '@kiemi/engine';
 import type { HighlightResult, StepChange, Suggestion } from '@kiemi/recorder';
 import {
   DEFAULT_SESSION,
@@ -15,7 +15,8 @@ import { translations } from '@kiemi/shared';
 import { v7 as uuidv7 } from 'uuid';
 import { z } from 'zod';
 import type { RecordCommand, RecordStart, WorkerToHost } from '../run/protocol';
-import type { TunnelLike, WorkerHandle } from '../run/run-manager';
+import type { WorkerHandle } from '../run/run-manager';
+import { type OpenTunnel, prepareNetwork, type TunnelLike, usedProducts } from '../tunnel/network';
 
 const NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -58,7 +59,7 @@ export interface RecorderManagerDeps {
   services: Services;
   spawnWorker: () => WorkerHandle;
   browsersPath: string;
-  openTunnel?: (env: Env, secrets: Secrets) => Promise<TunnelLike>;
+  openTunnel?: OpenTunnel;
 }
 
 interface Active {
@@ -121,7 +122,7 @@ export class RecorderManager {
     const input = StartRecordingInputSchema.parse(raw);
     const s = this.#d.services;
     const row = s.testCases.get(input.testCaseId);
-    const tc: TestCase = row.content;
+    const tc: TestCase = s.testCases.forRun(row.id);
     const projectId = row.projectId;
     if (this.#active && !this.#active.finished) this.stop(this.#active.id);
 
@@ -136,6 +137,8 @@ export class RecorderManager {
     // Stored as Playwright gave it (`storageState()`); the DB only checks the outline.
     const savedLogins = s.savedLogins.forRun(projectId) as unknown as Record<string, SavedLogin>;
 
+    // Recording starts on the test's product in that environment [O-02].
+    const appUrl = mainAppUrl(env, tc.product);
     const after = input.afterStepId ? tc.steps.find((x) => x.id === input.afterStepId) : undefined;
     const session = after?.session ?? DEFAULT_SESSION;
     const id = uuidv7();
@@ -184,10 +187,8 @@ export class RecorderManager {
         settings: { browser: settings.browser, headless: false },
         browsersPath: this.#d.browsersPath,
       },
-      ...(after
-        ? {}
-        : { url: resolveUrl(input.url ?? env?.baseUrl ?? 'about:blank', env?.baseUrl) }),
-      ...(env?.baseUrl ? { baseUrl: env.baseUrl } : {}),
+      ...(after ? {} : { url: resolveUrl(input.url ?? appUrl ?? 'about:blank', appUrl) }),
+      ...(appUrl ? { baseUrl: appUrl } : {}),
       session,
       ...(env ? { env } : {}),
       secrets,
@@ -211,7 +212,7 @@ export class RecorderManager {
     };
     this.#active = active;
     this.#publish(active, { type: 'status', recordingId: id, state: 'starting' });
-    void this.#launch(active, msg, env, secrets);
+    void this.#launch(active, msg, env, secrets, tc);
     return this.current() as RecordingInfo;
   }
 
@@ -306,16 +307,24 @@ export class RecorderManager {
     a.worker?.send({ type: 'recordCommand', command });
   }
 
-  async #launch(a: Active, start: RecordStart, env: Env | undefined, secrets: Secrets) {
+  async #launch(
+    a: Active,
+    start: RecordStart,
+    env: Env | undefined,
+    secrets: Secrets,
+    tc: TestCase,
+  ) {
     let msg = start;
-    if (env?.ssh?.enabled && this.#d.openTunnel) {
+    if (env) {
       try {
-        const tunnel = await this.#d.openTunnel(env, secrets);
-        a.tunnel = tunnel;
-        const proxied: Env = {
-          ...env,
-          proxy: { server: tunnel.proxyUrl, bypass: env.proxy?.bypass ?? [] },
-        };
+        const net = await prepareNetwork({
+          env,
+          secrets,
+          used: usedProducts(env, [tc], start.prefix?.sharedSteps ?? []),
+          openTunnel: this.#d.openTunnel,
+        });
+        a.tunnel = { proxyUrl: net.env.proxy?.server ?? '', close: net.close };
+        const proxied: Env = net.env;
         msg = {
           ...start,
           env: proxied,

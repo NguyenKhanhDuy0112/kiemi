@@ -49,6 +49,10 @@ export const runsRouter = router({
       ...run,
       running: ctx.runs.isRunning(run.id),
       environmentName: env?.name ?? null,
+      /** Colour/type/protection for the Run screen and report [O-03]. */
+      environment: env
+        ? { name: env.name, type: env.type, color: env.color, protected: env.protected }
+        : null,
       cases: run.cases.map((c) => ({ ...c, testName: names.get(c.testCaseId) ?? '' })),
     };
   }),

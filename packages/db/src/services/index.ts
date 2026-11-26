@@ -7,6 +7,7 @@ import { FolderService, ProjectService } from './projects';
 import { RunService } from './runs';
 import { SavedLoginService } from './saved-logins';
 import { SettingsService } from './settings';
+import { SharedResourceService } from './shared-resources';
 import { SharedStepService } from './shared-steps';
 import { SuiteService } from './suites';
 import { TestCaseService } from './test-cases';
@@ -19,6 +20,7 @@ export * from './projects';
 export * from './runs';
 export * from './saved-logins';
 export * from './settings';
+export * from './shared-resources';
 export * from './shared-steps';
 export * from './suites';
 export * from './test-cases';
@@ -32,6 +34,7 @@ export interface Services {
   readonly testCases: TestCaseService;
   readonly suites: SuiteService;
   readonly sharedSteps: SharedStepService;
+  readonly sharedResources: SharedResourceService;
   readonly elements: ElementService;
   readonly environments: EnvironmentService;
   readonly datasets: DatasetService;
@@ -50,6 +53,7 @@ export function createServices(ctx: RepoContext, cipher: SecretCipher): Services
     testCases: new TestCaseService(ctx),
     suites: new SuiteService(ctx),
     sharedSteps: new SharedStepService(ctx),
+    sharedResources: new SharedResourceService(ctx),
     elements: new ElementService(ctx),
     environments: new EnvironmentService(ctx, cipher),
     datasets: new DatasetService(ctx),

@@ -9,13 +9,19 @@ import type { ProjectSnapshot } from './format';
 export function readSnapshot(services: Services, projectId: string): ProjectSnapshot {
   const p = services.projects.get(projectId);
   return {
-    project: { id: p.id, name: p.name, description: p.description ?? null },
+    project: {
+      id: p.id,
+      name: p.name,
+      description: p.description ?? null,
+      variables: p.variables ?? {},
+    },
     products: services.products.list(projectId).map((x) => ({
       id: x.id,
       key: x.key,
       name: x.name,
       kind: x.kind,
       sortOrder: x.sortOrder,
+      variables: x.variables ?? {},
     })),
     folders: services.folders.list(projectId).map((f) => ({
       id: f.id,
@@ -33,9 +39,16 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
     environments: services.environments.list(projectId).map((e) => ({
       id: e.id,
       name: e.name,
-      baseUrl: e.baseUrl,
-      proxy: e.proxy,
-      ssh: e.ssh,
+      type: e.type,
+      color: e.color,
+      protected: e.protected,
+      cells: services.environments.cells(e.id).map((c) => ({
+        productId: c.productId,
+        url: c.url,
+        variables: c.variables,
+        proxy: c.proxy,
+        ssh: c.ssh,
+      })),
       variables: services.environments.variables(e.id),
       secretNames: services.environments.secretNames(e.id),
       sortOrder: e.sortOrder,
@@ -60,6 +73,7 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       columns: d.columns,
       rows: d.rows,
       source: d.source,
+      envRows: d.envRows ?? {},
     })),
     suites: services.suites.list(projectId).map((s) => ({
       id: s.id,
@@ -135,10 +149,15 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
 
   services.ctx.db.transaction(() => {
     const project = services.projects.repo.get(projectId);
-    if (project.name !== s.project.name || (project.description ?? null) !== s.project.description)
+    if (
+      project.name !== s.project.name ||
+      (project.description ?? null) !== s.project.description ||
+      !same(project.variables ?? {}, s.project.variables ?? {})
+    )
       services.projects.repo.update(projectId, {
         name: s.project.name,
         description: s.project.description,
+        variables: s.project.variables ?? {},
       });
 
     /** Generic reconcile of one table. `values` = columns from the file. */
@@ -168,14 +187,29 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
     // Products first: everything else points at them. A project keeps at least one.
     if (!s.products.length) {
       const d = services.products.defaultFor(projectId);
-      s.products = [{ id: d.id, key: d.key, name: d.name, kind: d.kind, sortOrder: d.sortOrder }];
+      s.products = [
+        {
+          id: d.id,
+          key: d.key,
+          name: d.name,
+          kind: d.kind,
+          sortOrder: d.sortOrder,
+          variables: d.variables ?? {},
+        },
+      ];
     }
     reconcile(
       services.products.repo as unknown as Repo<never>,
       services.products.repo.list(eq(productsTable.projectId, projectId)),
       s.products.map((p) => ({
         id: p.id,
-        values: { key: p.key, name: p.name, kind: p.kind, sortOrder: p.sortOrder },
+        values: {
+          key: p.key,
+          name: p.name,
+          kind: p.kind,
+          sortOrder: p.sortOrder,
+          variables: Object.keys(p.variables ?? {}).length ? p.variables : null,
+        },
       })),
     );
     const productIds = new Set(s.products.map((p) => p.id));
@@ -233,9 +267,9 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
         id: e.id,
         values: {
           name: e.name,
-          baseUrl: e.baseUrl ?? null,
-          proxy: e.proxy ?? null,
-          ssh: e.ssh ?? null,
+          type: e.type,
+          color: e.color ?? null,
+          protected: e.protected,
           sortOrder: e.sortOrder,
           secretNames: [...new Set(e.secretNames)].sort(),
         },
@@ -244,6 +278,25 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
         const e = s.environments.find((x) => x.id === id);
         if (!e) return;
         if (!same(envs.variables(id), e.variables)) envs.setVariables(id, e.variables);
+        // Cells by product; files from before M9-05 carry one URL for the first product.
+        const legacy =
+          !e.cells.length && (e.baseUrl || e.proxy || e.ssh)
+            ? [{ productId: first, url: e.baseUrl, variables: {}, proxy: e.proxy, ssh: e.ssh }]
+            : [];
+        const seen = new Set<string>();
+        const cells = [...e.cells, ...legacy].filter(
+          (c) => productIds.has(c.productId) && !seen.has(c.productId) && seen.add(c.productId),
+        );
+        envs.setCells(
+          id,
+          cells.map((c) => ({
+            productId: c.productId,
+            url: c.url && /^[a-z][a-z0-9+.-]*:\/\//i.test(c.url) ? c.url : null,
+            variables: c.variables,
+            proxy: c.proxy ?? null,
+            ssh: c.ssh ?? null,
+          })),
+        );
         // A secret removed by a teammate: drop this machine's value too.
         const names = new Set(e.secretNames);
         for (const sec of envs.secrets.list(eq(secretsTable.environmentId, id)))
@@ -282,7 +335,13 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
       services.datasets.list(projectId),
       s.datasets.map((d) => ({
         id: d.id,
-        values: { name: d.name, columns: d.columns, rows: d.rows, source: d.source },
+        values: {
+          name: d.name,
+          columns: d.columns,
+          rows: d.rows,
+          source: d.source,
+          envRows: Object.keys(d.envRows ?? {}).length ? d.envRows : null,
+        },
       })),
     );
     reconcile(

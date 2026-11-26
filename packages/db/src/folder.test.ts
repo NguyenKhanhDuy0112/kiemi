@@ -53,6 +53,12 @@ function sample() {
   s.environments.update(env.id, { baseUrl: 'https://uat.example.com' });
   s.environments.setVariables(env.id, { portal: 'https://p' });
   s.environments.setSecret(env.id, 'nvPass', 'TOP-SECRET');
+  const admin = s.products.create({ projectId, name: 'Admin' });
+  s.environments.setCell(env.id, admin.id, {
+    url: 'https://admin.uat.example.com',
+    variables: { user: 'admin01' },
+    proxy: { server: 'http://proxy:3128', bypass: [] },
+  });
   const ds = s.datasets.create({
     projectId,
     name: 'Dữ liệu',
@@ -172,7 +178,7 @@ describe('attach / open / sync', () => {
     writeFileSync(
       join(dir, 'tests', 'web', 'Mới', 'a.kiemi.json'),
       JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         id: '01890000-0000-7000-8000-000000000001',
         name: 'Mới tạo',
       }),
@@ -292,5 +298,34 @@ describe('attach / open / sync', () => {
     syncProjectFolder(s, projectId);
     expect(readFileSync(file, 'utf8')).toContain('apiKey');
     expect(readFileSync(file, 'utf8')).not.toContain('K-123');
+  });
+
+  it('keeps the Environment × Product cells and reads pre-M9-05 files [O-02]', () => {
+    const { s, projectId, env } = sample();
+    const dir = tempDir();
+    attachProjectFolder(s, projectId, dir);
+    const file = join(dir, '.kiemi', 'environments.json');
+    const doc = JSON.parse(readFileSync(file, 'utf8'));
+    expect(doc.environments[0].cells.map((c: { url: string }) => c.url)).toEqual([
+      'https://uat.example.com',
+      'https://admin.uat.example.com',
+    ]);
+    const other = machine();
+    openProjectFolder(other, dir);
+    expect(other.environments.forRun(env.id).env.apps.admin).toMatchObject({
+      url: 'https://admin.uat.example.com',
+      variables: { user: 'admin01' },
+    });
+    // A teammate on an older build wrote the v1.0 shape: one URL, no cells.
+    doc.environments[0] = {
+      ...doc.environments[0],
+      cells: undefined,
+      baseUrl: 'https://old.example.com',
+    };
+    writeFileSync(file, JSON.stringify(doc));
+    syncProjectFolder(s, projectId);
+    const apps = s.environments.forRun(env.id).env.apps;
+    expect(apps.web?.url).toBe('https://old.example.com');
+    expect(apps.admin?.missing).toBe(true);
   });
 });

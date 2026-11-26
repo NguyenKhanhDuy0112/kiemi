@@ -1,3 +1,4 @@
+import { VariableNameSchema } from '@kiemi/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { DbError, type Patch, Repo, type RepoContext, validation } from '../repo';
@@ -41,6 +42,12 @@ export class ProjectService {
   }
   remove(id: string) {
     this.repo.remove(id);
+  }
+  /** Project-level variables, inherited by every test of the project [O-04]. */
+  setVariables(id: string, values: Record<string, string>) {
+    const p = z.record(VariableNameSchema, z.string()).safeParse(values);
+    if (!p.success) throw validation('variable', p.error.issues);
+    return this.repo.update(id, { variables: p.data });
   }
 }
 

@@ -17,7 +17,7 @@ import { RecordPanel } from '../record/record-panel';
 import { EditorRunButton } from '../run/editor-run-button';
 import { duplicateStep, findStep, savedVariables } from './doc-model';
 import { useEditorStore } from './editor-store';
-import { DataTab, SessionsTab, VariablesTab } from './editor-tabs';
+import { DataTab, EnvironmentsTab, SessionsTab, VariablesTab } from './editor-tabs';
 import { PropsPanel } from './props-panel';
 import { AddStepMenu, StepTable, useDeleteStep } from './step-table';
 import { AdvancedModeContext } from './strategies';
@@ -66,6 +66,8 @@ export function EditorScreen({ testId }: { testId: string }) {
     ...trpc.environments.get.queryOptions({ id: firstEnvId ?? '' }),
     enabled: !!firstEnvId,
   });
+  // Workspace library steps are called by id too [O-07].
+  const library = useQuery(trpc.sharedResources.list.queryOptions({ kind: 'shared_step' }));
   const shared = useQuery({
     ...trpc.sharedSteps.list.queryOptions({ projectId: projectId ?? '' }),
     enabled: !!projectId,
@@ -215,8 +217,12 @@ export function EditorScreen({ testId }: { testId: string }) {
   }, [doc, env.data, datasets.data]);
 
   const sharedNames = useMemo(
-    () => new Map((shared.data ?? []).map((s) => [s.id, s.name])),
-    [shared.data],
+    () =>
+      new Map([
+        ...(library.data ?? []).map((r) => [r.id, r.name] as const),
+        ...(shared.data ?? []).map((s) => [s.id, s.name] as const),
+      ]),
+    [shared.data, library.data],
   );
 
   if (!doc || test.isLoading) {
@@ -341,6 +347,7 @@ export function EditorScreen({ testId }: { testId: string }) {
                 <TabsTrigger value="data">{tx('ui.editor.tabs.data')}</TabsTrigger>
                 <TabsTrigger value="variables">{tx('ui.editor.tabs.variables')}</TabsTrigger>
                 <TabsTrigger value="sessions">{tx('ui.editor.tabs.sessions')}</TabsTrigger>
+                <TabsTrigger value="environments">{tx('ui.editor.tabs.environments')}</TabsTrigger>
               </TabsList>
               <TabsContent
                 value="steps"
@@ -371,6 +378,9 @@ export function EditorScreen({ testId }: { testId: string }) {
               </TabsContent>
               <TabsContent value="sessions" className="overflow-auto">
                 <SessionsTab />
+              </TabsContent>
+              <TabsContent value="environments" className="overflow-auto">
+                <EnvironmentsTab />
               </TabsContent>
             </Tabs>
             {detailOpen && (

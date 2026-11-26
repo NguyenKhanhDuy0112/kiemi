@@ -62,7 +62,7 @@ describe('folders & test cases [M2-02]', () => {
   it('stores a valid .kiemi.json document and keeps columns in sync', () => {
     const { services: s, defaultProjectId: projectId } = setup();
     const t = s.testCases.create({ projectId, name: 'Đăng nhập' });
-    expect(t.content).toMatchObject({ schemaVersion: 1, id: t.id, name: 'Đăng nhập', steps: [] });
+    expect(t.content).toMatchObject({ schemaVersion: 2, id: t.id, name: 'Đăng nhập', steps: [] });
     const saved = s.testCases.save(
       t.id,
       {

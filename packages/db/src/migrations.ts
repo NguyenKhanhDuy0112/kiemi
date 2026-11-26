@@ -310,4 +310,66 @@ ALTER TABLE "test_cases" ADD COLUMN "product_id" TEXT;
 ALTER TABLE "shared_steps" ADD COLUMN "product_id" TEXT;
 ALTER TABLE "elements" ADD COLUMN "product_id" TEXT;`,
   },
+  {
+    id: 7,
+    name: 'environment-products',
+    sql: `CREATE TABLE "environment_products" (
+  "id" TEXT PRIMARY KEY,
+  "workspace_id" TEXT NOT NULL,
+  "created_at" INTEGER NOT NULL,
+  "updated_at" INTEGER NOT NULL,
+  "deleted_at" INTEGER,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "project_id" TEXT NOT NULL,
+  "environment_id" TEXT NOT NULL,
+  "product_id" TEXT NOT NULL,
+  "url" TEXT,
+  "variables" TEXT NOT NULL,
+  "proxy" TEXT,
+  "ssh" TEXT
+);
+CREATE INDEX "environment_products_environment_idx" ON "environment_products" ("environment_id");
+CREATE INDEX "environment_products_project_idx" ON "environment_products" ("project_id");
+ALTER TABLE "environments" ADD COLUMN "cells_pending" INTEGER NOT NULL DEFAULT 0;
+UPDATE "environments" SET "cells_pending" = 1;`,
+  },
+  {
+    id: 8,
+    name: 'environment-type',
+    sql: `ALTER TABLE "environments" ADD COLUMN "type" TEXT NOT NULL DEFAULT 'other';
+ALTER TABLE "environments" ADD COLUMN "color" TEXT;
+ALTER TABLE "environments" ADD COLUMN "protected" INTEGER NOT NULL DEFAULT 0;
+UPDATE "environments" SET "type" = 'production', "protected" = 1
+  WHERE lower("name") IN ('production', 'prod', 'live', 'thật', 'that', 'chính thức');
+UPDATE "environments" SET "type" = 'uat' WHERE lower("name") = 'uat';
+UPDATE "environments" SET "type" = 'staging' WHERE lower("name") IN ('staging', 'stg');
+UPDATE "environments" SET "type" = 'dev' WHERE lower("name") IN ('dev', 'development');
+UPDATE "environments" SET "type" = 'test' WHERE lower("name") IN ('test', 'qa', 'sit');`,
+  },
+  {
+    id: 9,
+    name: 'variable-levels',
+    sql: `ALTER TABLE "projects" ADD COLUMN "variables" TEXT;
+ALTER TABLE "products" ADD COLUMN "variables" TEXT;
+ALTER TABLE "datasets" ADD COLUMN "env_rows" TEXT;`,
+  },
+  {
+    id: 10,
+    name: 'shared-resources',
+    sql: `CREATE TABLE "shared_resources" (
+  "id" TEXT PRIMARY KEY,
+  "workspace_id" TEXT NOT NULL,
+  "created_at" INTEGER NOT NULL,
+  "updated_at" INTEGER NOT NULL,
+  "deleted_at" INTEGER,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "kind" TEXT NOT NULL,
+  "scope" TEXT NOT NULL,
+  "project_id" TEXT,
+  "product_id" TEXT,
+  "name" TEXT NOT NULL,
+  "data" TEXT NOT NULL
+);
+CREATE INDEX "shared_resources_workspace_idx" ON "shared_resources" ("workspace_id");`,
+  },
 ];

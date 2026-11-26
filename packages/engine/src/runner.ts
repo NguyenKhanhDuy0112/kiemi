@@ -24,9 +24,11 @@ import type { EngineEvent, EngineEventListener, LogLevel, StepPhase } from './ev
 import { evaluateCondition } from './flow/condition';
 import { type ResolvedLocator, resolveLocator } from './locator/resolve';
 import type { RunDebugger } from './run/debug';
+import { findWriteSteps } from './run/protection';
 import type { SavedLogin } from './run/services';
 import { DialogController, type RunServices } from './run/services';
 import { toLocator } from './run/target';
+import { mainAppUrl } from './vars/app';
 import { maskSecrets, VariableStore } from './vars/store';
 
 /** Default per-step timeout when neither the step nor the request sets one [D-07]. */
@@ -54,6 +56,12 @@ export interface RunRequest {
   sharedSteps?: SharedStep[];
   /** Suite-level variables [E-02]. */
   suiteVariables?: Record<string, string>;
+  /** Inherited variables of the workspace, project and the test's product [O-04]. */
+  variables?: {
+    workspace?: Record<string, string>;
+    project?: Record<string, string>;
+    product?: Record<string, string>;
+  };
   /** Saved login sessions of the project, by name [F-02]. */
   savedLogins?: Record<string, SavedLogin>;
   options?: {
@@ -146,6 +154,10 @@ class Run {
         test: request.testCase.variables,
         row,
         secrets: request.secrets,
+        product: request.testCase.product,
+        workspace: request.variables?.workspace,
+        project: request.variables?.project,
+        productVariables: request.variables?.product,
       },
       this.#now,
     );
@@ -244,6 +256,25 @@ class Run {
     let runError: RunError | undefined;
 
     try {
+      // Protected environment (Production): refuse before anything runs [W-10].
+      const env = this.#req.env;
+      if (env?.protected) {
+        const writes = findWriteSteps(testCase, this.#opts.registry, this.#req.sharedSteps);
+        const first = writes[0];
+        if (first) {
+          throw new EngineError(
+            'PROTECTED_ENVIRONMENT',
+            `Environment "${env.name}" is protected: step ${first.stepId} (${first.action}) may write data`,
+            {
+              environment: env.name,
+              stepId: first.stepId,
+              action: first.action,
+              reason: first.reason,
+              count: writes.length,
+            },
+          );
+        }
+      }
       if (artifactsOpt) await mkdir(artifactsOpt.dir, { recursive: true });
       let video = artifactsOpt?.video === true && this.#opts.browser !== undefined;
       if (video) {
@@ -324,7 +355,7 @@ class Run {
     const req = this.#req;
     const logins = new Map(Object.entries(req.savedLogins ?? {}));
     const shared = new Map((req.sharedSteps ?? []).map((s) => [s.id, s]));
-    const baseUrl = req.env?.baseUrl;
+    const baseUrl = mainAppUrl(req.env, req.testCase.product);
     return {
       testCase: req.testCase,
       env: req.env,

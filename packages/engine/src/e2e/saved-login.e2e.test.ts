@@ -19,7 +19,7 @@ let n = 0;
 async function run(steps: StepInput[], extra: Partial<RunRequest> = {}, now?: () => Date) {
   const events: EngineEvent[] = [];
   const testCase = TestCaseSchema.parse({
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: '0193a5b2-7c4e-7d1a-9f3b-2c8e4a6d1f14',
     name: 'login',
     steps: steps.map((s, i) => ({ ...s, id: `s${i + 1}` })),
@@ -28,7 +28,16 @@ async function run(steps: StepInput[], extra: Partial<RunRequest> = {}, now?: ()
     {
       runId: `login-${++n}`,
       testCase,
-      env: { id: 'demo', name: 'Demo', baseUrl: e.site.url, variables: {}, secretNames: [] },
+      env: {
+        id: 'demo',
+        name: 'Demo',
+        baseUrl: e.site.url,
+        variables: {},
+        secretNames: [],
+        apps: {},
+        type: 'other',
+        protected: false,
+      },
       ...extra,
     },
     {

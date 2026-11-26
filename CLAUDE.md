@@ -1,44 +1,38 @@
 # CLAUDE.md — Kiemi (No-code UI Test Automation)
 
-## Thương hiệu
-- Tên sản phẩm: **Kiemi** (từ "kiểm"). Package scope: `@kiemi/*`. File test: `.kiemi.json`. App ID: `app.kiemi.desktop`.
-- Slogan (tiếng Anh, dùng cho mọi ngôn ngữ): *"Let Kiemi do the checking."*
-- Màu: chàm đậm `#1F2A5C` (chủ đạo), xanh lá pass `#3DDC84`, đỏ fail `#E5484D`, trắng.
-- Linh vật: **Cú Kiemi** — cú tròn màu chàm, mắt to, bụng/mỏ là **dấu tick xanh lá** (SPEC U-16).
-- Icon: ô vuông bo góc nền chàm có **Cú Kiemi** (dấu tick xanh lá). Phải nhận diện được ở 16px.
-
 > File này được Claude Code tự đọc mỗi phiên. Đây là luật của dự án — tuân thủ tuyệt đối.
+> Skills: `.claude/skills/branding/SKILL.md` (UI/icon/màu — tải khi làm màn hình mới) · `.claude/skills/release/SKILL.md` (build/sign/CI release — tải khi làm M7/N-14)
 
 ## 1. Sản phẩm
-Desktop app (Windows + macOS) cho **tester không biết code**: ghi thao tác hoặc soạn bảng step → bấm Chạy → xem kết quả.
-Cài là dùng: offline, không cần tài khoản, không cài thêm gì (dùng Edge/Chrome có sẵn trên máy).
-
-Tài liệu nguồn (đọc khi cần):
-- `docs/SPEC.md` — toàn bộ yêu cầu, mỗi yêu cầu có ID (vd `B-03`)
-- `docs/ROADMAP.md` — danh sách task theo milestone, có checkbox
-- `docs/PROGRESS.md` — tiến độ, nhật ký, **task tiếp theo**
-- `docs/ARCHITECTURE.md` — kiến trúc, luồng chạy, ranh giới giữa các khối
-- `docs/adr/` — các quyết định kiến trúc
+Desktop app (Windows + macOS) cho **tester không biết code**: ghi thao tác hoặc soạn bảng step → bấm Chạy → xem kết quả. Offline, không cần tài khoản.
+Docs: `docs/SPEC.md` (yêu cầu + ID), `docs/ROADMAP.md` (task), `docs/PROGRESS.md` (tiến độ), `docs/ARCHITECTURE.md`, `docs/adr/`.
 
 ## 2. Quy trình mỗi phiên (BẮT BUỘC)
-1. Đọc `docs/PROGRESS.md` → mục **"Tiếp theo"**. Đọc các mục SPEC mà task đó tham chiếu.
-2. **Mỗi phiên (chat) làm trọn 1 milestone** trong ROADMAP (vd M5): code lần lượt **mọi task chưa xong** của milestone đó, rồi mới test cả milestone một lượt. Không làm sang milestone kế, không làm ngoài phạm vi ROADMAP.
-   - Tiết kiệm token: không đọc cả SPEC — chỉ `grep` các ID mà task tham chiếu (vd `grep -E '^\| (A-01|A-02) ' docs/SPEC.md`). Đọc PROGRESS trước, ARCHITECTURE/ADR chỉ khi task đụng tới.
-   - Milestone quá lớn cho 1 phiên → dừng ở điểm ổn định (sau 1 task trọn vẹn), commit, ghi chi tiết phần còn lại vào PROGRESS mục **"Đang làm dở"**.
+1. Đọc `docs/PROGRESS.md` → mục **"Tiếp theo"**, **"Lưu ý cho task sau"**, **"Vấn đề tồn đọng"**. Tra các ID SPEC của task bằng `node scripts/spec-lookup.mjs <ID>...` (xem §8).
+2. **Mỗi phiên (chat) làm trọn milestone hiện tại**: lần lượt từng task trong ROADMAP (vd M9-08a → M9-11), tự động, không dừng hỏi giữa các task. Mỗi task vẫn theo đủ quy trình bên dưới (kế hoạch ngắn, test, 1 commit, cập nhật docs). Không làm sang milestone kế, không làm ngoài phạm vi ROADMAP.
+   - Task ước lượng > ~400 dòng thay đổi hoặc > 8 file → dừng, đề xuất chia nhỏ (M9-08a, M9-08b…) trước khi code.
+   - Chỉ dừng giữa milestone khi: task cần chia nhỏ (đề xuất trước khi code), cần quyết định của người dùng, lỗi không tự xử lý được, hoặc context gần đầy → dừng ở điểm ổn định, commit, ghi phần còn lại vào PROGRESS mục **"Đang làm dở"**.
 3. Trước mỗi task: nêu kế hoạch ngắn (file tạo/sửa, cách test).
-4. **Trong lúc code từng task**: viết kèm test (unit/e2e) của task; chỉ cần `pnpm lint && pnpm typecheck` pass rồi commit local, chưa push.
-   **Code xong cả milestone → test cả milestone**: chạy `pnpm lint && pnpm typecheck && pnpm test` (phải pass hết) + kiểm tra luồng chính trên app thật (build, `_electron.launch`) nếu milestone có UI. Sửa lỗi tìm được (commit `fix(...)`).
+4. **Trong lúc code**: viết kèm test (unit/e2e) của task; chỉ chạy test liên quan (§8). Trước khi commit chạy **1 lần** `pnpm lint && pnpm typecheck && pnpm test` (phải pass hết).
+   **Task cuối của milestone** → thêm kiểm tra luồng chính trên app thật (build, `_electron.launch`) nếu milestone có UI. Sửa lỗi tìm được (commit `fix(...)`).
 5. Cập nhật:
    - `docs/ROADMAP.md`: tick `[x]` task đã xong
-   - `docs/PROGRESS.md`: thêm dòng nhật ký, cập nhật "Tiếp theo", ghi vấn đề tồn đọng
+   - `docs/PROGRESS.md`: thêm dòng nhật ký, cập nhật "Tiếp theo", **ghi đè "Lưu ý cho task sau"**, ghi vấn đề tồn đọng
+   - Tạo/đổi vị trí module → cập nhật `docs/CODEMAP.md`
    - Có quyết định kiến trúc mới → thêm file `docs/adr/NNNN-ten.md`
 6. Commit theo Conventional Commits, kèm ID: `feat(engine): add fill action [A-02]`
    - **Tác giả commit = chủ dự án**: `Duy Nguyen Khanh <duynguyen.011202@gmail.com>` (đã đặt trong `git config` của repo). Trước khi commit, kiểm tra `git config user.email` đúng email này.
    - **Không thêm** dòng `Co-Authored-By: Claude …` hay bất kỳ attribution AI nào vào commit/PR.
-   - Mỗi task 1 commit. **Test cả milestone pass → `git push`** lên GitHub (`origin`). Chưa có remote `origin` → nhắc người dùng cung cấp URL repo, không tự tạo repo.
+   - Mỗi task 1 commit. **Quy ước nhánh**:
+     - Tên: `<loại>/<ID>-<mô-tả>` — chữ thường, kebab-case, không dấu, < 40 ký tự.
+       Loại: `milestone/` (vd `milestone/m9-env-product`), `fix/`, `chore/`, `spike/`.
+     - Bắt đầu milestone: tạo nhánh `milestone/<mX>-<tên>` từ `main` mới nhất. Mọi task commit + push vào nhánh đó.
+     - Hết milestone: mở PR tiêu đề `M<số>: <tên milestone>`, mô tả liệt kê task + ID; CI xanh → merge (squash/merge commit, giữ ID trong message) → xóa nhánh.
+   - Phát hành: tag `vX.Y.Z` (beta: `vX.Y.Z-beta.N`) trên `main`.
+   - Chưa có remote `origin` → nhắc người dùng cung cấp URL repo, không tự tạo repo.
    - Không `push --force` lên `main`.
-7. Nếu người dùng chỉ nói "làm tiếp" / "continue" → làm task trong mục "Tiếp theo" (hoặc mục "Đang làm dở" nếu có).
-8. **Kết thúc phiên**: sau khi push, DỪNG — không tự làm milestone kế. Báo ngắn gọn: đã xong gì, kết quả test, milestone tiếp theo, và nhắc người dùng `/clear` (hoặc mở chat mới) rồi gõ `Làm tiếp.`
+7. Nếu người dùng chỉ nói "làm tiếp" / "continue" → làm từ task trong mục "Tiếp theo" (hoặc "Đang làm dở" nếu có) cho tới hết milestone đó.
+8. **Kết thúc phiên** = hết milestone: sau task cuối chạy kiểm tra app thật (nếu có UI), push nhánh, mở PR theo quy ước (mục 6), đợi CI xanh (tự sửa nếu đỏ) rồi **tự merge vào `main`** (người dùng đã cho phép sẵn), xóa nhánh, cập nhật `main` cục bộ. Rồi DỪNG — không tự làm milestone kế. Báo ngắn gọn (≤ 10 dòng): các task đã xong, kết quả test, PR đã merge, milestone tiếp theo, và nhắc người dùng `/clear` (hoặc mở chat mới) rồi gõ `Làm tiếp.`
 9. Chạy tự động không cần mở chat: xem `START-PROMPT.md` (vòng lặp `claude -p "Làm tiếp."`, mỗi lần = 1 phiên mới = 1 milestone).
 
 ## 2b. Quy trình thay đổi yêu cầu (BẮT BUỘC)
@@ -104,14 +98,7 @@ docs/
 5. **Nhiều phiên từ đầu**: mỗi step có `session` (mặc định `"default"`); mỗi session = 1 browser context riêng.
 6. **DB**: mọi bảng có `id` (UUIDv7), `workspaceId`, `createdAt`, `updatedAt`, `deletedAt` (soft delete), `version`.
 7. **Bảo mật Electron**: `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`. Renderer chỉ gọi main qua electron-trpc. Secret lưu bằng `safeStorage`. Che secret trong log, kết quả, ảnh chụp.
-8. **UI đẹp, đơn giản, dễ dùng**: mọi màn hình tuân thủ mục **U** trong `docs/SPEC.md` (U-01 → U-15). Trước khi làm UI, đọc lại mục U.
-   **Làm UI nhanh — dùng đồ có sẵn, không tự thiết kế từ đầu**:
-   - Component: lấy từ **shadcn/ui** bằng `pnpm dlx shadcn@latest add <tên>` trong `apps/desktop` (button, input, dialog, dropdown-menu, command, table, tabs, sonner, tooltip, sheet…).
-   - Bố cục màn hình: dùng **shadcn Blocks** (vd `sidebar-07` cho layout 3 vùng U-01, `dashboard-01`, `login-0x`) rồi chỉnh màu/chữ theo token sẵn có trong `styles.css`.
-   - Bảng: TanStack Table theo mẫu "Data Table" của shadcn. Icon: Lucide. Toast: sonner. Command palette: `command` (cmdk).
-   - Chỉ tự viết component khi shadcn không có; không thêm UI kit khác (MUI, Ant…).
-   - Demo-site (`apps/demo-site`) là web mục tiêu để test, không cần đẹp — HTML/CSS thuần.
-   **UI cho người không biết code**: không hardcode chuỗi (dùng i18n). Không hiện thuật ngữ kỹ thuật (selector, CSS, Playwright) trừ chế độ "Nâng cao". Lỗi phải nói bằng tiếng Việt dễ hiểu: *"Bước 5: Không tìm thấy nút 'Lưu' sau 10 giây"*.
+8. **UI đẹp, đơn giản, dễ dùng**: mọi màn hình tuân thủ mục **U** trong `docs/SPEC.md`. Trước khi làm màn hình mới, tải skill `branding` (`.claude/skills/branding/SKILL.md`).
 9. **Không thêm dependency lớn** khi chưa ghi lý do vào ADR.
 
 ## 6. Definition of Done
@@ -126,3 +113,34 @@ docs/
 - Tên file: kebab-case. Component React: PascalCase.
 - Không để `any`, không `// @ts-ignore` khi chưa ghi lý do.
 - Mỗi action engine nằm ở `packages/engine/src/actions/<type>.ts`.
+
+## 8. Tiết kiệm token (BẮT BUỘC)
+
+### Đọc tài liệu
+- KHÔNG đọc toàn bộ `docs/SPEC.md`, `docs/proposals/*`, `docs/QC-COVERAGE.md`. Chỉ tra đúng ID của task:
+  `node scripts/spec-lookup.mjs <ID> [ID...]`  (vd `node scripts/spec-lookup.mjs M9-08 O-06`)
+- `docs/PROGRESS.md`: chỉ đọc mục **Tiếp theo**, **Lưu ý cho task sau** và **Vấn đề tồn đọng**. Nhật ký cũ hơn 2 tuần chuyển sang `docs/progress-archive.md`.
+- `docs/CODEMAP.md`: chỉ mở khi chưa biết code nằm ở đâu.
+- `docs/ARCHITECTURE.md` / ADR: chỉ đọc khi task đụng tới ranh giới giữa các khối.
+
+### Phạm vi mỗi phiên
+- **1 milestone / phiên** (§2), làm lần lượt từng task; khi context dài thì compact (xem cuối §8). Không đọc file "cho chắc": tìm có mục tiêu (`rg`, go-to-definition) trước, chỉ mở file cần sửa.
+
+### Chạy test
+- Trong lúc làm: chỉ chạy test liên quan: `pnpm vitest run <đường-dẫn-hoặc-tên>` / `pnpm --filter <package> test`.
+- Toàn bộ `pnpm lint && pnpm typecheck && pnpm test` chỉ chạy **1 lần cuối** trước khi commit.
+- E2E engine trên demo-site: chỉ chạy spec của action/tính năng vừa làm, không chạy cả bộ.
+- Hook `.claude/hooks/filter-test-output.sh` tự lọc output của lệnh `pnpm test|vitest|…` (chỉ trả phần lỗi + tóm tắt; log đầy đủ ở `$TMPDIR/kiemi-test.log`). Kết quả test dài → giao cho subagent chạy và chỉ trả về tóm tắt lỗi.
+
+### Viết code
+- Code lặp khuôn (action mới, file i18n, bảng DB, tRPC router) → dùng generator `pnpm gen <loại> <tên>` (nếu chưa có thì tạo ở task riêng), không viết tay từng file.
+- Không in lại cả file khi chỉ sửa vài dòng. Không thêm log/giải thích dài vào chat; tóm tắt cuối task ≤ 10 dòng.
+
+### Bàn giao giữa các phiên
+Claude Code không nhớ gì giữa các phiên — kiến thức chỉ đi tiếp qua file.
+- Cuối mỗi task, **ghi đè** mục "Lưu ý cho task sau" trong `docs/PROGRESS.md` (≤ 3 dòng): file/thư mục chính đã đụng, khuôn mẫu nên làm theo, cạm bẫy đã gặp.
+- Tạo module/thư mục mới hoặc đổi vị trí code → cập nhật `docs/CODEMAP.md` (mỗi module 1 dòng). Giữ file dưới ~80 dòng.
+- Làm việc giống task trước (thêm action, màn hình, bảng) → mở **1 file mẫu** cùng loại (theo CODEMAP) và làm theo, không khám phá lại.
+
+### Compact
+Khi compact, giữ lại: ID task đang làm, file đã sửa, test đang fail và lý do, quyết định đã chốt. Bỏ: nội dung file đã đọc, output test đã pass.

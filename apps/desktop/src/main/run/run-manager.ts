@@ -1,6 +1,12 @@
 import { join } from 'node:path';
-import type { RunRowStatus, RunTarget, Services } from '@kiemi/db';
-import type { EngineEvent, RunRequest, SavedLogin, StepPhase } from '@kiemi/engine';
+import { DbError, type RunRowStatus, type RunTarget, type Services } from '@kiemi/db';
+import {
+  type EngineEvent,
+  environmentSkip,
+  type RunRequest,
+  type SavedLogin,
+  type StepPhase,
+} from '@kiemi/engine';
 import type {
   ArtifactRef,
   Dataset,
@@ -10,6 +16,7 @@ import type {
   Secrets,
   TestCase,
 } from '@kiemi/schema';
+import { type OpenTunnel, prepareNetwork, type TunnelLike, usedProducts } from '../tunnel/network';
 import type { HostToWorker, WorkerToHost } from './protocol';
 import { type StartRunInput, StartRunInputSchema } from './start-input';
 
@@ -24,10 +31,7 @@ export interface WorkerHandle {
   kill(): void;
 }
 
-export interface TunnelLike {
-  readonly proxyUrl: string;
-  close(): Promise<void>;
-}
+export type { OpenTunnel, TunnelLike } from '../tunnel/network';
 
 export interface RunManagerDeps {
   services: Services;
@@ -36,7 +40,8 @@ export interface RunManagerDeps {
   artifactsRoot: string;
   /** Where a downloaded Chromium lives (`userData/browsers`). */
   browsersPath: string;
-  openTunnel?: (env: Env, secrets: Secrets) => Promise<TunnelLike>;
+  /** Opens one SSH tunnel; called once per distinct SSH setting of the cells a run uses [O-02]. */
+  openTunnel?: OpenTunnel;
   /** Grace period after Stop before the engine process is killed. */
   cancelKillMs?: number;
 }
@@ -49,6 +54,8 @@ export interface PlannedCase {
   testCaseId: string;
   testName: string;
   rowIndex?: number | undefined;
+  /** Not run: the test is limited to other environments [O-06]. */
+  skipped?: RunError | undefined;
 }
 
 /** What the renderer receives while a run progresses [N-05, S-03]. */
@@ -101,13 +108,15 @@ function datasetOf(
   tc: TestCase,
   services: Services,
   overrideId?: string | null,
+  environmentId?: string | null,
 ): Dataset | undefined {
-  if (overrideId) return services.datasets.forRun(overrideId);
+  // Saved datasets may have their own rows on this environment [O-05].
+  if (overrideId) return services.datasets.forRun(overrideId, environmentId);
   const src = tc.dataset;
   if (!src) return undefined;
   if (src.source === 'table')
     return { id: 'table', name: 'table', columns: src.columns, rows: src.rows };
-  if (src.source === 'saved') return services.datasets.forRun(src.datasetId);
+  if (src.source === 'saved') return services.datasets.forRun(src.datasetId, environmentId);
   // Excel/CSV files are imported into a table / saved dataset by the editor.
   return undefined;
 }
@@ -157,11 +166,17 @@ export class RunManager {
     let defaultEnv: string | null | undefined;
     let plans: CasePlan[] = [];
     const t = input.target;
+    /** Environment of the run (known before the data: datasets differ per environment). */
+    const envFor = (pid: string, suiteEnv?: string | null): string | null =>
+      input.environmentId === undefined
+        ? (suiteEnv ?? s.environments.list(pid)[0]?.id ?? null)
+        : input.environmentId;
     if (t.kind === 'test') {
       const row = s.testCases.get(t.testCaseId);
       projectId = row.projectId;
       target = { kind: 'test', testCaseId: row.id, name: row.name };
-      plans = expand(row.content, datasetOf(row.content, s), t.rowIndex);
+      const content = s.testCases.forRun(row.id);
+      plans = expand(content, datasetOf(content, s, null, envFor(projectId)), t.rowIndex);
     } else if (t.kind === 'suite') {
       const suite = s.suites.get(t.suiteId);
       projectId = suite.projectId;
@@ -173,7 +188,13 @@ export class RunManager {
         if (!item.enabled) continue;
         const row = s.testCases.repo.find(item.testCaseId);
         if (!row) continue;
-        plans.push(...expand(row.content, datasetOf(row.content, s, item.datasetId)));
+        const content = s.testCases.forRun(row.id);
+        plans.push(
+          ...expand(
+            content,
+            datasetOf(content, s, item.datasetId, envFor(projectId, suite.environmentId)),
+          ),
+        );
       }
     } else {
       projectId = t.projectId;
@@ -181,8 +202,8 @@ export class RunManager {
       const tag = t.tag.toLowerCase();
       for (const summary of s.testCases.list(projectId)) {
         if (!summary.tags.some((x) => x.toLowerCase() === tag)) continue;
-        const row = s.testCases.get(summary.id);
-        plans.push(...expand(row.content, datasetOf(row.content, s)));
+        const content = s.testCases.forRun(summary.id);
+        plans.push(...expand(content, datasetOf(content, s, null, envFor(projectId))));
       }
     }
 
@@ -194,8 +215,25 @@ export class RunManager {
     const { env, secrets } = environmentId
       ? s.environments.forRun(environmentId)
       : { env: undefined, secrets: {} };
+    // Production & co.: the UI must have asked twice [O-03, W-10].
+    if (env?.protected && input.confirmProtected !== true)
+      throw new DbError('CONFIRM_REQUIRED', `Environment "${env.name}" is protected`, {
+        environment: env.name,
+        environmentId: env.id,
+        type: env.type,
+      });
     const settings = s.settings.getAll();
-    const sharedSteps = s.sharedSteps.forRun(projectId);
+    // Project steps plus the workspace library, called by id [O-07].
+    const sharedSteps = [
+      ...s.sharedSteps.forRun(projectId),
+      ...s.sharedResources.sharedStepsForRun(),
+    ];
+    // Inherited variables [O-04]: workspace → project → the test's product.
+    const workspaceVars = settings.workspaceVariables;
+    const projectVars = s.projects.get(projectId).variables ?? {};
+    const productVars = new Map(
+      s.products.list(projectId).map((p) => [p.key, p.variables ?? {}] as const),
+    );
     // Stored as Playwright gave it (`storageState()`); the DB only checks the outline.
     const savedLogins = s.savedLogins.forRun(projectId) as unknown as Record<string, SavedLogin>;
 
@@ -219,19 +257,36 @@ export class RunManager {
     this.#trim();
 
     const planned: PlannedCase[] = [];
-    const requests: RunRequest[] = plans.map((p, i) => {
+    const requests: RunRequest[] = [];
+    plans.forEach((p, i) => {
       const c = s.runs.addCase({ runId: run.id, testCaseId: p.testCase.id, rowIndex: p.rowIndex });
       const dir = plans.length > 1 ? `case-${i + 1}` : '';
       active.caseIds.add(c.id);
-      active.openCases.add(c.id);
-      active.caseDirs.set(c.id, dir);
-      planned.push({
+      const base = {
         runCaseId: c.id,
         testCaseId: p.testCase.id,
         testName: p.testCase.name,
         ...(p.rowIndex === undefined ? {} : { rowIndex: p.rowIndex }),
-      });
-      return {
+      };
+      // Limited to other environments: recorded as skipped with the reason, never run [O-06].
+      const skip = environmentSkip(p.testCase, env);
+      if (skip) {
+        const error: RunError = {
+          code: 'ENV_SKIPPED',
+          message: skip.reason ?? `Skipped on environment ${skip.environment}`,
+          details: {
+            environment: skip.environment,
+            ...(skip.reason ? { reason: skip.reason } : {}),
+          },
+        };
+        s.runs.abortCase(c.id, 'skipped', error);
+        planned.push({ ...base, skipped: error });
+        return;
+      }
+      active.openCases.add(c.id);
+      active.caseDirs.set(c.id, dir);
+      planned.push(base);
+      requests.push({
         runId: c.id,
         testCase: p.testCase,
         ...(env ? { env } : {}),
@@ -240,6 +295,13 @@ export class RunManager {
         ...(p.rowIndex === undefined ? {} : { rowIndex: p.rowIndex }),
         sharedSteps,
         savedLogins,
+        variables: {
+          workspace: workspaceVars,
+          project: projectVars,
+          product:
+            productVars.get(p.testCase.product ?? env?.defaultProduct ?? '') ??
+            ({} as Record<string, string>),
+        },
         ...(suiteVariables ? { suiteVariables } : {}),
         options: {
           defaultStepTimeoutMs: settings.defaultTimeoutSec * 1000,
@@ -251,7 +313,7 @@ export class RunManager {
             trace: opts.trace === true,
           },
         },
-      };
+      });
     });
 
     this.#publish(active, { type: 'plan', runId: run.id, target, cases: planned });
@@ -370,14 +432,21 @@ export class RunManager {
     this.#publish(active, { type: 'status', runId: active.runId, status: 'running' });
 
     let msg = start;
-    if (env?.ssh?.enabled && this.#d.openTunnel) {
+    if (env) {
       try {
-        const tunnel = await this.#d.openTunnel(env, secrets);
-        active.tunnel = tunnel;
-        const proxied: Env = {
-          ...env,
-          proxy: { server: tunnel.proxyUrl, bypass: env.proxy?.bypass ?? [] },
-        };
+        // Each product's cell may need its own SSH tunnel / proxy [O-02].
+        const net = await prepareNetwork({
+          env,
+          secrets,
+          used: usedProducts(
+            env,
+            start.requests.map((r) => r.testCase),
+            start.requests[0]?.sharedSteps ?? [],
+          ),
+          openTunnel: this.#d.openTunnel,
+        });
+        active.tunnel = { proxyUrl: net.env.proxy?.server ?? '', close: net.close };
+        const proxied = net.env;
         msg = { ...start, requests: start.requests.map((r) => ({ ...r, env: proxied })) };
       } catch (err) {
         this.#finish(active, 'error', {

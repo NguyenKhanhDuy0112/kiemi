@@ -48,6 +48,8 @@ export const projects = sqliteTable(
     folderPath: text('folder_path'),
     /** `relative path → hash` at the last folder sync (three-way merge base). */
     folderState: json<Record<string, string>>('folder_state'),
+    /** Project-level variables [O-04] (migration 9). */
+    variables: json<Record<string, string>>('variables'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );
@@ -65,6 +67,8 @@ export const products = sqliteTable(
       .notNull()
       .default('web'),
     sortOrder: integer('sort_order').notNull().default(0),
+    /** Product-level variables [O-04] (migration 9). */
+    variables: json<Record<string, string>>('variables'),
   },
   (t) => [index('products_project_idx').on(t.projectId)],
 );
@@ -178,8 +182,45 @@ export const environments = sqliteTable(
      */
     secretNames: json<string[]>('secret_names'),
     sortOrder: integer('sort_order').notNull().default(0),
+    /**
+     * 1 = v1.0 row whose `baseUrl/proxy/ssh` still wait to move into a cell of the
+     * default product (`EnvironmentService.backfillCells`) [O-02] (migration 7).
+     * Those three columns are legacy: cells hold them now.
+     */
+    cellsPending: integer('cells_pending').notNull().default(0),
+    /** Dev · Test · UAT · Staging · Production · Other [O-03] (migration 8). */
+    type: text('type', { enum: ['dev', 'test', 'uat', 'staging', 'production', 'other'] })
+      .notNull()
+      .default('other'),
+    /** `#RRGGBB`; null = the type's colour. */
+    color: text('color'),
+    /** Refuses steps that write data [W-10]; on by default for Production. */
+    protected: integer('protected', { mode: 'boolean' }).notNull().default(false),
   },
   (t) => [index('environments_project_idx').on(t.projectId)],
+);
+
+/**
+ * One cell of the Environment × Product matrix [O-02] (migration 7): the
+ * product's URL, variables and network in that environment. No row = the
+ * product is not available in the environment.
+ */
+export const environmentProducts = sqliteTable(
+  'environment_products',
+  {
+    ...base,
+    projectId: text('project_id').notNull(),
+    environmentId: text('environment_id').notNull(),
+    productId: text('product_id').notNull(),
+    url: text('url'),
+    variables: json<Record<string, string>>('variables').notNull(),
+    proxy: json<ProxySettings>('proxy'),
+    ssh: json<SshSettings>('ssh'),
+  },
+  (t) => [
+    index('environment_products_environment_idx').on(t.environmentId),
+    index('environment_products_project_idx').on(t.projectId),
+  ],
 );
 
 export const variables = sqliteTable(
@@ -220,6 +261,8 @@ export const datasets = sqliteTable(
     columns: json<string[]>('columns').notNull(),
     rows: json<Record<string, string>[]>('rows').notNull(),
     source: json<DatasetSourceInfo>('source').notNull(),
+    /** Rows used instead on some environments, by environment id [O-05] (migration 9). */
+    envRows: json<Record<string, Record<string, string>[]>>('env_rows'),
   },
   (t) => [index('datasets_project_idx').on(t.projectId)],
 );
@@ -320,6 +363,35 @@ export const savedLogins = sqliteTable(
   (t) => [index('saved_logins_project_idx').on(t.projectId)],
 );
 
+/** What a shared resource is; its `data` shape depends on it [O-07]. */
+export type SharedResourceKind = 'shared_step' | 'element';
+/** Where a shared resource applies [O-07]. */
+export type SharedResourceScope = 'workspace' | 'project' | 'product';
+/** `data` of a `shared_step` is `{ params, steps }`; of an `element` is `{ locator, pageUrl }`. */
+export type SharedResourceData =
+  | { params: SharedStep['params']; steps: Step[] }
+  | { locator: Locator; pageUrl?: string | null };
+
+/**
+ * Resources shared beyond one project: the workspace library (used across projects) [O-07]
+ * (migration 10). Project/product-level steps and elements stay in their own tables.
+ */
+export const sharedResources = sqliteTable(
+  'shared_resources',
+  {
+    ...base,
+    kind: text('kind').$type<SharedResourceKind>().notNull(),
+    scope: text('scope').$type<SharedResourceScope>().notNull(),
+    /** `null` for the workspace scope. */
+    projectId: text('project_id'),
+    /** Only for the product scope. */
+    productId: text('product_id'),
+    name: text('name').notNull(),
+    data: json<SharedResourceData>('data').notNull(),
+  },
+  (t) => [index('shared_resources_workspace_idx').on(t.workspaceId)],
+);
+
 export const ALL_TABLES = {
   workspaces,
   projects,
@@ -331,6 +403,7 @@ export const ALL_TABLES = {
   sharedSteps,
   elements,
   environments,
+  environmentProducts,
   variables,
   secrets,
   datasets,
@@ -340,4 +413,5 @@ export const ALL_TABLES = {
   artifacts,
   settings,
   savedLogins,
+  sharedResources,
 } as const;

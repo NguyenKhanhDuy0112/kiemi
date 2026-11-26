@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
+  EnvColorSchema,
+  EnvTypeSchema,
   LocatorSchema,
   ProductSchema,
   ProxySchema,
@@ -47,6 +49,8 @@ export const ProjectFileSchema = z.object({
   id,
   name: z.string().trim().min(1),
   description: z.string().nullish(),
+  /** Project-level variables [O-04]. */
+  variables: z.record(VariableNameSchema, z.string()).default({}),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -61,12 +65,26 @@ export const FolderEntrySchema = z.object({
 });
 export const FoldersFileSchema = z.object({ folders: z.array(FolderEntrySchema).default([]) });
 
+/** One cell of the Environment × Product matrix [O-02]. */
+export const CellEntrySchema = z.object({
+  productId: id,
+  url: z.string().nullish(),
+  variables: z.record(VariableNameSchema, z.string()).default({}),
+  proxy: ProxySchema.nullish(),
+  ssh: SshSettingsSchema.nullish(),
+});
+
 export const EnvironmentEntrySchema = z.object({
   id,
   name: z.string().trim().min(1),
+  type: EnvTypeSchema.default('other'),
+  color: EnvColorSchema.nullish(),
+  protected: z.boolean().default(false),
+  /** Read only (files written before M9-05) → the first product's cell. */
   baseUrl: z.string().nullish(),
   proxy: ProxySchema.nullish(),
   ssh: SshSettingsSchema.nullish(),
+  cells: z.array(CellEntrySchema).default([]),
   variables: z.record(VariableNameSchema, z.string()).default({}),
   /** Names only — secret values never live in the project folder [O-11]. */
   secretNames: z.array(VariableNameSchema).default([]),
@@ -100,6 +118,8 @@ export const DatasetFileSchema = z.object({
       sheet: z.string().optional(),
     })
     .default({ kind: 'manual' }),
+  /** Rows per environment id [O-05]. */
+  envRows: z.record(id, z.array(z.record(z.string(), z.string()))).default({}),
 });
 
 export const SuiteFileSchema = z.object({
@@ -122,6 +142,7 @@ export const SuiteFileSchema = z.object({
 export type ProductEntry = z.infer<typeof ProductSchema>;
 export type FolderEntry = z.infer<typeof FolderEntrySchema>;
 export type EnvironmentEntry = z.infer<typeof EnvironmentEntrySchema>;
+export type CellEntry = z.infer<typeof CellEntrySchema>;
 export type ElementEntry = z.infer<typeof ElementEntrySchema>;
 export type SharedStepEntry = z.infer<typeof SharedStepFileSchema>;
 export type DatasetEntry = z.infer<typeof DatasetFileSchema>;
@@ -129,7 +150,12 @@ export type SuiteEntry = z.infer<typeof SuiteFileSchema>;
 
 /** Everything of one project that is shared through its folder. */
 export interface ProjectSnapshot {
-  project: { id: string; name: string; description: string | null };
+  project: {
+    id: string;
+    name: string;
+    description: string | null;
+    variables: Record<string, string>;
+  };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];
   folders: FolderEntry[];

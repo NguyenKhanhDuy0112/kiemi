@@ -64,6 +64,11 @@ export interface ActionDefinition<P extends z.ZodType = z.ZodType> {
    * timeout; their children have their own.
    */
   container?: boolean;
+  /**
+   * The step may create/change/delete data (raw params, before variables).
+   * Refused on protected environments such as Production [W-10].
+   */
+  writes?: (params: Record<string, unknown>) => boolean;
   execute(params: z.output<P>, ctx: ActionContext): Promise<void> | void;
 }
 

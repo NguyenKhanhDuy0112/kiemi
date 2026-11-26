@@ -69,6 +69,10 @@ export const en = {
         message: 'The step failed: {{reason}}',
         hint: 'Run again. If it still fails, check the screenshot of this step.',
       },
+      ENV_SKIPPED: {
+        message: 'Skipped: this test does not run on the {{environment}} environment.',
+        hint: 'To run it, change the test’s environment limit.',
+      },
       RUN_CANCELLED: { message: 'The run was stopped.', hint: 'Press Run to start again.' },
       ELEMENT_NOT_FOUND: {
         message: 'Could not find {{element}} after {{seconds}} seconds.',
@@ -101,6 +105,19 @@ export const en = {
       PROXY_SECRET_MISSING: {
         message: 'The proxy password (secret “{{secret}}”) is missing.',
         hint: 'Go to Environment → Secrets to enter it.',
+      },
+      APP_NOT_AVAILABLE: {
+        message: 'Product “{{product}}” is not set up in environment “{{environment}}”.',
+        hint: 'Go to Environments and enter this product’s address in that environment’s column — or pick another environment when running.',
+      },
+      UNKNOWN_PRODUCT: {
+        message: 'The project has no product “{{product}}”.',
+        hint: 'Check the product name after “app.”, or add this product to the project.',
+      },
+      PROTECTED_ENVIRONMENT: {
+        message:
+          'Environment “{{environment}}” is protected, so Kiemi does not run tests with steps that write data (cleanup steps, API calls that add/change/delete).',
+        hint: 'Run on another environment, or remove the data-writing steps from this test. Only turn protection off when you are sure.',
       },
       UNKNOWN_VARIABLE: {
         message: 'There is no variable “{{name}}”.',

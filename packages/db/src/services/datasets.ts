@@ -80,10 +80,26 @@ export class DatasetService {
     this.repo.remove(id);
   }
 
-  /** Engine shape (`RunRequest.dataset`). */
-  forRun(id: string): Dataset {
+  /**
+   * Rows used instead when running on `environmentId` (same columns); `null`
+   * goes back to the default rows [O-05].
+   */
+  setEnvironmentRows(id: string, environmentId: string, rows: Record<string, string>[] | null) {
+    const cur = this.repo.get(id);
+    const next = { ...(cur.envRows ?? {}) };
+    if (rows === null) delete next[environmentId];
+    else {
+      this.#validate({ projectId: cur.projectId, name: cur.name, columns: cur.columns, rows });
+      next[environmentId] = rows;
+    }
+    return this.repo.update(id, { envRows: Object.keys(next).length ? next : null });
+  }
+
+  /** Engine shape (`RunRequest.dataset`): the environment's own rows when it has some [O-05]. */
+  forRun(id: string, environmentId?: string | null): Dataset {
     const r = this.repo.get(id);
-    return DatasetSchema.parse({ id: r.id, name: r.name, columns: r.columns, rows: r.rows });
+    const rows = (environmentId && r.envRows?.[environmentId]) || r.rows;
+    return DatasetSchema.parse({ id: r.id, name: r.name, columns: r.columns, rows });
   }
 
   #validate(input: z.input<typeof DatasetInputSchema>) {

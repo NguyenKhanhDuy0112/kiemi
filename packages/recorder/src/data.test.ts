@@ -10,7 +10,7 @@ const field = (label: string, attributes: Record<string, string> = {}) => ({
 
 const recorded = (extra: Partial<TestCase> = {}): TestCase =>
   TestCaseSchema.parse({
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: '0193a5b2-7c4e-7d1a-9f3b-2c8e4a6d1f15',
     name: 'Đăng ký',
     tags: ['form'],

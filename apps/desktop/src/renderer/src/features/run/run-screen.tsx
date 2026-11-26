@@ -6,6 +6,7 @@ import { moodForStatus } from '@renderer/components/mascot/mood';
 import { Badge } from '@renderer/components/ui/badge';
 import { Button } from '@renderer/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@renderer/components/ui/dialog';
+import { envColor } from '@renderer/lib/environment';
 import { errorMessage } from '@renderer/lib/errors';
 import { useAppStore } from '@renderer/lib/store';
 import { trpc, trpcClient } from '@renderer/lib/trpc';
@@ -22,6 +23,7 @@ import {
   Pause,
   Play,
   RotateCcw,
+  ShieldAlert,
   Square,
   StepForward,
 } from 'lucide-react';
@@ -29,6 +31,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { childLists } from '../editor/doc-model';
 import { StepSentence } from '../editor/step-sentence';
+import { EnvironmentPill } from '../environments/environment-badge';
 import { buildHtmlReport } from './report';
 import { useStartRun } from './run-dialog';
 import {
@@ -127,13 +130,19 @@ export function RunScreen({ runId }: { runId: string }) {
     });
     return m;
   }, [testIds, tests]);
+  // Workspace library steps are called by id too [O-07].
+  const library = useQuery(trpc.sharedResources.list.queryOptions({ kind: 'shared_step' }));
   const shared = useQuery({
     ...trpc.sharedSteps.list.queryOptions({ projectId: detail?.projectId ?? '' }),
     enabled: !!detail?.projectId,
   });
   const sharedNames = useMemo(
-    () => new Map((shared.data ?? []).map((s) => [s.id, s.name])),
-    [shared.data],
+    () =>
+      new Map([
+        ...(library.data ?? []).map((r) => [r.id, r.name] as const),
+        ...(shared.data ?? []).map((s) => [s.id, s.name] as const),
+      ]),
+    [shared.data, library.data],
   );
 
   if (!view) {
@@ -174,6 +183,8 @@ export function RunScreen({ runId }: { runId: string }) {
         run: view,
         title,
         environmentName: detail?.environmentName ?? null,
+        environmentColor: detail?.environment ? envColor(detail.environment) : null,
+        environmentProtected: detail?.environment?.protected === true,
         startedAt: detail?.startedAt ? new Date(detail.startedAt) : null,
         tests: docs,
         screenshots,
@@ -209,12 +220,9 @@ export function RunScreen({ runId }: { runId: string }) {
         <Mascot mood={moodForStatus(view.status)} size={36} />
         <h1 className="min-w-0 truncate text-base font-semibold">{title}</h1>
         <RunStatusBadge status={view.status} />
+        {detail?.environment && <EnvironmentPill env={detail.environment} />}
         <span className="text-xs text-muted-foreground">
-          {detail?.environmentName
-            ? tx('ui.run.environment', { name: detail.environmentName })
-            : detail
-              ? tx('ui.run.noEnvironment')
-              : ''}
+          {detail && !detail.environment ? tx('ui.run.noEnvironment') : ''}
           {!running &&
             view.durationMs !== undefined &&
             ` · ${tx('ui.run.duration', { seconds: seconds(view.durationMs) })}`}
@@ -271,6 +279,15 @@ export function RunScreen({ runId }: { runId: string }) {
           )}
         </div>
       </header>
+      {detail?.environment?.protected && (
+        <div
+          role="status"
+          className="flex items-center gap-2 border-b border-fail bg-fail-soft px-3 py-1.5 text-sm font-medium text-fail-text"
+        >
+          <ShieldAlert className="size-4" aria-hidden />
+          {tx('ui.run.protectedBanner', { name: detail.environment.name })}
+        </div>
+      )}
 
       {running && (
         <div

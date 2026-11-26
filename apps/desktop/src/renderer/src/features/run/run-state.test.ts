@@ -141,3 +141,17 @@ describe('live run state [M4-02]', () => {
     expect(crashed.cases.map((c) => c.status)).toEqual(['error', 'error']);
   });
 });
+
+describe('plan with env-skipped case [O-06]', () => {
+  it('marks the case skipped and keeps the reason', () => {
+    const error = { code: 'ENV_SKIPPED', message: 'm', details: { environment: 'Prod' } } as never;
+    const run = applyFeed(initialRun('r1'), {
+      type: 'plan',
+      runId: 'r1',
+      target: { kind: 'testCase', testCaseId: 't' } as never,
+      cases: [{ runCaseId: 'c1', testCaseId: 't', testName: 'T', skipped: error }],
+    });
+    expect(run.cases[0]?.status).toBe('skipped');
+    expect(run.cases[0]?.error).toBe(error);
+  });
+});

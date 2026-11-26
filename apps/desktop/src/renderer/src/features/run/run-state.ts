@@ -70,9 +70,11 @@ export function applyFeed(run: LiveRun, e: RunFeedEvent): LiveRun {
       return {
         ...run,
         target: e.target,
-        cases: e.cases.map((c) => ({
+        cases: e.cases.map(({ skipped, ...c }) => ({
           ...c,
-          status: 'queued',
+          // Limited to other environments: shown as skipped with the reason [O-06].
+          status: skipped ? 'skipped' : 'queued',
+          ...(skipped ? { error: skipped } : {}),
           stepCount: 0,
           stepsDone: 0,
           steps: {},

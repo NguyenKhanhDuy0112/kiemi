@@ -17,7 +17,7 @@ describe('stop after step X and keep the sessions [K-04]', () => {
   it('skips later steps and cleanup, and hands over the open pages', async () => {
     let kept: SessionPages | undefined;
     const testCase = TestCaseSchema.parse({
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: '0193a5b2-7c4e-7d1a-9f3b-2c8e4a6d1f12',
       name: 'keep',
       steps: [
@@ -31,7 +31,16 @@ describe('stop after step X and keep the sessions [K-04]', () => {
       {
         runId: 'keep-1',
         testCase,
-        env: { id: 'demo', name: 'Demo', baseUrl: e.site.url, variables: {}, secretNames: [] },
+        env: {
+          id: 'demo',
+          name: 'Demo',
+          baseUrl: e.site.url,
+          variables: {},
+          secretNames: [],
+          apps: {},
+          type: 'other',
+          protected: false,
+        },
         options: { stopAfterStepId: 's2' },
       },
       { registry: createDefaultRegistry(), browser: e.browser, keepSessions: (p) => (kept = p) },

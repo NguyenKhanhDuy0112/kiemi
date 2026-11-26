@@ -93,7 +93,7 @@ describe('project folders in the app [T-01, M9-02]', () => {
     writeFileSync(
       join(root, 'Dự án đầu tiên', 'tests', 'x.kiemi.json'),
       JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         id: '01890000-0000-7000-8000-0000000000aa',
         name: 'Từ Git',
       }),
@@ -127,7 +127,7 @@ describe('project folders in the app [T-01, M9-02]', () => {
       writeFileSync(
         join(dir, 'b.kiemi.json'),
         JSON.stringify({
-          schemaVersion: 1,
+          schemaVersion: 2,
           id: '01890000-0000-7000-8000-0000000000bb',
           name: 'Máy B',
         }),

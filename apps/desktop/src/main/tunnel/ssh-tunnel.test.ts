@@ -4,7 +4,7 @@ import { type AddressInfo, connect as netConnect, type Socket } from 'node:net';
 import { type SshSettings, SshSettingsSchema } from '@kiemi/schema';
 import { type Connection, Server as SshServer, utils } from 'ssh2';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { openSshTunnel, testSshConnection, withTunnelProxy } from './ssh-tunnel';
+import { openSshTunnel, testSshConnection } from './ssh-tunnel';
 
 /** Host name that only the SSH server can resolve (proves DNS through SSH). */
 const INTERNAL = 'kiemi-internal.test';
@@ -194,20 +194,6 @@ describe('SSH tunnel [G-07]', () => {
     ).toMatchObject({
       ok: false,
       reason: 'unreachable',
-    });
-  });
-
-  it('points the run environment at the tunnel, keeping the bypass list', () => {
-    const env = {
-      id: 'e',
-      name: 'UAT',
-      variables: {},
-      secretNames: [],
-      proxy: { server: 'http://old:1', bypass: ['localhost'] },
-    };
-    expect(withTunnelProxy(env, { proxyUrl: 'socks5://127.0.0.1:5555' }).proxy).toEqual({
-      server: 'socks5://127.0.0.1:5555',
-      bypass: ['localhost'],
     });
   });
 

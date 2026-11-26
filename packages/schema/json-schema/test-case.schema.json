@@ -7,7 +7,7 @@
     },
     "schemaVersion": {
       "type": "number",
-      "const": 1
+      "const": 2
     },
     "id": {
       "type": "string",
@@ -27,6 +27,32 @@
       "items": {
         "type": "string",
         "minLength": 1
+      }
+    },
+    "product": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,31}$"
+    },
+    "environments": {
+      "type": "object",
+      "properties": {
+        "only": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "except": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "reason": {
+          "type": "string"
+        }
       }
     },
     "sessions": {
@@ -728,6 +754,6 @@
     "id",
     "name"
   ],
-  "$id": "https://kiemi.app/schema/test-case.v1.json",
+  "$id": "https://kiemi.app/schema/test-case.v2.json",
   "title": "Kiemi test case"
 }

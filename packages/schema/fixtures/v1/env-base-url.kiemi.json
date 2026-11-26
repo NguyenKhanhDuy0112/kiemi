@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "0193a5b2-7c4e-7d1a-9f3b-2c8e4a6d1f04",
+  "name": "Đăng nhập theo môi trường",
+  "steps": [
+    { "id": "s1", "action": "goto", "params": { "url": "{{env.baseUrl}}/login.html" } },
+    { "id": "s2", "action": "assertUrl", "params": { "expected": "{{ env.baseUrl }}/login.html" } }
+  ],
+  "cleanup": [{ "id": "c1", "action": "goto", "params": { "url": "{{env.baseUrl}}" } }]
+}

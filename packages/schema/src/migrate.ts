@@ -72,11 +72,31 @@ export function createMigrator(current: number, migrations: readonly Migration[]
   };
 }
 
+/** Replaces `{{env.baseUrl}}` (any spacing) in every string, deep. */
+function replaceBaseUrl(value: unknown): unknown {
+  if (typeof value === 'string') return value.replace(/\{\{\s*env\.baseUrl\s*\}\}/g, '{{app}}');
+  if (Array.isArray(value)) return value.map(replaceBaseUrl);
+  if (value === null || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.entries(value as RawDoc).map(([k, v]) => [k, replaceBaseUrl(v)]),
+  );
+}
+
 /**
- * Registered DSL migrations, oldest first. v1 is the first version, so none yet.
+ * Registered DSL migrations, oldest first.
  * Adding one: bump CURRENT_SCHEMA_VERSION, add `{ from: N, migrate }`, add fixtures/vN.
  */
-export const MIGRATIONS: readonly Migration[] = [];
+export const MIGRATIONS: readonly Migration[] = [
+  /** v1 → v2: products × environments — `{{env.baseUrl}}` becomes `{{app}}` [O-02, ADR 0018]. */
+  {
+    from: 1,
+    migrate: (doc) => ({
+      ...doc,
+      ...(doc.steps !== undefined ? { steps: replaceBaseUrl(doc.steps) } : {}),
+      ...(doc.cleanup !== undefined ? { cleanup: replaceBaseUrl(doc.cleanup) } : {}),
+    }),
+  },
+];
 
 export const migrateToCurrent = createMigrator(CURRENT_SCHEMA_VERSION, MIGRATIONS);
 
