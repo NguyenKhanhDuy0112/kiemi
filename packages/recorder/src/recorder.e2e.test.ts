@@ -551,3 +551,30 @@ describe('suggested checks [M-01]', () => {
     expect(seen.at(-1)).toEqual([]);
   });
 });
+
+describe('recorder: custom dropdown [W-04]', () => {
+  const html = `<!doctype html><meta charset="utf-8"><title>Dropdown</title>
+    <div id="city" tabindex="0" role="combobox" aria-label="Thành phố">Chọn…</div>
+    <div id="box" hidden><input id="q" aria-label="Tìm"><ul id="list" role="listbox"></ul></div>
+    <script>
+      const cities = ['Hà Nội', 'Hải Phòng', 'Đà Nẵng'];
+      const draw = (f) => list.innerHTML = cities.filter(c => c.toLowerCase().includes(f.toLowerCase())).map(c => '<li role="option">' + c + '</li>').join('');
+      city.onclick = () => { box.hidden = false; draw(''); q.focus(); };
+      q.oninput = () => draw(q.value);
+      list.onclick = (e) => { city.textContent = e.target.textContent; box.hidden = true; };
+    </script>`;
+
+  it('records open + search + choose as one pickOption step and replays it', async () => {
+    const rec = await record('/dd.html', undefined, { '/dd.html': html });
+    const page = rec.page;
+    if (!page) throw new Error('no page');
+    await page.locator('#city').click();
+    await page.keyboard.type('hà');
+    await page.getByRole('option', { name: 'Hà Nội' }).click();
+    const list = await steps(rec, 2);
+    expect(brief(list)).toEqual([
+      'goto {"url":"/dd.html"}',
+      'pickOption {"search":"hà","option":"Hà Nội"}',
+    ]);
+  });
+});
