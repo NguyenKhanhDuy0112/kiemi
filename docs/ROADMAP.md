@@ -117,7 +117,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M10-08** Phạm vi sửa: chỉ test này / mọi nơi dùng phần tử / step dùng chung, hiện danh sách test bị ảnh hưởng [FX-08] [S]
 - [x] **M10-09** "Sửa và chạy lại" từ màn Kết quả (cùng dòng dữ liệu, cùng môi trường) → vào trạng thái tạm dừng [FX-09] [S]
 - [x] **M10-10** Nhật ký sửa + Hoàn tác trong phiên sửa lỗi; đề nghị "Chạy lại từ đầu để xác nhận" [FX-11] [S]
-- [ ] **M10-11** Demo-site: popup ngẫu nhiên + trang lỗi theo từng loại; e2e luồng sửa khi fail
+- [x] **M10-11** Demo-site: popup ngẫu nhiên + trang lỗi theo từng loại; e2e luồng sửa khi fail
 
 ## M11 — Validate form, thiết kế test & đo độ phủ
 - [ ] **M11-01** Bảng đặc tả field (kiểu + quy tắc, phụ thuộc, so sánh giữa field, file) + lưu trữ `FieldSpec`/`FieldRule` [R-01]

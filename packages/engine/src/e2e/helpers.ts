@@ -10,6 +10,7 @@ import {
 import type { Browser } from 'playwright-core';
 import { createDefaultRegistry } from '../actions';
 import type { EngineEvent } from '../events';
+import type { RunDebugger } from '../run/debug';
 import { type RunRequest, runTestCase } from '../runner';
 import { launchTestBrowser } from '../testing/browser';
 
@@ -24,6 +25,8 @@ export interface E2E {
       request?: Partial<RunRequest>;
       events?: EngineEvent[];
       sharedSteps?: SharedStep[];
+      /** Pause / fix a failed step while the run waits [FX-01]. */
+      debugger?: RunDebugger;
     },
   ): Promise<RunResult>;
   close(): Promise<void>;
@@ -39,7 +42,7 @@ export async function startE2E(syncDelayMs = 0): Promise<E2E> {
     browser,
     site,
     async run(steps, extra = {}) {
-      const { request, events, sharedSteps, ...tc } = extra;
+      const { request, events, sharedSteps, debugger: dbg, ...tc } = extra;
       await fetch(`${site.url}/api/reset`, { method: 'POST' });
       const testCase = TestCaseSchema.parse({
         schemaVersion: 2,
@@ -67,7 +70,12 @@ export async function startE2E(syncDelayMs = 0): Promise<E2E> {
           // Cold browsers on CI runners (macOS especially) can need > 10 s for the first page.
           options: { defaultStepTimeoutMs: CI_STEP_TIMEOUT_MS, ...request?.options },
         },
-        { registry, browser, ...(events ? { onEvent: (e) => events.push(e) } : {}) },
+        {
+          registry,
+          browser,
+          ...(dbg ? { debugger: dbg } : {}),
+          ...(events ? { onEvent: (e) => events.push(e) } : {}),
+        },
       );
     },
     async close() {
