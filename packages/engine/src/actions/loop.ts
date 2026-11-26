@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { defineAction } from '../define-action';
 import { EngineError } from '../errors';
 import { target } from './_common';
+import { readTable } from './_table';
 
 const MAX_ITERATIONS = 1000;
 
@@ -35,24 +36,7 @@ export const loopAction = defineAction({
       items = [...(ctx.run.dataset?.rows ?? [])];
     } else {
       const { locator } = await ctx.resolve(p.target as NonNullable<typeof p.target>);
-      items = await locator.evaluate((el) => {
-        const text = (e: Element) => ((e as HTMLElement).innerText ?? e.textContent ?? '').trim();
-        const rows = [...el.querySelectorAll('tr, [role="row"]')];
-        const isHeader = (r: Element) =>
-          r.querySelector('td, [role="cell"], [role="gridcell"]') === null;
-        const header = rows.find(isHeader);
-        const names = header ? [...header.children].map(text) : [];
-        return rows
-          .filter((r) => !isHeader(r))
-          .map((r) => {
-            const cells = [...r.children].map(text);
-            const item: Record<string, unknown> = { text: text(r), cells };
-            names.forEach((n, i) => {
-              if (n && !(n in item)) item[n] = cells[i] ?? '';
-            });
-            return item;
-          });
-      });
+      items = await readTable(locator);
     }
     if (items.length > MAX_ITERATIONS) {
       throw new EngineError(

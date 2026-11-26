@@ -1104,6 +1104,10 @@ export const viUi = {
     useSession: { label: 'Dùng đăng nhập đã lưu', sentence: 'Dùng đăng nhập đã lưu {{name}}' },
     wait: { label: 'Chờ cố định', sentence: 'Chờ {{seconds}} giây' },
     extract: { label: 'Lưu giá trị vào biến', sentence: 'Lưu {{target}} vào biến {{into}}' },
+    extractTable: {
+      label: 'Lưu bảng vào biến',
+      sentence: 'Lưu bảng {{target}} thành danh sách {{into}}',
+    },
     call: { label: 'Dùng bước chung', sentence: 'Thực hiện {{shared}}' },
     waitUntil: {
       label: 'Chờ đến khi',
@@ -1174,6 +1178,9 @@ export const viUi = {
     attribute: 'Thuộc tính',
     regex: 'Chỉ lấy phần khớp (biểu thức)',
     into: 'Tên biến',
+    allPages: 'Duyệt mọi trang',
+    next: 'Nút "Trang sau"',
+    maxPages: 'Số trang tối đa',
     shared: 'Bước dùng chung',
     args: 'Tham số',
     condition: 'Điều kiện',

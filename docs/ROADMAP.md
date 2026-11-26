@@ -135,7 +135,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M11-12** Demo-site: form Đăng ký 5 field có lỗi cố ý; mẫu L-03 #7 "Validate form" [L-03]
 
 ## M12 — Dữ liệu & tính toán
-- [ ] **M12-01** Biến danh sách & object: lưu bảng/danh sách thành list object, truy cập `{{x[0].y}}`, `{{x.length}}`, panel Biến (DSL tăng version) [P-02]
+- [x] **M12-01** Biến danh sách & object: lưu bảng/danh sách thành list object, truy cập `{{x[0].y}}`, `{{x.length}}`, panel Biến (DSL tăng version) [P-02]
 - [ ] **M12-02** Dataset lồng nhau: nhiều sheet liên kết khóa, step Lặp duyệt danh sách con, UI dạng cây [P-01]
 - [ ] **M12-03** ADR engine công thức (an toàn, không `eval`) + thư viện công thức có tên, debug từng bước [P-03]
 - [ ] **M12-04** So sánh số có sai lệch + định dạng số/tiền/ngày VN theo môi trường [P-04, P-10]

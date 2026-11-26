@@ -1111,6 +1111,10 @@ export const enUi = {
       label: 'Save value to variable',
       sentence: 'Save {{target}} into variable {{into}}',
     },
+    extractTable: {
+      label: 'Save table to variable',
+      sentence: 'Save table {{target}} as list {{into}}',
+    },
     call: { label: 'Use shared step', sentence: 'Do {{shared}}' },
     waitUntil: {
       label: 'Wait until',
@@ -1178,6 +1182,9 @@ export const enUi = {
     attribute: 'Attribute',
     regex: 'Keep only the matching part (pattern)',
     into: 'Variable name',
+    allPages: 'Go through every page',
+    next: '"Next page" button',
+    maxPages: 'Maximum pages',
     shared: 'Shared step',
     args: 'Arguments',
     condition: 'Condition',
