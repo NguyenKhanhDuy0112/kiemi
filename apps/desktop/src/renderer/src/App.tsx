@@ -32,7 +32,7 @@ const EnvironmentsScreen = lazy(() =>
   })),
 );
 const CoverageScreen = lazy(() =>
-  import('@renderer/features/coverage/coverage-screen').then((m) => ({
+  import('@renderer/features/test-coverage/coverage-screen').then((m) => ({
     default: m.CoverageScreen,
   })),
 );
