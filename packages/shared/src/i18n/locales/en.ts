@@ -69,6 +69,10 @@ export const en = {
         message: 'The step failed: {{reason}}',
         hint: 'Run again. If it still fails, check the screenshot of this step.',
       },
+      ENV_SKIPPED: {
+        message: 'Skipped: this test does not run on the {{environment}} environment.',
+        hint: 'To run it, change the test’s environment limit.',
+      },
       RUN_CANCELLED: { message: 'The run was stopped.', hint: 'Press Run to start again.' },
       ELEMENT_NOT_FOUND: {
         message: 'Could not find {{element}} after {{seconds}} seconds.',

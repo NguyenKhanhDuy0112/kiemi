@@ -84,6 +84,7 @@ describe('describeRunError [I-04, N-06]', () => {
       'STEP_TIMEOUT',
       'STEP_FAILED',
       'RUN_CANCELLED',
+      'ENV_SKIPPED',
       'ELEMENT_NOT_FOUND',
       'ELEMENT_AMBIGUOUS',
       'BROWSER_NOT_FOUND',

@@ -36,6 +36,8 @@ export const ENGINE_ERROR_CODES = [
   'UNKNOWN_SHARED_STEP',
   /** A step may write data and the environment is protected (Production) [W-10]. */
   'PROTECTED_ENVIRONMENT',
+  /** The test is limited to other environments (`environments.only/except`) [O-06]. */
+  'ENV_SKIPPED',
   'ACTION_FAILED',
   'ENGINE_ERROR',
   /** The engine process stopped unexpectedly (raised by the host). */

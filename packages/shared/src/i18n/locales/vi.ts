@@ -72,6 +72,10 @@ export const vi = {
         message: 'Bước gặp lỗi: {{reason}}',
         hint: 'Thử chạy lại. Nếu vẫn lỗi, xem ảnh chụp màn hình của bước này.',
       },
+      ENV_SKIPPED: {
+        message: 'Bỏ qua: test này không chạy trên môi trường {{environment}}.',
+        hint: 'Muốn chạy, sửa phần “Giới hạn môi trường” của test.',
+      },
       RUN_CANCELLED: { message: 'Lần chạy đã bị dừng.', hint: 'Bấm Chạy để chạy lại.' },
       ELEMENT_NOT_FOUND: {
         message: 'Không tìm thấy {{element}} sau {{seconds}} giây.',

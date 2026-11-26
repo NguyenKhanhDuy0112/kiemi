@@ -1,6 +1,12 @@
 import { join } from 'node:path';
 import { DbError, type RunRowStatus, type RunTarget, type Services } from '@kiemi/db';
-import type { EngineEvent, RunRequest, SavedLogin, StepPhase } from '@kiemi/engine';
+import {
+  type EngineEvent,
+  environmentSkip,
+  type RunRequest,
+  type SavedLogin,
+  type StepPhase,
+} from '@kiemi/engine';
 import type {
   ArtifactRef,
   Dataset,
@@ -48,6 +54,8 @@ export interface PlannedCase {
   testCaseId: string;
   testName: string;
   rowIndex?: number | undefined;
+  /** Not run: the test is limited to other environments [O-06]. */
+  skipped?: RunError | undefined;
 }
 
 /** What the renderer receives while a run progresses [N-05, S-03]. */
@@ -245,19 +253,36 @@ export class RunManager {
     this.#trim();
 
     const planned: PlannedCase[] = [];
-    const requests: RunRequest[] = plans.map((p, i) => {
+    const requests: RunRequest[] = [];
+    plans.forEach((p, i) => {
       const c = s.runs.addCase({ runId: run.id, testCaseId: p.testCase.id, rowIndex: p.rowIndex });
       const dir = plans.length > 1 ? `case-${i + 1}` : '';
       active.caseIds.add(c.id);
-      active.openCases.add(c.id);
-      active.caseDirs.set(c.id, dir);
-      planned.push({
+      const base = {
         runCaseId: c.id,
         testCaseId: p.testCase.id,
         testName: p.testCase.name,
         ...(p.rowIndex === undefined ? {} : { rowIndex: p.rowIndex }),
-      });
-      return {
+      };
+      // Limited to other environments: recorded as skipped with the reason, never run [O-06].
+      const skip = environmentSkip(p.testCase, env);
+      if (skip) {
+        const error: RunError = {
+          code: 'ENV_SKIPPED',
+          message: skip.reason ?? `Skipped on environment ${skip.environment}`,
+          details: {
+            environment: skip.environment,
+            ...(skip.reason ? { reason: skip.reason } : {}),
+          },
+        };
+        s.runs.abortCase(c.id, 'skipped', error);
+        planned.push({ ...base, skipped: error });
+        return;
+      }
+      active.openCases.add(c.id);
+      active.caseDirs.set(c.id, dir);
+      planned.push(base);
+      requests.push({
         runId: c.id,
         testCase: p.testCase,
         ...(env ? { env } : {}),
@@ -284,7 +309,7 @@ export class RunManager {
             trace: opts.trace === true,
           },
         },
-      };
+      });
     });
 
     this.#publish(active, { type: 'plan', runId: run.id, target, cases: planned });
