@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Đăng ký — Kiemi Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Đăng ký tài khoản</h1>
+      <p class="muted">
+        Form 5 ô để thử kiểm tra form. Lỗi cố ý bật bằng <code>?bug=</code>:
+        <code>msg</code> (thông báo sai chữ) · <code>field</code> (lỗi hiện nhầm ô) ·
+        <code>clear</code> (xóa dữ liệu khi lỗi) · <code>nofocus</code> (không focus ô lỗi) ·
+        <code>sent</code> (vẫn gửi khi còn lỗi) · <code>trim</code> (không cắt khoảng trắng) ·
+        <code>accent</code> (mất dấu khi lưu).
+      </p>
+      <form id="register" class="card" novalidate>
+        <div class="field">
+          <label for="fullname">Họ tên *</label>
+          <input id="fullname" name="fullname" type="text" autocomplete="off" />
+          <span class="error-text" id="err-fullname" role="alert"></span>
+        </div>
+        <div class="field">
+          <label for="email">Email *</label>
+          <input id="email" name="email" type="text" autocomplete="off" />
+          <span class="error-text" id="err-email" role="alert"></span>
+        </div>
+        <div class="field">
+          <label for="phone">Số điện thoại</label>
+          <input id="phone" name="phone" type="text" autocomplete="off" />
+          <span class="error-text" id="err-phone" role="alert"></span>
+        </div>
+        <div class="field">
+          <label for="dob">Ngày sinh (dd/MM/yyyy) *</label>
+          <input id="dob" name="dob" type="text" placeholder="dd/MM/yyyy" autocomplete="off" />
+          <span class="error-text" id="err-dob" role="alert"></span>
+        </div>
+        <div class="field">
+          <label for="password">Mật khẩu *</label>
+          <input id="password" name="password" type="password" autocomplete="off" />
+          <span class="error-text" id="err-password" role="alert"></span>
+        </div>
+        <button type="submit" class="btn primary" id="btn-register">Đăng ký</button>
+      </form>
+      <p>Kết quả: <strong id="register-result" role="status">—</strong></p>
+      <section class="card" id="saved" hidden>
+        <h2>Tài khoản đã lưu</h2>
+        <dl>
+          <dt>Họ tên</dt><dd><input id="saved-fullname" readonly /></dd>
+          <dt>Email</dt><dd><input id="saved-email" readonly /></dd>
+          <dt>Số điện thoại</dt><dd><input id="saved-phone" readonly /></dd>
+          <dt>Ngày sinh</dt><dd><input id="saved-dob" readonly /></dd>
+        </dl>
+      </section>
+    </main>
+    <script type="module" src="/src/register.ts"></script>
+  </body>
+</html>

@@ -76,6 +76,10 @@ export const FieldSpecSchema = z
     defaultValue: z.string().optional(),
     /** List the standard bad values of this field when generating tests [R-04]. */
     badData: z.boolean().default(true),
+    /** The app trims spaces around the value before saving. */
+    trim: z.boolean().default(true),
+    /** Where the saved value is shown again (detail page) to check it round-trips [R-07]. */
+    readBack: LocatorSchema.optional(),
     /** A value the field accepts, used when generating tests (needed for hand-written patterns). */
     example: z.string().optional(),
     readOnly: z.boolean().default(false),
@@ -116,6 +120,10 @@ export const FormSpecSchema = z
     path: z.string().optional(),
     /** The button that sends the form. */
     submit: LocatorSchema.optional(),
+    /** Text shown after a successful submit; lets tests tell "sent" from "not sent" [R-05]. */
+    successMessage: z.string().trim().min(1).optional(),
+    /** Page showing the saved record, relative to `{{app}}` (the form page when left out) [R-07]. */
+    detailPath: z.string().optional(),
     fields: z.array(FieldSpecSchema).max(200).default([]),
   })
   .superRefine((form, ctx) => {

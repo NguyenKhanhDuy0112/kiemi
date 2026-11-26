@@ -19,13 +19,37 @@ export function expectedError(
   return expectedMessage(c.messageKey, { label: f?.label ?? '' }, c.messageParams, catalog);
 }
 
+/** The value as the app is expected to store and show it again. */
+export const storedValue = (f: FieldSpec, typed: string): string =>
+  f.trim && typeof typed === 'string' && f.type !== 'password' ? typed.trim() : typed;
+
+/** Fixed ids of the result checks, so reports can group them per rule [R-09]. */
+export const CHECK_IDS = {
+  message: 'chk-message',
+  focus: 'chk-focus',
+  kept: 'chk-kept',
+  notSent: 'chk-not-sent',
+  sent: 'chk-sent',
+  saved: 'chk-saved',
+} as const;
+
 /**
- * Steps that type a case's values and send the form [R-03]. The checks of the
- * result (error text, focus, nothing sent) are added by the validation checks [R-05].
+ * Steps that type a case's values, send the form and check the result [R-03,
+ * R-05, R-07]: the error text next to the broken field, focus on it, typed data
+ * kept, nothing sent; or "sent" and the saved values read back. Checks are
+ * `soft` so every one is reported, not only the first failure.
  */
-export function caseSteps(form: FormSpec, c: FormCase): StepInput[] {
+export function caseSteps(form: FormSpec, c: FormCase, catalog: MessageCatalog = {}): StepInput[] {
   const steps: StepInput[] = [];
   const id = (what: string) => `${what}-${steps.length + 1}`;
+  const check = (
+    stepId: string,
+    action: string,
+    params: Record<string, unknown>,
+    name: string,
+  ): void => {
+    steps.push({ id: stepId, action, params, name, mode: 'soft' });
+  };
   if (form.path)
     steps.push({ id: id('open'), action: 'goto', params: { url: `{{app}}${form.path}` } });
   for (const f of form.fields) {
@@ -76,6 +100,71 @@ export function caseSteps(form: FormSpec, c: FormCase): StepInput[] {
       params: { target: form.submit },
       name: 'Gửi form',
     });
+  if (!form.submit) return steps;
+
+  const broken = form.fields.find((x) => x.key === c.field);
+  const message = expectedError(form, c, catalog);
+  if (c.expect === 'reject' && broken) {
+    const target = locatorOf(broken);
+    if (message)
+      check(
+        CHECK_IDS.message,
+        'assertFieldError',
+        { target, op: 'equals', message },
+        `Thông báo lỗi của "${broken.label}"`,
+      );
+    check(CHECK_IDS.focus, 'assertFocus', { target }, `Con trỏ ở ô lỗi "${broken.label}"`);
+    const typed = c.values[broken.key] ?? '';
+    if (
+      typed.trim() !== '' &&
+      typed === typed.trim() &&
+      broken.type !== 'file' &&
+      broken.type !== 'checkbox'
+    )
+      check(
+        CHECK_IDS.kept,
+        'assertValue',
+        { target, op: 'equals', value: typed },
+        `Giữ dữ liệu đã nhập ở "${broken.label}"`,
+      );
+    if (form.successMessage)
+      check(
+        CHECK_IDS.notSent,
+        'assertToast',
+        { text: form.successMessage, op: 'notContains' },
+        'Form không được gửi',
+      );
+  } else if (c.expect === 'accept') {
+    if (form.successMessage)
+      check(
+        CHECK_IDS.sent,
+        'assertToast',
+        { text: form.successMessage, op: 'contains' },
+        'Form được gửi thành công',
+      );
+    const readable = form.fields.filter((f) => f.readBack && f.key in c.values);
+    if (readable.length) {
+      if (form.detailPath)
+        steps.push({
+          id: id('detail'),
+          action: 'goto',
+          params: { url: `{{app}}${form.detailPath}` },
+          name: 'Mở lại bản đã lưu',
+        });
+      for (const f of readable)
+        check(
+          `${CHECK_IDS.saved}-${f.key}`,
+          'assertText',
+          {
+            target: f.readBack,
+            op: 'equals',
+            value: storedValue(f, c.values[f.key] ?? ''),
+            normalizeSpace: false,
+          },
+          `Lưu rồi đọc lại "${f.label}"`,
+        );
+    }
+  }
   return steps;
 }
 

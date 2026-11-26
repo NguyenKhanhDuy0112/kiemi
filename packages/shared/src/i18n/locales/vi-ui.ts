@@ -499,6 +499,11 @@ export const viUi = {
     },
     expectKinds: { accept: 'Hợp lệ', reject: 'Phải báo lỗi', safe: 'Không được lỗi' },
     badData: 'Thêm dữ liệu xấu chuẩn',
+    successMessage: 'Thông báo khi gửi thành công',
+    detailPath: 'Trang xem lại bản đã lưu (nếu khác)',
+    trim: 'Tự cắt khoảng trắng đầu/cuối khi lưu',
+    readBack: 'Nơi hiện lại giá trị đã lưu (CSS)',
+    readBackHint: '#saved-name',
     fileTypesHint: 'pdf, png',
     pathHint: '/dang-ky',
     fileSize: 'Dung lượng tối đa (KB)',
@@ -997,6 +1002,14 @@ export const viUi = {
     assertTitle: {
       label: 'Kiểm tra tiêu đề trang',
       sentence: 'Kiểm tra tiêu đề trang {{op}} {{value}}',
+    },
+    assertFieldError: {
+      label: 'Kiểm tra lỗi của ô nhập',
+      sentence: 'Kiểm tra ô {{target}} báo lỗi {{op}} {{message}}',
+    },
+    assertFocus: {
+      label: 'Kiểm tra con trỏ đang ở ô',
+      sentence: 'Kiểm tra con trỏ đang ở {{target}}',
     },
     assertToast: { label: 'Kiểm tra thông báo', sentence: 'Kiểm tra có thông báo {{op}} {{text}}' },
     assertVariable: { label: 'Kiểm tra biến', sentence: 'Kiểm tra biến {{name}} {{op}} {{value}}' },

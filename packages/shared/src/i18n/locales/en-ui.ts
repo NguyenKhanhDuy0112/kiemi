@@ -501,6 +501,11 @@ export const enUi = {
     },
     expectKinds: { accept: 'Accepted', reject: 'Must show error', safe: 'Must not break' },
     badData: 'Add standard bad data',
+    successMessage: 'Message shown when sent successfully',
+    detailPath: 'Page showing the saved record (if different)',
+    trim: 'Spaces around the value are trimmed when saved',
+    readBack: 'Where the saved value is shown again (CSS)',
+    readBackHint: '#saved-name',
     fileTypesHint: 'pdf, png',
     pathHint: '/sign-up',
     fileSize: 'Maximum size (KB)',
@@ -1001,6 +1006,11 @@ export const enUi = {
     },
     assertUrl: { label: 'Check page address', sentence: 'Check page address {{op}} {{value}}' },
     assertTitle: { label: 'Check page title', sentence: 'Check page title {{op}} {{value}}' },
+    assertFieldError: {
+      label: 'Check field error',
+      sentence: 'Check {{target}} shows error {{op}} {{message}}',
+    },
+    assertFocus: { label: 'Check field has focus', sentence: 'Check the cursor is in {{target}}' },
     assertToast: { label: 'Check message', sentence: 'Check a message {{op}} {{text}}' },
     assertVariable: {
       label: 'Check variable',

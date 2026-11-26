@@ -266,6 +266,20 @@ export function FieldRow({
               </Box>
             </>
           )}
+          <Box label={tx('ui.forms.readBack')}>
+            <Input
+              aria-label={tx('ui.forms.readBack')}
+              value={field.readBack?.strategies.find((s) => s.kind === 'css')?.value ?? ''}
+              placeholder={tx('ui.forms.readBackHint')}
+              onChange={(e) =>
+                set({
+                  readBack: e.target.value
+                    ? { strategies: [{ kind: 'css', value: e.target.value }] }
+                    : undefined,
+                })
+              }
+            />
+          </Box>
           <Box label={tx('ui.forms.defaultValue')}>
             <Input
               aria-label={tx('ui.forms.defaultValue')}
@@ -403,6 +417,14 @@ export function FieldRow({
                 onCheckedChange={(v) => set({ unique: v === true })}
               />
               {tx('ui.forms.unique')}
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={field.trim}
+                aria-label={tx('ui.forms.trim')}
+                onCheckedChange={(v) => set({ trim: v === true })}
+              />
+              {tx('ui.forms.trim')}
             </div>
             <div className="flex items-center gap-2">
               <Checkbox

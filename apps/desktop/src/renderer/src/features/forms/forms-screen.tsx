@@ -10,7 +10,7 @@ import { ClipboardList, Plus, Trash2, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { FieldRow } from './field-row';
-import { cleanField, firstFormProblem, newField, newForm } from './form-edit';
+import { cleanField, cleanForm, firstFormProblem, newField, newForm } from './form-edit';
 import { GenerateDialog } from './generate-dialog';
 import { InferPanel } from './infer-panel';
 import { MessageCatalogEditor } from './message-catalog';
@@ -51,7 +51,10 @@ export function FormsScreen() {
   };
 
   const save = async () => {
-    const cleaned = forms.map((f) => ({ ...f, fields: f.fields.map(cleanField) }));
+    const cleaned = forms.map((f) => ({
+      ...cleanForm(f),
+      fields: f.fields.map(cleanField),
+    }));
     const problem = firstFormProblem(cleaned);
     if (problem) {
       toast.error(tx('ui.forms.invalid', { problem }));
@@ -117,6 +120,22 @@ export function FormsScreen() {
                 value={form.path ?? ''}
                 placeholder={tx('ui.forms.pathHint')}
                 onChange={(e) => patch({ ...form, path: e.target.value })}
+              />
+            </div>
+            <div className="flex flex-col gap-1 text-xs md:col-span-4">
+              {tx('ui.forms.successMessage')}
+              <Input
+                aria-label={tx('ui.forms.successMessage')}
+                value={form.successMessage ?? ''}
+                onChange={(e) => patch({ ...form, successMessage: e.target.value })}
+              />
+            </div>
+            <div className="flex flex-col gap-1 text-xs md:col-span-4">
+              {tx('ui.forms.detailPath')}
+              <Input
+                aria-label={tx('ui.forms.detailPath')}
+                value={form.detailPath ?? ''}
+                onChange={(e) => patch({ ...form, detailPath: e.target.value })}
               />
             </div>
             <div className="flex items-end md:col-span-4 md:justify-end">

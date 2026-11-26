@@ -284,10 +284,19 @@ export function generateFormCases(form: FormSpec): FormCase[] {
     }
 
     const texty = ['text', 'textarea', 'password'].includes(f.type);
-    if (texty && !ruleLength) {
+    // An email field only gets length cases when nothing else defines its format.
+    const emailLength = f.type === 'email' && !f.pattern && f.ruleRefs.length === 0;
+    if ((texty && !ruleLength) || emailLength) {
       const ch = fillerChar(f, eff);
-      const of = (n: number) => (n <= 0 ? '' : pad(ch, n));
-      if (eff.minLength !== undefined && eff.minLength > 0) {
+      const of = (n: number) =>
+        n <= 0
+          ? ''
+          : emailLength
+            ? n <= 12
+              ? pad('a', n)
+              : `${pad('a', n - 12)}@example.com`
+            : pad(ch, n);
+      if (!emailLength && eff.minLength !== undefined && eff.minLength > 0) {
         add({
           id: `${f.key}:minLength.below`,
           name: `${L}: ngắn hơn tối thiểu (${eff.minLength - 1} ký tự)`,

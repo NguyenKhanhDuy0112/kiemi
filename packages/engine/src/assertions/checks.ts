@@ -342,8 +342,98 @@ export const toastCheck = defineCheck({
         // frame navigating
       }
     }
-    const pass = texts.some((t) => compareText(t, p.op, p.text, p));
+    // "Not contains / not equals" must hold for every message, not just one of them.
+    const negative = p.op === 'notContains' || p.op === 'notEquals';
+    const pass = negative
+      ? texts.every((t) => compareText(t, p.op, p.text, p))
+      : texts.some((t) => compareText(t, p.op, p.text, p));
     return { pass, actual: texts.length ? texts.join(' | ') : '(no message)', expected: p.text };
+  },
+});
+
+/**
+ * Error message shown for one field [R-05]: looks in what the input points to
+ * (`aria-errormessage` / `aria-describedby`), the browser's own validation
+ * message, and the smallest block around the input that holds no other field.
+ * A message that appears next to a different field does not count.
+ */
+export const fieldErrorCheck = defineCheck({
+  name: 'fieldError',
+  params: z.object({
+    target,
+    message: z.unknown(),
+    op: TextOpSchema.default('equals'),
+    ...TextMatchOptions,
+  }),
+  async check(p, ctx) {
+    const { locator } = await ctx.resolve(p.target, { ...once, state: 'attached' });
+    const texts = await locator.evaluate((el) => {
+      const out: string[] = [];
+      const shown = (e: Element) => {
+        const h = e as HTMLElement;
+        const r = h.getBoundingClientRect();
+        const st = getComputedStyle(h);
+        return r.width > 0 && r.height > 0 && st.visibility !== 'hidden' && st.display !== 'none';
+      };
+      const own = (e: Element) =>
+        Array.from(e.childNodes)
+          .filter((n) => n.nodeType === 3)
+          .map((n) => n.textContent ?? '')
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      for (const attr of ['aria-errormessage', 'aria-describedby']) {
+        for (const id of (el.getAttribute(attr) ?? '').split(/\s+/).filter(Boolean)) {
+          const t = document.getElementById(id);
+          if (t && shown(t)) out.push((t as HTMLElement).innerText.trim());
+        }
+      }
+      const native = (el as HTMLInputElement).validationMessage;
+      if (native) out.push(native);
+      const CONTROLS = 'input:not([type=hidden]), select, textarea';
+      let box: Element = el;
+      while (box.parentElement && box.parentElement !== document.body) {
+        if (box.parentElement.querySelectorAll(CONTROLS).length > 1) break;
+        box = box.parentElement;
+      }
+      const near: Element[] = [];
+      if (box !== el) near.push(...Array.from(box.querySelectorAll('*')));
+      else {
+        for (let s = el.nextElementSibling, i = 0; s && i < 2; s = s.nextElementSibling, i++)
+          near.push(s, ...Array.from(s.querySelectorAll('*')));
+      }
+      for (const c of near) {
+        if (
+          c === el ||
+          c.contains(el) ||
+          ['LABEL', 'OPTION', 'SCRIPT', 'STYLE'].includes(c.tagName)
+        )
+          continue;
+        if (c.matches(CONTROLS) || c.closest('label') || !shown(c)) continue;
+        const t = own(c);
+        if (t) out.push(t);
+      }
+      return out;
+    });
+    const pass = texts.some((t) => compareText(t, p.op, p.message, p));
+    return { pass, actual: texts.length ? texts.join(' | ') : '(no message)', expected: p.message };
+  },
+});
+
+/** The keyboard focus is on this field [R-05]. */
+export const focusCheck = defineCheck({
+  name: 'focus',
+  params: z.object({ target }),
+  async check({ target: t }, ctx) {
+    const { locator } = await ctx.resolve(t, { ...once, state: 'attached' });
+    const info = await locator.evaluate((el) => {
+      const a = document.activeElement;
+      const describe = a
+        ? `${a.tagName.toLowerCase()}${a.id ? `#${a.id}` : ''}${a.getAttribute('name') ? `[name=${a.getAttribute('name')}]` : ''}`
+        : '(none)';
+      return { focused: el === a || el.contains(a), describe };
+    });
+    return { pass: info.focused, actual: info.describe, expected: 'focused' };
   },
 });
 
@@ -373,6 +463,8 @@ export const CHECKS: readonly CheckDef[] = [
   urlCheck,
   titleCheck,
   toastCheck,
+  fieldErrorCheck,
+  focusCheck,
   variableCheck,
 ] as CheckDef[];
 

@@ -30,6 +30,7 @@ export function newField(form: FormSpec, type: FieldType = 'text'): FieldSpec {
     allowedChars: 'any',
     unique: false,
     badData: true,
+    trim: true,
     readOnly: false,
     options: [],
     ruleRefs: [],
@@ -52,9 +53,19 @@ export const toNumber = (text: string): number | undefined => {
 export function cleanField(f: FieldSpec): FieldSpec {
   const out: Record<string, unknown> = { ...f };
   for (const k of Object.keys(out)) if (out[k] === undefined || out[k] === '') delete out[k];
+  const rb = f.readBack?.strategies[0];
+  if (rb?.kind === 'css' && rb.value === '') delete out.readBack;
   if (f.type !== 'dropdown') out.options = [];
   if (f.type !== 'file') delete out.file;
   return out as unknown as FieldSpec;
+}
+
+/** Drops empty optional texts of a form. */
+export function cleanForm(f: FormSpec): FormSpec {
+  const out: Record<string, unknown> = { ...f };
+  for (const k of ['path', 'successMessage', 'detailPath'])
+    if (out[k] === '' || out[k] === undefined) delete out[k];
+  return out as unknown as FormSpec;
 }
 
 /** First problem of the forms in plain text, or null when they can be saved. */

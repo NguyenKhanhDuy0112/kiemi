@@ -58,7 +58,7 @@ export function generateFormTests(
         c.expect === 'reject' ? 'negative' : 'positive',
         `technique:${c.technique}`,
       ],
-      steps: caseSteps(form, c),
+      steps: caseSteps(form, c, catalog),
     });
     created++;
   }
