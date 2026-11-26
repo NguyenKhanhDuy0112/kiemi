@@ -74,6 +74,8 @@ export const FieldSpecSchema = z
     /** The value must not already exist (e.g. username, email). */
     unique: z.boolean().default(false),
     defaultValue: z.string().optional(),
+    /** A value the field accepts, used when generating tests (needed for hand-written patterns). */
+    example: z.string().optional(),
     readOnly: z.boolean().default(false),
     /** Dropdown choices. */
     options: z.array(z.string()).max(200).default([]),
@@ -110,6 +112,8 @@ export const FormSpecSchema = z
     productId: z.string().min(1).nullish(),
     /** Page of the form, relative to `{{app}}`. */
     path: z.string().optional(),
+    /** The button that sends the form. */
+    submit: LocatorSchema.optional(),
     fields: z.array(FieldSpecSchema).max(200).default([]),
   })
   .superRefine((form, ctx) => {

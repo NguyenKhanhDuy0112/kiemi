@@ -151,6 +151,18 @@ export function inferForm(scan: ScannedForm, id: string, path?: string): FormSpe
     id,
     name: scan.name || 'Form',
     ...(path ? { path } : {}),
+    ...(scan.submit
+      ? {
+          submit: {
+            strategies: [
+              ...(scan.submit.text
+                ? [{ kind: 'role' as const, role: 'button', name: scan.submit.text }]
+                : []),
+              { kind: 'css' as const, value: scan.submit.css },
+            ],
+          },
+        }
+      : {}),
     fields,
   });
 }

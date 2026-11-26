@@ -44,6 +44,7 @@ describe('scan + infer a form [R-02]', () => {
       expect(scans).toHaveLength(1);
       const form = inferForm(scans[0] ?? { name: '', controls: [] }, 'f1', '/dang-ky');
       expect(form.name).toBe('register');
+      expect(form.submit?.strategies[0]).toEqual({ kind: 'role', role: 'button', name: 'Gửi' });
       const by = Object.fromEntries(form.fields.map((f) => [f.key, f]));
       expect(Object.keys(by)).toEqual([
         'email',

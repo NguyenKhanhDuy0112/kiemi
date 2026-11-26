@@ -6,11 +6,12 @@ import { useAppStore } from '@renderer/lib/store';
 import { trpc, trpcClient } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ClipboardList, Plus, Trash2 } from 'lucide-react';
+import { ClipboardList, Plus, Trash2, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { FieldRow } from './field-row';
 import { cleanField, firstFormProblem, newField, newForm } from './form-edit';
+import { GenerateDialog } from './generate-dialog';
 import { InferPanel } from './infer-panel';
 import { MessageCatalogEditor } from './message-catalog';
 
@@ -26,6 +27,7 @@ export function FormsScreen() {
   const stored = project.data?.formSpecs;
   const [forms, setForms] = useState<FormSpec[]>([]);
   const [current, setCurrent] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
   useEffect(() => {
     const list = stored ?? [];
     setForms(list);
@@ -109,15 +111,24 @@ export function FormsScreen() {
               />
             </div>
             <div className="flex flex-col gap-1 text-xs md:col-span-4">
-              {tx('ui.forms.path')}
+              {tx('ui.forms.path', { app: '{{app}}' })}
               <Input
-                aria-label={tx('ui.forms.path')}
+                aria-label={tx('ui.forms.path', { app: '{{app}}' })}
                 value={form.path ?? ''}
                 placeholder={tx('ui.forms.pathHint')}
                 onChange={(e) => patch({ ...form, path: e.target.value })}
               />
             </div>
             <div className="flex items-end md:col-span-4 md:justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={dirty || form.fields.length === 0}
+                title={dirty ? tx('ui.forms.saveFirst') : undefined}
+                onClick={() => setGenerating(true)}
+              >
+                <Wand2 /> {tx('ui.forms.generate')}
+              </Button>
               <Button
                 size="sm"
                 variant="ghost"
@@ -157,6 +168,9 @@ export function FormsScreen() {
         </section>
       )}
       <MessageCatalogEditor projectId={projectId} />
+      {generating && form && (
+        <GenerateDialog projectId={projectId} form={form} onClose={() => setGenerating(false)} />
+      )}
     </div>
   );
 }

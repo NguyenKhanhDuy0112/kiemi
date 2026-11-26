@@ -2,6 +2,7 @@ import { formSpecsFromSchema, inferForm } from '@kiemi/engine';
 import { LocatorSchema } from '@kiemi/schema';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
+import { generateFormTests } from '../../forms/generate-tests';
 import { type RecorderManager, StartRecordingInputSchema } from '../../record/recorder-manager';
 import { publicProcedure, router } from '../trpc';
 
@@ -78,8 +79,19 @@ export const savedLoginsRouter = router({
   }),
 });
 
-/** Field specs derived without a browser [R-02]. */
+/** Field specs derived without a browser [R-02], tests generated from them [R-03]. */
 export const formsRouter = router({
+  /** Creates test cases for the ticked cases of a form's generated list. */
+  generateTests: publicProcedure
+    .input(
+      z.object({
+        projectId: z.string().min(1),
+        formId: z.string().min(1),
+        caseIds: z.array(z.string().min(1)).min(1).max(500),
+      }),
+    )
+    .mutation(({ ctx, input }) => generateFormTests(ctx.services, input)),
+
   /** JSON Schema / OpenAPI text → forms to review. */
   fromSchema: publicProcedure
     .input(z.object({ text: z.string().min(2).max(2_000_000) }))

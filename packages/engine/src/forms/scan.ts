@@ -31,6 +31,8 @@ export interface ScannedForm {
   /** `id` / `name` of the `<form>`, "" for loose inputs outside any form. */
   name: string;
   controls: ScannedControl[];
+  /** The button that sends the form, when there is one. */
+  submit?: { text: string; css: string } | undefined;
 }
 
 /**
@@ -133,9 +135,18 @@ export async function scanForms(page: Page): Promise<ScannedForm[]> {
       return out;
     };
 
+    const submitOf = (f: HTMLFormElement) => {
+      const b = f.querySelector<HTMLElement>(
+        'button[type=submit], input[type=submit], button:not([type])',
+      );
+      if (!b) return undefined;
+      const text = clean(b.tagName === 'INPUT' ? (b as HTMLInputElement).value : b.textContent);
+      return { text, css: cssOf(b) };
+    };
     const forms = Array.from(document.forms).map((f) => ({
       name: f.id || f.getAttribute('name') || '',
       controls: collect(f),
+      submit: submitOf(f),
     }));
     const loose = collect(document).filter((c) => !document.querySelector(c.css)?.closest('form'));
     return loose.length ? [...forms, { name: '', controls: loose }] : forms;

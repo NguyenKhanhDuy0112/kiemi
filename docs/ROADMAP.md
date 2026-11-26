@@ -124,7 +124,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M11-01b** UI bảng đặc tả field (khai báo form 5 field không cần code) [R-01] [M]
 - [x] **M11-02** Tự suy ra đặc tả từ HTML form (+ OpenAPI/JSON Schema nếu có), QC duyệt [R-02]
 - [x] **M11-03** Thư viện quy tắc VN & catalog thông báo dùng chung (Email, SĐT VN, CCCD, MST, …) [R-10]
-- [ ] **M11-04** Sinh test theo kỹ thuật chuẩn (phân vùng, biên, bảng quyết định, pairwise; 1 hợp lệ + mỗi case sai 1 field), chuyển biến thể M-03 cũ sang mô hình mới [R-03, M-03]
+- [x] **M11-04** Sinh test theo kỹ thuật chuẩn (phân vùng, biên, bảng quyết định, pairwise; 1 hợp lệ + mỗi case sai 1 field), chuyển biến thể M-03 cũ sang mô hình mới [R-03, M-03]
 - [ ] **M11-05** Bộ dữ liệu xấu chuẩn, bật/tắt theo field, nhãn giải thích tiếng Việt [R-04]
 - [ ] **M11-06** Kiểm tra thông báo lỗi theo field (vị trí, nội dung theo catalog, focus, không xóa dữ liệu, không gửi form) + round-trip lưu rồi đọc lại [R-05, R-07]
 - [ ] **M11-07** Ma trận kết quả Field × Quy tắc (xem ảnh/chi tiết, xuất Excel) [R-09]
