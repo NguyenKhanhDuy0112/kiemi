@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M12** đang làm trên nhánh `milestone/m12-data-compute`: M12-01 xong → M12-02. M11 đã merge.
+**M12** đang làm trên nhánh `milestone/m12-data-compute`: M12-01, M12-02a xong → M12-02b. M11 đã merge.
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
@@ -24,6 +24,7 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 - M11-11 xong: `schema/src/test-lint.ts` (`lintTest(tc, others)` 7 luật: noAssertion, fixedWait, weakSelector, noCleanup, tooLong >40, duplicate, hardCodedData; `removeStep`, `signatureOf`). UI `features/editor/quality-button.tsx` (popover ở thanh đầu editor, nút "Xóa bước chờ" cho fixedWait, còn lại có giải thích); tRPC `coverage.signatures`. CV-08: toast sau khi dừng ghi có nút "Sinh thêm case" → màn Biểu mẫu (`record-panel.tsx`). Q-09/AI-19 chưa có nên chỉ mở R-03.
 - M11-12 xong: demo-site `register.html` (+`src/register.ts`, lỗi cố ý `?bug=`), mẫu L-03 #7: `samples.ts` `registerFormSpec()` + thư mục/suite "Validate form Đăng ký" sinh từ `generateFormTests` (chỉ cho dự án mẫu MỚI; dự án mẫu đã cài trước đó không có). Kiểm tra app thật `_electron.launch` (build → Biểu mẫu → sinh test → Độ phủ) đạt; script ngoài repo, dùng `--user-data-dir` + `KIEMI_PROJECTS_DIR`. Test mẫu phải tạo browser riêng mỗi run (run đóng browser).
 - M12-01 xong: action `extractTable` (`engine/src/actions/extract-table.ts`, đọc bảng dùng chung `_table.ts` `readTable/readAllPages`, `loop` cũng dùng) lưu bảng thành `list<object>` theo tiêu đề cột; `{{x[0].y}}`, `{{x.length}}` chạy sẵn nhờ evaluator. Không đổi DSL (action mới, không bump version). Chưa có panel xem biến lúc chạy (chỉ log bước `x = N row(s)`). e2e `e2e/data.e2e.test.ts` (file chung của M12).
+- M12-02a xong (chia từ M12-02): `schema/dataset.ts` `DatasetChild` + `childRowsOf` (bảng con nối `key`↔`parentKey`, tự dò cột chung đầu tiên khi import); cột `datasets.children` (migration 15), folder/bundle/tRPC `datasets.update{children}` + `importFile{linked}`; engine `RunServices.row`, `loop over:'children' child:<tên>`. M12-02b làm UI (cây, chọn khóa, chọn nhập nhiều sheet). Env-override rows (O-05) chỉ thay dòng cha, bảng con giữ nguyên.
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 

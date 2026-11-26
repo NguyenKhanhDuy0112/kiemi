@@ -264,6 +264,14 @@ export interface DatasetSourceInfo {
   sheet?: string;
 }
 
+export interface DatasetChildRow {
+  name: string;
+  key: string;
+  parentKey: string;
+  columns: string[];
+  rows: Record<string, string>[];
+}
+
 export const datasets = sqliteTable(
   'datasets',
   {
@@ -275,6 +283,8 @@ export const datasets = sqliteTable(
     source: json<DatasetSourceInfo>('source').notNull(),
     /** Rows used instead on some environments, by environment id [O-05] (migration 9). */
     envRows: json<Record<string, Record<string, string>[]>>('env_rows'),
+    /** Linked child tables, e.g. one sheet each [P-01] (migration 15). */
+    children: json<DatasetChildRow[]>('children'),
   },
   (t) => [index('datasets_project_idx').on(t.projectId)],
 );

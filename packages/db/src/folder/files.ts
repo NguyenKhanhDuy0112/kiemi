@@ -251,6 +251,7 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
     name: x.name,
     columns: x.columns,
     rows: x.rows,
+    ...(x.children?.length ? { children: x.children } : {}),
     source: x.source,
     ...(Object.keys(x.envRows).length ? { envRows: sortKeys(x.envRows) } : {}),
   }));

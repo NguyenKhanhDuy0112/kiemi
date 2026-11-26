@@ -64,6 +64,15 @@ function sample() {
     name: 'Dữ liệu',
     columns: ['ma'],
     rows: [{ ma: 'A1' }],
+    children: [
+      {
+        name: 'Con',
+        key: 'ma',
+        parentKey: 'ma',
+        columns: ['ma', 'x'],
+        rows: [{ ma: 'A1', x: '1' }],
+      },
+    ],
   });
   const suite = s.suites.create({ projectId, name: 'Hồi quy', environmentId: env.id });
   s.suites.setItems(suite.id, [{ testCaseId: t.id, datasetId: ds.id }, { testCaseId: t2.id }]);

@@ -369,6 +369,7 @@ class Run {
       env: req.env,
       secrets: req.secrets ?? {},
       dataset: req.dataset,
+      row: req.rowIndex === undefined ? undefined : req.dataset?.rows[req.rowIndex],
       sharedSteps: shared,
       pages: this.#pages,
       dialogs: this.#dialogs,

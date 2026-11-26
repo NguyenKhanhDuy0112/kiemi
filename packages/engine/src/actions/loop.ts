@@ -1,3 +1,4 @@
+import { childRowsOf } from '@kiemi/schema';
 import { z } from 'zod';
 import { defineAction } from '../define-action';
 import { EngineError } from '../errors';
@@ -15,12 +16,15 @@ export const loopAction = defineAction({
   type: 'loop',
   params: z
     .object({
-      over: z.enum(['times', 'data', 'tableRows']).default('times'),
+      over: z.enum(['times', 'data', 'tableRows', 'children']).default('times'),
+      /** Name of the linked child table (`over: children`) [P-01]. */
+      child: z.string().min(1).optional(),
       times: z.coerce.number().int().nonnegative().max(MAX_ITERATIONS).optional(),
       target: target.optional(),
       steps: z.array(z.record(z.string(), z.unknown())).min(1),
     })
     .refine((p) => p.over !== 'times' || p.times !== undefined, 'times is required')
+    .refine((p) => p.over !== 'children' || p.child !== undefined, 'child (table name) is required')
     .refine(
       (p) => p.over !== 'tableRows' || p.target !== undefined,
       'target (the table) is required',
@@ -32,6 +36,18 @@ export const loopAction = defineAction({
     let items: Record<string, unknown>[];
     if (p.over === 'times') {
       items = Array.from({ length: p.times ?? 0 }, () => ({}));
+    } else if (p.over === 'children') {
+      const row = ctx.run.row;
+      const dataset = ctx.run.dataset;
+      const rows = dataset && row ? childRowsOf(dataset, row, p.child as string) : undefined;
+      if (!rows) {
+        throw new EngineError(
+          'INVALID_PARAMS',
+          `No linked table "${p.child}" for the current data row`,
+          { child: p.child },
+        );
+      }
+      items = rows;
     } else if (p.over === 'data') {
       items = [...(ctx.run.dataset?.rows ?? [])];
     } else {

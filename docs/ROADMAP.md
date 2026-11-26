@@ -136,7 +136,8 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 
 ## M12 — Dữ liệu & tính toán
 - [x] **M12-01** Biến danh sách & object: lưu bảng/danh sách thành list object, truy cập `{{x[0].y}}`, `{{x.length}}`, panel Biến (DSL tăng version) [P-02]
-- [ ] **M12-02** Dataset lồng nhau: nhiều sheet liên kết khóa, step Lặp duyệt danh sách con, UI dạng cây [P-01]
+- [x] **M12-02a** Dataset lồng nhau — lõi: `Dataset.children` (bảng con nối bằng khóa), import Excel nhiều sheet, đồng bộ thư mục/bundle, step Lặp `over: children` [P-01]
+- [ ] **M12-02b** Dataset lồng nhau — UI: dạng cây trong tab Dữ liệu, chọn cột khóa, nhập nhiều sheet [P-01]
 - [ ] **M12-03** ADR engine công thức (an toàn, không `eval`) + thư viện công thức có tên, debug từng bước [P-03]
 - [ ] **M12-04** So sánh số có sai lệch + định dạng số/tiền/ngày VN theo môi trường [P-04, P-10]
 - [ ] **M12-05** Kỳ vọng 2 nguồn (cột Excel + công thức) + so sánh bảng với danh sách kỳ vọng theo khóa [P-05, P-06]

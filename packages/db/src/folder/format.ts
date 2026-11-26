@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import {
+  DatasetChildSchema,
   EnvColorSchema,
   EnvTypeSchema,
   type FormSpec,
@@ -127,6 +128,7 @@ export const DatasetFileSchema = z.object({
   name: z.string().trim().min(1),
   columns: z.array(z.string().min(1)),
   rows: z.array(z.record(z.string(), z.string())).default([]),
+  children: z.array(DatasetChildSchema).optional(),
   source: z
     .object({
       kind: z.enum(['manual', 'excel', 'csv']),
