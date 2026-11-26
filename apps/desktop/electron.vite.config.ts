@@ -11,6 +11,8 @@ export default defineConfig({
           index: resolve(__dirname, 'src/main/index.ts'),
           // Utility process running Playwright [N-05, M4-01].
           'engine-worker': resolve(__dirname, 'src/main/run/engine-worker.ts'),
+          // Command line `kiemi run …`, started with ELECTRON_RUN_AS_NODE [X-04, ADR 0022].
+          cli: resolve(__dirname, 'src/cli/index.ts'),
         },
       },
     },

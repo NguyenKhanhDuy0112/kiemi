@@ -31,7 +31,11 @@ module.exports = {
   // (Chromium download) and reads its own files from disk.
   asarUnpack: ['node_modules/playwright-core/**'],
   // Built demo site = target of the sample tests, works offline [L-01, ADR 0014].
-  extraResources: [{ from: '../demo-site/dist', to: 'sample-site', filter: ['**/*'] }],
+  // Launchers of the command line (`resources/cli/kiemi.cmd|sh`) [X-04].
+  extraResources: [
+    { from: '../demo-site/dist', to: 'sample-site', filter: ['**/*'] },
+    { from: 'build/cli', to: 'cli', filter: ['kiemi.cmd', 'kiemi.sh'] },
+  ],
   // better-sqlite3 uses N-API prebuilds that load in Electron as-is (ADR 0008).
   npmRebuild: false,
   publish: [{ provider: 'github', owner: releaseOwner, repo: releaseRepo, releaseType: 'draft' }],

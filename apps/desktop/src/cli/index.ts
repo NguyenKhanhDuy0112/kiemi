@@ -2,8 +2,22 @@
  * `kiemi` command line [X-04, ADR 0022]. Runs under Node or Electron's `ELECTRON_RUN_AS_NODE`;
  * it never imports `electron`.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { HELP, parseArgs } from './args';
 import { EXIT, execute } from './run';
+
+/** Version of the app this file ships in (`package.json` two folders up from `out/main/cli.js`). */
+function readVersion(): string {
+  try {
+    const pkg = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf8')) as {
+      version?: string;
+    };
+    return pkg.version ?? 'dev';
+  } catch {
+    return 'dev';
+  }
+}
 
 export async function main(
   argv: string[],
@@ -19,7 +33,7 @@ export async function main(
       io.out(HELP);
       return EXIT.ok;
     case 'version':
-      io.out(env.KIEMI_VERSION ?? 'dev');
+      io.out(env.KIEMI_VERSION ?? readVersion());
       return EXIT.ok;
     case 'error':
       io.err(`${args.message}\n\n${HELP}`);
