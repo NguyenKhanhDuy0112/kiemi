@@ -10,6 +10,7 @@ import {
 import ExcelJS from 'exceljs';
 import { v7 as uuidv7 } from 'uuid';
 import { generateFormTests } from '../forms/generate-tests';
+import { installDataSamples } from './samples-data';
 
 /** Name of the project holding the sample tests (one per workspace) [L-01]. */
 export const SAMPLE_PROJECT = 'Dự án mẫu';
@@ -354,6 +355,8 @@ export async function installSamples(
     formSuite.id,
     services.testCases.list(projectId, generated.folderId).map((t) => ({ testCaseId: t.id })),
   );
+  // L-03 #1, #2, #4, #5: data & calculation samples.
+  installDataSamples(services, projectId, env.id);
   return { projectId, created: true, firstTestId: rows[0]?.id ?? null };
 }
 

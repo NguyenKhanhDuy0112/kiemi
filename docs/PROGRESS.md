@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M12** đang làm trên nhánh `milestone/m12-data-compute`: M12-01 → M12-09a xong → M12-09b (task cuối: 4 bộ test mẫu L-03 #1,#2,#4,#5 + kiểm tra app thật + PR). M11 đã merge.
+**M12** đang làm trên nhánh `milestone/m12-data-compute`: M12 xong (M12-01 → M12-09b), chờ PR merge. Tiếp theo: milestone kế trong ROADMAP. M11 đã merge.
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
@@ -34,6 +34,8 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 - M12-07 xong: ADR 0020; action `download` (`actions/download.ts`; bấm → chờ `download` → kiểm tên/loại/dung lượng → biến `{name, ext, size, path, rows|text, sheets, sheet, cell}`); bộ đọc `engine/src/files/read.ts` (exceljs + CSV tự viết + `unpdf` cho PDF; engine KHÔNG import db). Thêm dep `exceljs`, `unpdf` vào engine. e2e `e2e/download.e2e.test.ts` dùng trang `data:` với `<a download>`; PDF thử là PDF tối giản viết tay. Cạm bẫy: `assertText` cần `target` — so chuỗi từ biến dùng `assertExpected`.
 - M12-08 xong: action `generateFile` (`actions/generate-file.ts`, ghi bằng `files/write.ts`): `from: columns|data|list|template`; `columns` là mẫu chữ chạy RIÊNG từng dòng (`rawParams`, `{{loop.index}}`, `{{random}}`, `{{fake.email}}`); biến `{name, ext, size, path, count, rows}` → `upload` dùng `{{f.path}}`. CSV có BOM. e2e trong `e2e/data.e2e.test.ts` (trang `data:` có input file).
 - M12-09a xong (chia từ M12-09): demo-site thêm `shop.html` (`src/shop-calc.ts` thuần: giảm → VAT 8% → ship, `?bug=vat`), `payroll.html` (xuất `/api/payroll/export.xlsx|pdf`), `list.html` (500 dòng, `?bug=sort|filter`), `import.html` (POST nhị phân `/api/import`, báo dòng lỗi theo số dòng file). Logic server thuần `server/data-pages.ts` (+ dep `exceljs` cho demo-site); `DemoStore.people/imported`. e2e `e2e/data-pages.e2e.test.ts` (đã chứng minh các action M12 chạy trên trang thật). M12-09b: viết mẫu trong `apps/desktop/src/main/samples/samples.ts` theo khuôn mẫu #7 (`registerFormSpec`), nhớ site mẫu đóng gói phục vụ từ `dist` (kiểm tra `vite build` có 4 trang mới).
+- M12-09b xong: `main/samples/samples-data.ts` (`installDataSamples`: công thức `TongTien`, thư mục "Dữ liệu & tính toán", suite "Mẫu dữ liệu & tính toán" gồm 4 test L-03 #1,#2,#4,#5); chỉ cho dự án mẫu MỚI. Kiểm tra app thật (`_electron.launch`, build → cài mẫu → màn Công thức → thử công thức → cây test) đạt. Vết công thức nay giữ ngoặc (`(a - b) * 1.08`).
+- Tồn đọng M12: panel xem biến lúc chạy (P-02), ngày theo locale (P-10), UI cho dataset lồng nhau chỉ cho dataset đã lưu, `assertTableCompare` duyệt trang phải bắt đầu từ trang 1.
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 

@@ -89,7 +89,7 @@ describe('step-by-step trace [P-03]', () => {
     const { value, steps } = s.explain("ConVat(SUM(gioHang, 'thanhTien') - 90000)");
     expect(value).toBe(756000);
     expect(steps.map((x) => [x.text, x.value])).toEqual([
-      ["SUM(gioHang, 'thanhTien')".replace(/'/g, '"'), 790000],
+      ['SUM(gioHang, "thanhTien")', 790000],
       ['SUM(gioHang, "thanhTien") - 90000', 700000],
       ['x * 1.08', 756000],
       ['ROUND(x * 1.08)', 756000],

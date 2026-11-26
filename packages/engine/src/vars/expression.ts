@@ -239,8 +239,11 @@ export function nodeText(n: Node): string {
     case 'neg':
       return `-${nodeText(n.e)}`;
     case 'cmp':
-    case 'bin':
-      return `${nodeText(n.l)} ${n.op} ${nodeText(n.r)}`;
+    case 'bin': {
+      // Keep the grouping the tester wrote: `(a - b) * 1.08`, not `a - b * 1.08`.
+      const side = (c: Node) => (c.t === 'bin' || c.t === 'cmp' ? `(${nodeText(c)})` : nodeText(c));
+      return `${side(n.l)} ${n.op} ${side(n.r)}`;
+    }
     case 'call':
       return `${n.name}(${n.args.map(nodeText).join(', ')})`;
     case 'member':
