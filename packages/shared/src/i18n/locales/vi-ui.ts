@@ -378,6 +378,23 @@ export const viUi = {
     backToDefault: 'Quay về dữ liệu chung',
     saveRows: 'Lưu dữ liệu',
   },
+  fix: {
+    hint: {
+      notFound: 'Không tìm thấy phần tử — trang có thể đã đổi. Chọn cách sửa nhanh:',
+      timeout: 'Hết thời gian chờ — trang có thể tải chậm hơn bình thường.',
+      blocked: 'Có thứ gì đó che phần tử (thường là popup).',
+      network: 'Lỗi mạng / API — thử lại thường là đủ, hoặc xem lại yêu cầu.',
+    },
+    repick: 'Chọn lại phần tử',
+    similar: 'Dùng phần tử tương tự',
+    noSimilar: 'Không thấy phần tử nào giống trên trang.',
+    waitLonger: 'Chờ lâu hơn',
+    addWaitStep: 'Thêm bước chờ 3 giây',
+    addPopupRule: 'Thêm trình xử lý popup',
+    popupText: 'Chữ trên popup (vd: Chúng tôi dùng cookie)',
+    popupButton: 'Chữ trên nút đóng (vd: Đồng ý)',
+    savePopupRule: 'Lưu quy tắc và thử lại',
+  },
   popups: {
     title: 'Popup tự đóng',
     hint: 'Nếu trang hiện popup này thì tự bấm đóng — áp dụng cho mọi test của dự án, popup bất chợt không làm test fail.',

@@ -5,6 +5,7 @@ import {
   environmentSkip,
   type RunRequest,
   type SavedLogin,
+  type SimilarCandidate,
   type StepPhase,
 } from '@kiemi/engine';
 import type { HighlightResult } from '@kiemi/recorder';
@@ -417,6 +418,15 @@ export class RunManager {
     }));
   }
 
+  /** Elements on the paused page that look like the one a step lost [FX-06]. */
+  liveSimilar(runId: string, locator: Locator): Promise<SimilarCandidate[]> {
+    return this.#ask<SimilarCandidate[]>(runId, [], (requestId) => ({
+      type: 'liveSimilar',
+      requestId,
+      locator,
+    }));
+  }
+
   /** Starts recording the tester's actions on the page of the paused run [FX-04]. */
   liveRecordStart(runId: string): boolean {
     const active = this.#runs.get(runId);
@@ -573,6 +583,10 @@ export class RunManager {
           stepNo: msg.stepNo,
           ...(msg.error ? { error: msg.error } : {}),
         });
+        return;
+      case 'similarResult':
+        active.waiting.get(msg.requestId)?.resolve(msg.candidates);
+        active.waiting.delete(msg.requestId);
         return;
       case 'liveRecorded':
         active.waiting.get(msg.requestId)?.resolve(msg.steps);

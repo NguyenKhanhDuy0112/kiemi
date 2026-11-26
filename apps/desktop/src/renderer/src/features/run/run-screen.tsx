@@ -437,6 +437,8 @@ export function RunScreen({ runId }: { runId: string }) {
             testCaseId={current.testCaseId}
             doc={docs[current.testCaseId] as TestCase}
             version={tests[testIds.indexOf(current.testCaseId)]?.data?.version ?? 0}
+            projectId={detail?.projectId ?? ''}
+            error={view.paused.error}
             stepId={fixPick ?? view.paused.stepId}
             failed={
               view.paused.error !== undefined &&

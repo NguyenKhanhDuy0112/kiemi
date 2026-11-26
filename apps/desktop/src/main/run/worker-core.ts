@@ -2,6 +2,7 @@ import {
   type ActionRegistry,
   createDefaultRegistry,
   DebugController,
+  findSimilar,
   type LaunchBrowserOptions,
   type LaunchedBrowser,
   launchBrowser,
@@ -163,6 +164,7 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
         case 'edit':
           if (msg.step) debug.editStep(msg.step);
           if (msg.elements) debug.editElements(msg.elements);
+          if (msg.popupRules) debug.editPopupRules(msg.popupRules);
           if (msg.insert) debug.insert(msg.insert.stepId, msg.insert.where, msg.insert.steps);
           return;
         case 'liveRecordStart':
@@ -187,6 +189,18 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
             const steps = rec ? await rec.stop().catch(() => rec.steps) : [];
             post({ type: 'liveRecorded', requestId: msg.requestId, steps });
           })();
+          return;
+        case 'liveSimilar':
+          void (async () => {
+            const gate = debug.paused;
+            const sessions = debug.live;
+            if (!gate || !sessions) return [];
+            return findSimilar(await sessions.page(gate.session), msg.locator);
+          })()
+            .catch(() => [])
+            .then((candidates) =>
+              post({ type: 'similarResult', requestId: msg.requestId, candidates }),
+            );
           return;
         case 'livePick':
           void liveRecorder(msg.strings)

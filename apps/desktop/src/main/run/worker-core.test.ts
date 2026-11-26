@@ -32,7 +32,7 @@ describe('engine worker: fixing a failed step [FX-02, FX-03]', () => {
           { stepId: 's1', stepNo: '1', phase: 'steps', session: 'default' },
           { code: 'ELEMENT_NOT_FOUND', message: 'x' },
           new AbortController().signal,
-          { context: async () => ({}) as never },
+          { context: async () => ({}) as never, page: async () => ({}) as never },
         );
         edited = dbg?.stepEdit?.('s1');
         return { status: 'passed' } as unknown as RunResult;
@@ -89,7 +89,7 @@ describe('engine worker: fixing a failed step [FX-02, FX-03]', () => {
           { stepId: 's1', stepNo: '1', phase: 'steps', session: 'default' },
           { code: 'ELEMENT_NOT_FOUND', message: 'x' },
           new AbortController().signal,
-          { context: async () => ({}) as never },
+          { context: async () => ({}) as never, page: async () => ({}) as never },
         );
         return { status: 'passed' } as unknown as RunResult;
       },
@@ -101,6 +101,9 @@ describe('engine worker: fixing a failed step [FX-02, FX-03]', () => {
       debug: { pauseOnFail: true },
     });
     await tick();
+    await worker.handle({ type: 'liveSimilar', requestId: 'sim', locator });
+    await tick();
+    expect(posted).toContainEqual({ type: 'similarResult', requestId: 'sim', candidates: [] });
     await worker.handle({ type: 'liveRecordStart', strings: {} });
     await tick();
     await worker.handle({ type: 'liveRecordStop', requestId: 'q1' });

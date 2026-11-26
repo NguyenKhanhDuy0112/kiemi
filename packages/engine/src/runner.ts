@@ -643,7 +643,7 @@ class Run {
 
   /** Applies the project's popup rules to the session's page; true when one was closed. */
   async #handlePopups(session: string, signal: AbortSignal): Promise<boolean> {
-    const rules = this.#req.popupRules;
+    const rules = this.#opts.debugger?.popupRulesEdit?.() ?? this.#req.popupRules;
     if (!rules?.length || !this.#pages.isOpen(session)) return false;
     try {
       const page = await this.#pages.page(session);
@@ -656,7 +656,10 @@ class Run {
   }
 
   #live(): LiveSessions {
-    return { context: (session) => this.#pages.context(session) };
+    return {
+      context: (session) => this.#pages.context(session),
+      page: (session) => this.#pages.page(session),
+    };
   }
 
   /** Red frame on the failed element while the run waits; returns the undo [FX-01]. */

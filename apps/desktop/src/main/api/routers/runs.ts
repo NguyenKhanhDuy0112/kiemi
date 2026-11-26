@@ -3,6 +3,7 @@ import {
   ElementRefSchema,
   ElementSchema,
   LocatorSchema,
+  PopupRulesSchema,
   type Step,
   StepSchema,
 } from '@kiemi/schema';
@@ -41,6 +42,7 @@ export const runsRouter = router({
             type: z.literal('edit'),
             step: z.custom<Step>((v) => StepSchema.safeParse(v).success).optional(),
             elements: z.record(ElementRefSchema, ElementSchema).optional(),
+            popupRules: PopupRulesSchema.optional(),
             insert: z
               .object({
                 stepId: z.string().min(1),
@@ -71,6 +73,13 @@ export const runsRouter = router({
         ? { steps: [] as Step[], ok: ctx.runs.liveRecordStart(input.runId) }
         : { steps: await ctx.runs.liveRecordStop(input.runId), ok: true },
     ),
+
+  /** Elements that look like the one a step lost, from its fingerprint [FX-06]. */
+  liveSimilar: publicProcedure
+    .input(runId.extend({ locator: LocatorSchema }))
+    .mutation(async ({ ctx, input }) => ({
+      candidates: await ctx.runs.liveSimilar(input.runId, input.locator),
+    })),
 
   /** Show where a locator points on the page of the paused run [FX-03]. */
   liveHighlight: publicProcedure

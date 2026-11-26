@@ -379,6 +379,23 @@ export const enUi = {
     backToDefault: 'Back to the shared data',
     saveRows: 'Save data',
   },
+  fix: {
+    hint: {
+      notFound: 'Element not found — the page may have changed. Quick fixes:',
+      timeout: 'Timed out — the page may load slower than usual.',
+      blocked: 'Something covers the element (usually a popup).',
+      network: 'Network / API error — retrying is often enough, or check the request.',
+    },
+    repick: 'Pick the element again',
+    similar: 'Use a similar element',
+    noSimilar: 'No similar element found on the page.',
+    waitLonger: 'Wait longer',
+    addWaitStep: 'Add a 3 second wait step',
+    addPopupRule: 'Add a popup handler',
+    popupText: 'Text on the popup (e.g. We use cookies)',
+    popupButton: 'Text on the close button (e.g. Agree)',
+    savePopupRule: 'Save rule and retry',
+  },
   popups: {
     title: 'Auto-close popups',
     hint: 'If the page shows this popup, close it by itself — for every test of the project, so a random popup does not fail a run.',

@@ -1,5 +1,5 @@
-import type { RunError, Step, TestCase } from '@kiemi/schema';
-import type { BrowserContext } from 'playwright-core';
+import type { PopupRule, RunError, Step, TestCase } from '@kiemi/schema';
+import type { BrowserContext, Page } from 'playwright-core';
 import type { StepPhase } from '../events';
 
 /** Step about to run, as seen by a debugger. */
@@ -15,6 +15,8 @@ export interface StepGate {
 /** The run's open browser, handed over while it waits (Pick / Highlight on the real page) [FX-03]. */
 export interface LiveSessions {
   context(session: string): Promise<BrowserContext>;
+  /** Active tab of the session. */
+  page(session: string): Promise<Page>;
 }
 
 /** Awaited before every step; resolve to let the step run [H-03]. */
@@ -36,6 +38,8 @@ export interface RunDebugger {
   /** Steps added around `stepId` while the run waited; taken once [FX-04]. */
   takeInserted?(stepId: string, where: 'before' | 'after'): Step[];
   hasInserted?(stepId: string, where: 'before' | 'after'): boolean;
+  /** Popup rules changed while the run waited [FX-06]. */
+  popupRulesEdit?(): PopupRule[] | undefined;
   /** Elements edited while the run waited (re-picked) [FX-03]. */
   elementsEdit?(): TestCase['elements'] | undefined;
 }
@@ -69,6 +73,7 @@ export class DebugController implements RunDebugger {
   readonly #stepEdits = new Map<string, Step>();
   readonly #inserts = new Map<string, Step[]>();
   #elementEdits: TestCase['elements'] | undefined;
+  #popupRules: PopupRule[] | undefined;
   readonly #listener: DebugListener;
 
   constructor(
@@ -102,6 +107,14 @@ export class DebugController implements RunDebugger {
   /** The tester edited a step while paused [FX-02]. */
   editStep(step: Step): void {
     this.#stepEdits.set(step.id, step);
+  }
+
+  editPopupRules(rules: PopupRule[]): void {
+    this.#popupRules = rules;
+  }
+
+  popupRulesEdit(): PopupRule[] | undefined {
+    return this.#popupRules;
   }
 
   editElements(elements: TestCase['elements']): void {

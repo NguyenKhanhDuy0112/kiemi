@@ -1,4 +1,5 @@
-import type { Locator, Step, TestCase } from '@kiemi/schema';
+import type { SimilarCandidate } from '@kiemi/engine';
+import type { Locator, RunError, Step, TestCase } from '@kiemi/schema';
 import { Button } from '@renderer/components/ui/button';
 import {
   DropdownMenu,
@@ -13,13 +14,14 @@ import { groupActions, useActions } from '@renderer/lib/actions';
 import { errorMessage } from '@renderer/lib/errors';
 import { trpc, trpcClient } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Circle, ListPlus, RotateCcw, Save, Square } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { defaultParams, findStep, insertStep, newStepId, updateStep } from '../editor/doc-model';
 import { type PickSource, PickSourceContext } from '../editor/pick-context';
 import { StepForm } from '../editor/props-panel';
+import { classifyFailure, type QuickFixActions, QuickFixes } from './quick-fixes';
 import { useRunStore } from './run-store';
 
 /**
@@ -62,8 +64,10 @@ export function FixStepPanel({
   testCaseId,
   doc,
   version,
+  projectId,
   stepId,
   failed,
+  error,
 }: {
   runId: string;
   testCaseId: string;
@@ -72,11 +76,15 @@ export function FixStepPanel({
   stepId: string;
   /** The run waits on this step because it failed (so "Thử lại" makes sense). */
   failed: boolean;
+  projectId: string;
+  /** Why the step failed, for the quick fixes. */
+  error?: RunError | undefined;
 }) {
   const tx = useTx();
   const qc = useQueryClient();
   const decide = useRunStore((s) => s.decide);
   const { data: actions } = useActions();
+  const project = useQuery(trpc.projects.get.queryOptions({ id: projectId }));
   const [draft, setDraft] = useState(doc);
   const [busy, setBusy] = useState(false);
   /** Step being edited: the waiting one, or one just added next to it [FX-04]. */
@@ -152,21 +160,22 @@ export function FixStepPanel({
     setFocusId(id);
   };
 
-  const apply = async (retry: boolean) => {
+  const apply = async (retry: boolean, base: TestCase = draft, sendAdded = added) => {
     setBusy(true);
     try {
       // The engine takes the edited step even if saving fails (e.g. the test changed meanwhile).
       const edit = (command: Parameters<typeof trpcClient.runs.control.mutate>[0]['command']) =>
         trpcClient.runs.control.mutate({ runId, command });
-      for (const a of added) {
-        const s = findStep(draft, a.id);
+      for (const a of sendAdded) {
+        const s = findStep(base, a.id);
         if (s)
           await edit({ type: 'edit', insert: { stepId: a.anchor, where: a.where, steps: [s] } });
       }
-      const edited = added.some((a) => a.id === step.id) ? undefined : step;
+      // The waiting step itself, unless it is one of the steps just added.
+      const edited = sendAdded.some((a) => a.id === stepId) ? undefined : findStep(base, stepId);
       if (edited) await edit({ type: 'edit', step: edited });
       try {
-        await trpcClient.testCases.save.mutate({ id: testCaseId, version, content: draft });
+        await trpcClient.testCases.save.mutate({ id: testCaseId, version, content: base });
         await qc.invalidateQueries({ queryKey: trpc.testCases.get.queryKey({ id: testCaseId }) });
       } catch (err) {
         toast.warning(`${tx('ui.run.fixNotSaved')} ${errorMessage(err, tx)}`);
@@ -181,11 +190,89 @@ export function FixStepPanel({
     }
   };
 
+  // Quick fixes: change the draft, then send it and retry in one go [FX-06].
+  const waiting = findStep(draft, stepId);
+  const retryWith = (next: TestCase) => {
+    setDraft(next);
+    void apply(true, next);
+  };
+  const quick: QuickFixActions = {
+    hasTarget: waiting?.params.target !== undefined,
+    busy,
+    onRepick: () => {
+      void (async () => {
+        const picked = await source.pick().catch(() => null);
+        if (picked)
+          retryWith(updateStep(draft, stepId, { params: { ...waiting?.params, target: picked } }));
+      })();
+    },
+    onSimilar: async () => {
+      const target = waiting?.params.target as Locator | { ref: string } | undefined;
+      const locator = !target ? undefined : 'ref' in target ? draft.elements[target.ref] : target;
+      if (!locator) return [];
+      return (await trpcClient.runs.liveSimilar.mutate({ runId, locator }))
+        .candidates as SimilarCandidate[];
+    },
+    onUseCandidate: (c) =>
+      retryWith(updateStep(draft, stepId, { params: { ...waiting?.params, target: c.locator } })),
+    onWaitLonger: () =>
+      retryWith(
+        updateStep(draft, stepId, {
+          timeoutMs: Math.max(20_000, (waiting?.timeoutMs ?? 10_000) * 2),
+        }),
+      ),
+    onAddWaitStep: () => {
+      const id = newStepId(draft);
+      const created: Step = {
+        id,
+        action: 'wait',
+        params: { seconds: 3 },
+        session: waiting?.session ?? 'default',
+        enabled: true,
+        mode: 'hard',
+      };
+      const next = insertStep(draft, created, { beforeId: stepId });
+      const entry = { id, where: 'before' as const, anchor: stepId };
+      setAdded((a) => [...a, entry]);
+      setDraft(next);
+      void apply(true, next, [...added, entry]);
+    },
+    onAddPopupRule: (when, button) => {
+      void (async () => {
+        try {
+          const rules = [
+            ...(project.data?.popupRules ?? []),
+            {
+              id: `popup-${Date.now().toString(36)}`,
+              name: when.slice(0, 40),
+              enabled: true,
+              when: { strategies: [{ kind: 'text' as const, value: when }] },
+              action: {
+                kind: 'click' as const,
+                target: { strategies: [{ kind: 'text' as const, value: button }] },
+              },
+            },
+          ];
+          await trpcClient.projects.setPopupRules.mutate({ id: projectId, rules });
+          await trpcClient.runs.control.mutate({
+            runId,
+            command: { type: 'edit', popupRules: rules },
+          });
+          await qc.invalidateQueries({ queryKey: trpc.projects.get.queryKey({ id: projectId }) });
+          await apply(true);
+        } catch (err) {
+          toast.error(errorMessage(err, tx));
+        }
+      })();
+    },
+  };
+
   return (
     <aside
       className="flex w-[340px] shrink-0 flex-col overflow-y-auto border-l"
       aria-label={tx('ui.run.fixTitle')}
     >
+      {failed && error && <QuickFixes kind={classifyFailure(error)} {...quick} />}
       <PickSourceContext.Provider value={source}>
         <StepForm
           doc={draft}
