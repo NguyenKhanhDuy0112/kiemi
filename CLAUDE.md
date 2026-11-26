@@ -32,7 +32,7 @@ Docs: `docs/SPEC.md` (yêu cầu + ID), `docs/ROADMAP.md` (task), `docs/PROGRESS
    - Chưa có remote `origin` → nhắc người dùng cung cấp URL repo, không tự tạo repo.
    - Không `push --force` lên `main`.
 7. Nếu người dùng chỉ nói "làm tiếp" / "continue" → làm từ task trong mục "Tiếp theo" (hoặc "Đang làm dở" nếu có) cho tới hết milestone đó.
-8. **Kết thúc phiên** = hết milestone: sau task cuối chạy kiểm tra app thật (nếu có UI), push nhánh, mở PR theo quy ước (mục 6). Rồi DỪNG — không tự làm milestone kế. Báo ngắn gọn (≤ 10 dòng): các task đã xong, kết quả test, link PR, milestone tiếp theo, và nhắc người dùng `/clear` (hoặc mở chat mới) rồi gõ `Làm tiếp.`
+8. **Kết thúc phiên** = hết milestone: sau task cuối chạy kiểm tra app thật (nếu có UI), push nhánh, mở PR theo quy ước (mục 6), đợi CI xanh (tự sửa nếu đỏ) rồi **tự merge vào `main`** (người dùng đã cho phép sẵn), xóa nhánh, cập nhật `main` cục bộ. Rồi DỪNG — không tự làm milestone kế. Báo ngắn gọn (≤ 10 dòng): các task đã xong, kết quả test, PR đã merge, milestone tiếp theo, và nhắc người dùng `/clear` (hoặc mở chat mới) rồi gõ `Làm tiếp.`
 9. Chạy tự động không cần mở chat: xem `START-PROMPT.md` (vòng lặp `claude -p "Làm tiếp."`, mỗi lần = 1 phiên mới = 1 milestone).
 
 ## 2b. Quy trình thay đổi yêu cầu (BẮT BUỘC)
