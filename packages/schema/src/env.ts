@@ -43,6 +43,21 @@ export const ProxySchema = z
 export type ProxySettings = z.infer<typeof ProxySchema>;
 
 /**
+ * HTTP Basic / NTLM / Windows login of the environment's sites [W-01]: the
+ * browser answers the 401 challenge with this user; the password is a secret NAME.
+ */
+export const HttpAuthSchema = z.object({
+  username: z.string().min(1),
+  passwordSecret: VariableNameSchema,
+  /** Only answer challenges of this origin (`https://intranet.local`); empty = any site that asks. */
+  origin: z
+    .string()
+    .regex(/^https?:\/\/[^\s/]+$/, 'Origin must look like https://host[:port]')
+    .optional(),
+});
+export type HttpAuth = z.infer<typeof HttpAuthSchema>;
+
+/**
  * One SSH hop. Credentials are secret NAMES (values live encrypted in the
  * environment's secrets) [G-07, E-08].
  */
@@ -156,6 +171,8 @@ export const EnvSchema = z.object({
   variables: z.record(VariableNameSchema, z.string()).default({}),
   /** Names of secrets this env expects; values never live in the env [E-08]. */
   secretNames: z.array(VariableNameSchema).default([]),
+  /** HTTP Basic / NTLM / Windows auth for the sites of this env [W-01]. */
+  httpAuth: HttpAuthSchema.optional(),
   /** Proxy used by every session of runs in this env [G-06]. */
   proxy: ProxySchema.optional(),
   /** SSH tunnel opened by the desktop app for runs in this env [G-07]. */

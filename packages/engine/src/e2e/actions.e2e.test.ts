@@ -237,6 +237,61 @@ describe('tabs, dialogs, iframes, sessions, storage [A-13 → A-18, F-01]', () =
     expect(e.launched.length - before).toBe(1);
   });
 
+  it('answers HTTP Basic auth from the environment, with the password kept secret [W-01]', async () => {
+    const env = (httpAuth?: { username: string; passwordSecret: string }) => ({
+      id: 'e',
+      name: 'Nội bộ',
+      baseUrl: e.site.url,
+      variables: {},
+      secretNames: ['BASIC_PW'],
+      apps: {},
+      type: 'other' as const,
+      protected: false,
+      ...(httpAuth ? { httpAuth } : {}),
+    });
+    const ok = await e.run(
+      [
+        step('goto', { url: '/secure/basic' }),
+        step('assertText', {
+          target: { css: '#who' },
+          op: 'equals',
+          value: 'Xin chào demo',
+        }),
+      ],
+      {
+        request: {
+          env: env({ username: 'demo', passwordSecret: 'BASIC_PW' }),
+          secrets: { BASIC_PW: 'demo-pass' },
+        },
+      },
+    );
+    expect(summary(ok)).toEqual(['1 passed', '2 passed']);
+    // Wrong password → the browser gets 401 and shows the plain message, not the page.
+    const bad = await e.run(
+      [
+        step('goto', { url: '/secure/basic' }),
+        step(
+          'assertText',
+          { target: { css: '#who' }, op: 'equals', value: 'Xin chào demo' },
+          { timeoutMs: 800 },
+        ),
+      ],
+      {
+        request: {
+          env: env({ username: 'demo', passwordSecret: 'BASIC_PW' }),
+          secrets: { BASIC_PW: 'sai-mat-khau' },
+        },
+      },
+    );
+    expect(summary(bad)[1]).toMatch(/failed/);
+    expect(JSON.stringify(bad)).not.toContain('sai-mat-khau');
+    // A missing secret is reported before the browser opens a page.
+    const missing = await e.run([step('goto', { url: '/secure/basic' })], {
+      request: { env: env({ username: 'demo', passwordSecret: 'BASIC_PW' }), secrets: {} },
+    });
+    expect(missing.status).not.toBe('passed');
+  });
+
   it('finds elements inside nested iframes automatically', async () => {
     const r = await e.run([
       step('goto', { url: '/iframe.html' }),

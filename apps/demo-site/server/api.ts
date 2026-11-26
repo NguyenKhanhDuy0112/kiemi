@@ -15,6 +15,9 @@ import { handleWebForms } from './webforms';
 
 const COOKIE = 'demo_session';
 
+/** Login of the HTTP Basic area `/secure/basic` [W-01]. */
+export const BASIC_AUTH = { user: 'demo', pass: 'demo-pass' } as const;
+
 function parseCookies(header: string | undefined): Record<string, string> {
   const out: Record<string, string> = {};
   for (const part of (header ?? '').split(';')) {
@@ -78,6 +81,27 @@ export async function handleRequest(
     if (method === 'POST') form = Object.fromEntries(new URLSearchParams(await readBody(req)));
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
     res.end(handleWebForms(form));
+    return true;
+  }
+
+  // HTTP Basic auth area (demo / demo-pass) [W-01].
+  if (path === '/secure/basic') {
+    const given = /^Basic (.+)$/i.exec(req.headers.authorization ?? '')?.[1];
+    const [user, pass] = Buffer.from(given ?? '', 'base64')
+      .toString()
+      .split(':');
+    if (user !== BASIC_AUTH.user || pass !== BASIC_AUTH.pass) {
+      res.writeHead(401, {
+        'www-authenticate': 'Basic realm="Kiemi demo", charset="UTF-8"',
+        'content-type': 'text/plain; charset=utf-8',
+      });
+      res.end('Cần đăng nhập');
+      return true;
+    }
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+    res.end(
+      `<!doctype html><meta charset="utf-8"><title>Khu vực nội bộ</title><h1 id="who">Xin chào ${user}</h1><p id="area">Khu vực nội bộ (Basic auth)</p>`,
+    );
     return true;
   }
 

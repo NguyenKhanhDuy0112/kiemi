@@ -93,6 +93,14 @@ export const viUi = {
     colorHint: 'Hiện trên thanh tiêu đề, màn Chạy và báo cáo để không nhầm môi trường.',
     protected: 'Bảo vệ môi trường này',
     locale: 'Định dạng số và tiền',
+    httpAuth: {
+      title: 'Đăng nhập HTTP (Basic / NTLM / Windows)',
+      hint: 'Dành cho trang nội bộ hiện hộp hỏi tên và mật khẩu của trình duyệt. Mật khẩu lấy từ một bí mật của môi trường.',
+      username: 'Tên đăng nhập',
+      password: 'Bí mật chứa mật khẩu',
+      origin: 'Chỉ áp dụng cho trang (không bắt buộc)',
+      remove: 'Bỏ đăng nhập HTTP',
+    },
     localeHint:
       'Cách đọc “1.250”: 1250 (Việt Nam) hay 1,25 (Anh/Mỹ). Dùng khi so sánh số và hàm formatNumber/formatMoney.',
     localeVi: 'Việt Nam (1.250.000 ₫)',
@@ -954,6 +962,7 @@ export const viUi = {
     tags: 'smoke, nghỉ phép',
     session: 'quanly',
     baseUrl: 'https://uat.congty.vn',
+    httpAuthOrigin: 'https://intranet.congty.local',
     sshHost: 'bastion.congty.vn',
   },
   settingsScreen: {

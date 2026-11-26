@@ -95,6 +95,14 @@ export const enUi = {
       'Shown on the title bar, the Run screen and reports so environments are never mixed up.',
     protected: 'Protect this environment',
     locale: 'Number and money format',
+    httpAuth: {
+      title: 'HTTP login (Basic / NTLM / Windows)',
+      hint: 'For internal sites where the browser asks for a user name and password. The password comes from a secret of the environment.',
+      username: 'User name',
+      password: 'Secret holding the password',
+      origin: 'Only for this site (optional)',
+      remove: 'Remove HTTP login',
+    },
     localeHint:
       'How “1.250” reads: 1250 (Vietnam) or 1.25 (English). Used by number checks and formatNumber/formatMoney.',
     localeVi: 'Vietnam (1.250.000 ₫)',
@@ -958,6 +966,7 @@ export const enUi = {
     tags: 'smoke, leave',
     session: 'manager',
     baseUrl: 'https://uat.example.com',
+    httpAuthOrigin: 'https://intranet.company.local',
     sshHost: 'bastion.example.com',
   },
   settingsScreen: {

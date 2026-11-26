@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { handleRequest } from './api';
 import { DemoStore } from './store';
 
-export { handleRequest } from './api';
+export { BASIC_AUTH, handleRequest } from './api';
 export { DemoStore } from './store';
 
 /** Chromium flag that makes the demo app host names point at this machine. */

@@ -23,6 +23,7 @@ import type { z } from 'zod';
 import {
   type BrowserKind,
   ensureFfmpeg,
+  httpAuthFor,
   proxyFor,
   SessionPages,
   type ViewportSettings,
@@ -331,6 +332,7 @@ class Run {
       this.#pages = new SessionPages(this.#opts.browser, {
         ...(this.#req.options?.viewport ? { viewport: this.#req.options.viewport } : {}),
         proxy: proxyFor(this.#req.env, this.#req.secrets),
+        httpCredentials: httpAuthFor(this.#req.env, this.#req.secrets),
         videoDir: video && artifactsOpt ? join(artifactsOpt.dir, 'video') : undefined,
         traceDir: artifactsOpt?.trace ? artifactsOpt.dir : undefined,
         onPage: (session, page) => this.#onPage(session, page),

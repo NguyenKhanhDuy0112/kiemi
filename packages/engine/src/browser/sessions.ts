@@ -3,7 +3,7 @@ import type { Browser, BrowserContext, Page } from 'playwright-core';
 import { EngineError } from '../errors';
 import type { BrowserKind } from './detect';
 import { contextEmulation, type ViewportSettings } from './options';
-import type { ContextProxy } from './proxy';
+import type { ContextHttpCredentials, ContextProxy } from './proxy';
 
 interface SessionState {
   context: BrowserContext;
@@ -20,6 +20,8 @@ export interface SessionArtifact {
 export interface SessionPagesOptions {
   viewport?: ViewportSettings;
   proxy?: ContextProxy | undefined;
+  /** HTTP Basic / NTLM login answered by every session [W-01]. */
+  httpCredentials?: ContextHttpCredentials | undefined;
   /** Record a video per page into this folder [I-03]. */
   videoDir?: string | undefined;
   /** Record a Playwright trace per session into this folder [I-03]. */
@@ -157,6 +159,7 @@ export class SessionPages {
         const context = await browser.newContext({
           ...emulation,
           ...(o.proxy ? { proxy: o.proxy } : {}),
+          ...(o.httpCredentials ? { httpCredentials: o.httpCredentials } : {}),
           ...(o.videoDir
             ? { recordVideo: { dir: join(o.videoDir, session), size: emulation.viewport } }
             : {}),

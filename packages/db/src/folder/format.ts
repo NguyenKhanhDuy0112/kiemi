@@ -7,6 +7,7 @@ import {
   FormSpecsSchema,
   type Formulas,
   FormulasSchema,
+  HttpAuthSchema,
   LocatorSchema,
   type MessageCatalog,
   MessageCatalogSchema,
@@ -102,6 +103,7 @@ export const EnvironmentEntrySchema = z.object({
   color: EnvColorSchema.nullish(),
   protected: z.boolean().default(false),
   locale: z.enum(['vi', 'en']).nullish(),
+  httpAuth: HttpAuthSchema.nullish(),
   /** Read only (files written before M9-05) → the first product's cell. */
   baseUrl: z.string().nullish(),
   proxy: ProxySchema.nullish(),

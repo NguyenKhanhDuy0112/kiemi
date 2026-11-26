@@ -407,4 +407,9 @@ CREATE INDEX "shared_resources_workspace_idx" ON "shared_resources" ("workspace_
     name: 'environment-locale',
     sql: `ALTER TABLE "environments" ADD COLUMN "locale" TEXT;`,
   },
+  {
+    id: 18,
+    name: 'environment-http-auth',
+    sql: `ALTER TABLE "environments" ADD COLUMN "http_auth" TEXT;`,
+  },
 ];

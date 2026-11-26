@@ -65,6 +65,7 @@ import {
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { EnvironmentPill } from './environment-badge';
+import { HttpAuthForm } from './http-auth';
 import { PopupRulesEditor } from './popup-rules';
 
 const NONE = '__none__';
@@ -796,6 +797,12 @@ function EnvironmentDetails({ id, onChanged }: { id: string; onChanged: () => vo
             </SelectContent>
           </Select>
         </div>
+        <HttpAuthForm
+          key={JSON.stringify(e.httpAuth ?? null)}
+          value={e.httpAuth}
+          secretNames={e.secrets.map((s) => s.name)}
+          onSave={(httpAuth) => void update({ httpAuth })}
+        />
         <div className="flex items-start justify-between gap-4 rounded-md border p-3">
           <div>
             <Label htmlFor="env-protected" className="flex items-center gap-1.5">

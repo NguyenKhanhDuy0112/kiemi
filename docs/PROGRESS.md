@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M13** đang làm trên nhánh `milestone/m13-real-web`: xong M13-01 → M13-04. Tiếp: M13-05 → M13-09. Việc còn treo của v1.0: `docs/RELEASE-CHECKLIST.md` mục C và D.
+**M13** đang làm trên nhánh `milestone/m13-real-web`: xong M13-01 → M13-05. Tiếp: M13-06 → M13-09. Việc còn treo của v1.0: `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
+- M13-05 xong: `Env.httpAuth {username, passwordSecret, origin?}` (cột `environments.http_auth`, migration 18, theo khuôn `locale`), engine `httpAuthFor` → `newContext({httpCredentials})`, UI `features/environments/http-auth.tsx`; demo `/secure/basic` (demo/demo-pass, `BASIC_AUTH`). Chỉ 1 bộ đăng nhập cho cả môi trường (không theo sản phẩm); Windows tích hợp (SSO không nhập mật khẩu) chưa làm — NTLM chạy qua cùng httpCredentials.
 - M13-04 xong: action `clock` (`actions/clock.ts`; op set|freeze|advance|resume, `time` dd/MM/yyyy [HH:mm] hoặc ISO, `amount`+`unit`) dùng `context.clock` (áp cho mọi tab của phiên). Chỉ giả lập trình duyệt, không đụng giờ server demo. Test dùng giờ giữa ngày để không phụ thuộc múi giờ CI.
 - M13-03 xong: check `same` → `assertSame` (`left/right: {target, session?, tab?}`, `as: text|number|table`, tolerance, `key`); `ctx.resolve(target,{at:{session,tab}})` + `readRows({at})`; lỗi giữ `details.places` → runner chụp ảnh từng nơi (`step-N-failed-1.png`, `-2`). Form tự sinh chỉ hiện gợi ý JSON cho object lồng (left/right) — chưa có UI riêng.
 - M13-02 xong: action `openIn` (`session`, `url`, `browser: same|msedge|chrome|chromium`, `name`) mở trang ở phiên khác/trình duyệt khác; `SessionPages.useBrowser(session, kind)` + `RunOptions.launchBrowser` (worker-core truyền; trình duyệt phụ đóng trong `closeAll`). Phiên mới phải có trong `testCase.sessions` để bước dùng được; e2e harness có `e.launched`.
