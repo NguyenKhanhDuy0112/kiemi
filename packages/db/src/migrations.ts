@@ -412,4 +412,47 @@ CREATE INDEX "shared_resources_workspace_idx" ON "shared_resources" ("workspace_
     name: 'environment-http-auth',
     sql: `ALTER TABLE "environments" ADD COLUMN "http_auth" TEXT;`,
   },
+  {
+    id: 19,
+    name: 'project-manual-cases',
+    sql: `ALTER TABLE "projects" ADD COLUMN "manual_cases" TEXT;`,
+  },
+  {
+    id: 20,
+    name: 'project-test-plans',
+    sql: `ALTER TABLE "projects" ADD COLUMN "test_plans" TEXT;`,
+  },
+  {
+    id: 21,
+    name: 'project-permission-matrices',
+    sql: `ALTER TABLE "projects" ADD COLUMN "permission_matrices" TEXT;`,
+  },
+  {
+    id: 22,
+    name: 'notify-channels',
+    sql: `CREATE TABLE "notify_channels" (
+  "id" TEXT PRIMARY KEY,
+  "workspace_id" TEXT NOT NULL,
+  "created_at" INTEGER NOT NULL,
+  "updated_at" INTEGER NOT NULL,
+  "deleted_at" INTEGER,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "project_id" TEXT NOT NULL,
+  "name" TEXT NOT NULL,
+  "kind" TEXT NOT NULL,
+  "enabled" INTEGER NOT NULL DEFAULT 1,
+  "send_when" TEXT NOT NULL DEFAULT 'always',
+  "config" TEXT,
+  "ciphertext" BLOB,
+  "last_ok" INTEGER,
+  "last_message" TEXT,
+  "last_at" INTEGER
+);
+CREATE INDEX "notify_channels_project_idx" ON "notify_channels" ("project_id");`,
+  },
+  {
+    id: 23,
+    name: 'environment-db-connections',
+    sql: `ALTER TABLE "environments" ADD COLUMN "db_connections" TEXT;`,
+  },
 ];

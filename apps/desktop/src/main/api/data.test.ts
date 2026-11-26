@@ -1,4 +1,8 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createMemoryServices, writeCsv } from '@kiemi/db';
+import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
 import { createTestRunManager } from '../run/testing';
 import { createCaller } from './root';
@@ -129,5 +133,66 @@ describe('formulas router [P-03]', () => {
     expect(ok.ok && ok.steps.map((s) => s.value)).toContain('250');
     const bad = await c.formulas.explain({ expression: 'Vat()', formulas, values: {} });
     expect(bad).toMatchObject({ ok: false, error: expect.stringContaining('takes 1 input') });
+  });
+});
+
+describe('manual router [X-08]', () => {
+  it('previews the sample file and follows a chosen column mapping', async () => {
+    const { c } = caller();
+    const t = await c.manual.template();
+    const guess = await c.manual.preview({ data: t.data });
+    expect(guess.cases.map((x) => x.externalId)).toEqual(['TC-001', 'TC-002']);
+    expect(guess.mapping.name).toBe('Tên case');
+    const none = await c.manual.preview({ data: t.data, mapping: { action: 'Bước thực hiện' } });
+    expect(none.cases).toEqual([]);
+    expect(none.warnings[0]).toMatch(/Tên case/);
+  });
+});
+
+describe('reports router [X-01]', () => {
+  it('writes a workbook from sheets, and PDF needs the desktop app', async () => {
+    const { c } = caller();
+    const r = await c.reports.workbook({
+      sheets: [
+        { name: 'Tổng hợp', columns: ['Test', 'Kết quả'], rows: [['A', 'Đạt']] },
+        { name: 'Chi tiết', columns: ['x'], rows: [] },
+      ],
+    });
+    // .xlsx is a zip file
+    expect(Buffer.from(r.data, 'base64').subarray(0, 2).toString()).toBe('PK');
+    await expect(c.reports.pdf({ html: '<p>x</p>' })).rejects.toThrow(/desktop/);
+  });
+});
+
+describe('dbQuery router [X-05]', () => {
+  it('tests a SQLite connection and explains a missing secret or file', async () => {
+    const { c } = caller();
+    const projectId = (await c.projects.list())[0]?.id ?? '';
+    const env = await c.environments.create({ projectId, name: 'UAT', baseUrl: 'http://x' });
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-dbtest-'));
+    const file = join(dir, 'a.db');
+    new Database(file).close();
+    const ok = await c.dbQuery.test({
+      environmentId: env.id,
+      connection: { name: 'qa', kind: 'sqlite', database: file, ssl: false },
+    });
+    expect(ok).toEqual({ ok: true, message: 'Kết nối được' });
+    const missing = await c.dbQuery.test({
+      environmentId: env.id,
+      connection: { name: 'qa', kind: 'sqlite', database: join(dir, 'none.db'), ssl: false },
+    });
+    expect(missing.ok).toBe(false);
+    const noSecret = await c.dbQuery.test({
+      environmentId: env.id,
+      connection: {
+        name: 'p',
+        kind: 'postgres',
+        host: 'h',
+        database: 'd',
+        passwordSecret: 'DB_PW',
+        ssl: false,
+      },
+    });
+    expect(noSecret).toEqual({ ok: false, message: 'Chưa nhập giá trị cho bí mật “DB_PW”' });
   });
 });

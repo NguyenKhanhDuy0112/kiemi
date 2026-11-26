@@ -3,12 +3,18 @@ import {
   FormSpecsSchema,
   type Formulas,
   FormulasSchema,
+  type ManualCase,
+  ManualCasesSchema,
   type MessageCatalog,
   MessageCatalogSchema,
   type PageDecl,
   PageDeclsSchema,
+  PermissionMatricesSchema,
+  type PermissionMatrix,
   type PopupRule,
   PopupRulesSchema,
+  type TestPlan,
+  TestPlansSchema,
   VariableNameSchema,
 } from '@kiemi/schema';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -90,6 +96,33 @@ export class ProjectService {
   }
   formulas(id: string): Formulas {
     return this.repo.get(id).formulas ?? {};
+  }
+  /** Test cases written for people to run by hand [T-03]. */
+  setManualCases(id: string, cases: unknown) {
+    const p = ManualCasesSchema.safeParse(cases);
+    if (!p.success) throw validation('manual cases', p.error.issues);
+    return this.repo.update(id, { manualCases: p.data });
+  }
+  manualCases(id: string): ManualCase[] {
+    return this.repo.get(id).manualCases ?? [];
+  }
+  /** Test rounds per release [T-02]. */
+  setTestPlans(id: string, plans: unknown) {
+    const p = TestPlansSchema.safeParse(plans);
+    if (!p.success) throw validation('test plans', p.error.issues);
+    return this.repo.update(id, { testPlans: p.data });
+  }
+  testPlans(id: string): TestPlan[] {
+    return this.repo.get(id).testPlans ?? [];
+  }
+  /** Role × function permission matrices [Q-09]. */
+  setPermissionMatrices(id: string, matrices: unknown) {
+    const p = PermissionMatricesSchema.safeParse(matrices);
+    if (!p.success) throw validation('permission matrices', p.error.issues);
+    return this.repo.update(id, { permissionMatrices: p.data });
+  }
+  permissionMatrices(id: string): PermissionMatrix[] {
+    return this.repo.get(id).permissionMatrices ?? [];
   }
   /** Pages that should be tested [CV-02]. */
   setPages(id: string, pages: unknown) {

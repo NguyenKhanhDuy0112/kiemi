@@ -54,6 +54,16 @@ function sample() {
     baseUrl: 'https://uat.example.com',
     locale: 'en',
     httpAuth: { username: 'qa', passwordSecret: 'INTRANET_PW' },
+    dbConnections: [
+      {
+        name: 'qa',
+        kind: 'postgres' as const,
+        host: 'db.local',
+        database: 'don',
+        passwordSecret: 'DB_PW',
+        ssl: false,
+      },
+    ],
   });
   s.environments.setVariables(env.id, { portal: 'https://p' });
   s.environments.setSecret(env.id, 'nvPass', 'TOP-SECRET');
@@ -331,6 +341,10 @@ describe('attach / open / sync', () => {
     });
     expect(other.environments.forRun(env.id).env.locale).toBe('en'); // [P-10]
     expect(other.environments.forRun(env.id).env.httpAuth?.username).toBe('qa'); // [W-01]
+    expect(other.environments.forRun(env.id).env.dbConnections?.[0]).toMatchObject({
+      name: 'qa',
+      passwordSecret: 'DB_PW',
+    }); // [X-05]
     // A teammate on an older build wrote the v1.0 shape: one URL, no cells.
     doc.environments[0] = {
       ...doc.environments[0],

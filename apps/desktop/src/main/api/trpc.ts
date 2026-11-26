@@ -22,6 +22,8 @@ export interface ApiContext {
   desktop?: DesktopBridge;
   /** Address of the bundled sample site, started on demand [L-01]. */
   sampleSiteUrl?: () => Promise<string>;
+  /** SQLite file of the sample site, for the database sample [X-05]. */
+  sampleSiteDb?: () => Promise<string>;
   /** Opt-in crash reports [N-09] (absent in tests). */
   crashReports?: CrashReporter;
   /** Automatic updates (absent in development and tests) [N-12]. */
@@ -46,6 +48,8 @@ export interface DesktopBridge {
   openFolder(path: string): void;
   /** Native "choose a folder" dialog; `undefined` when cancelled. */
   pickFolder(title: string): Promise<string | undefined>;
+  /** Prints a self-contained HTML page to PDF (A4) in a hidden window [X-01]. */
+  htmlToPdf(html: string): Promise<Uint8Array>;
 }
 
 const DB_TO_TRPC = {

@@ -162,15 +162,19 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M13-09** Demo-site: control phức tạp, Basic auth, khuyến mãi theo ngày + đếm ngược; mẫu L-03 #8 [L-03]
 
 ## M14 — Team & quy trình QA (→ phát hành v1.1)
-- [ ] **M14-01** Case thủ công (bước + kỳ vọng, đánh dấu pass/fail, ảnh, chuyển dần sang tự động) [T-03]
-- [ ] **M14-02** Test plan & đợt test theo release (giao người, Pass/Fail/Blocked/Chưa chạy, dashboard) [T-02]
-- [ ] **M14-03** Import test case từ Excel (file mẫu + map cột) thành case thủ công [X-08]
-- [ ] **M14-04** Ma trận phân quyền từ Excel → sinh test mỗi vai trò (menu, nút, URL trực tiếp) + demo-site 3 vai trò; mẫu L-03 #3 [Q-09, L-03]
-- [ ] **M14-05** Báo cáo Excel/PDF (sheet Tổng hợp + Chi tiết) [X-01]
-- [ ] **M14-06** Thông báo kết quả qua webhook (Teams, Slack, Google Chat, Telegram, SMTP) [X-03]
-- [ ] **M14-07** ADR + `apps/cli` (`kiemi run …`) dùng chung engine, đóng gói cùng app, hẹn giờ, JUnit XML [X-04]
-- [ ] **M14-08** ADR + Query DB (SQL Server, Postgres, MySQL ở main process), mặc định chỉ đọc, ghi bị W-10 chặn; mẫu L-03 #6 [X-05, L-03]
-- [ ] **M14-09** Rà soát `QC-COVERAGE.md` (không còn ❌ ở dòng v1.1), user guide, phát hành v1.1
+- [x] **M14-01** Case thủ công (bước + kỳ vọng, đánh dấu pass/fail, ảnh, chuyển dần sang tự động) [T-03]
+- [x] **M14-02** Test plan & đợt test theo release (giao người, Pass/Fail/Blocked/Chưa chạy, dashboard) [T-02]
+- [x] **M14-03** Import test case từ Excel (file mẫu + map cột) thành case thủ công [X-08]
+- [x] **M14-04a** Ma trận phân quyền — lõi: schema + đọc Excel + sinh test mỗi vai trò (menu, URL trực tiếp) + demo-site cổng nội bộ 3 vai trò + e2e báo đúng ô vi phạm [Q-09]
+- [x] **M14-04b** Ma trận phân quyền — màn hình nhập Excel/sửa/sinh test + mẫu L-03 #3 [Q-09, L-03]
+- [x] **M14-05** Báo cáo Excel/PDF (sheet Tổng hợp + Chi tiết) [X-01]
+- [x] **M14-06** Thông báo kết quả qua webhook (Teams, Slack, Google Chat, Telegram, SMTP) [X-03]
+- [x] **M14-07a** ADR + CLI lõi (`apps/desktop/src/cli/`): `kiemi run <thư-mục-dự-án> --suite … --env … --junit …`, mở thư mục dự án vào DB tạm, bí mật qua `--secret`/biến môi trường, mã thoát 0/1/2/3, JUnit XML, lệnh `schedule` in Task Scheduler/cron [X-04]
+- [x] **M14-07b** CLI đóng gói cùng app (entry `cli` của electron-vite, chạy bằng `ELECTRON_RUN_AS_NODE`, file khởi chạy .cmd/.sh trong extraResources), hướng dẫn dùng [X-04]
+- [x] **M14-08a** ADR + Query DB — lõi: `Env.dbConnections` (lưu DB + thư mục dự án), action `queryDb` (chỉ đọc mặc định, ghi cần cờ + xác nhận, W-10 chặn trên Production, kết quả → biến danh sách), cổng `DbClient` để engine không phụ thuộc driver [X-05]
+- [x] **M14-08b** Query DB — driver thật (SQLite, Postgres, MySQL, SQL Server) ở `apps/desktop/src/main/db-query/`, nối vào worker + CLI, màn kết nối ở Môi trường + nút thử kết nối [X-05]
+- [x] **M14-08c** Query DB — demo-site có DB SQLite thật, mẫu L-03 #6 (duyệt nhiều cấp + đối chiếu DB) + e2e [X-05, L-03]
+- [x] **M14-09** Rà soát `QC-COVERAGE.md` (không còn ❌ ở dòng v1.1), user guide, chuẩn bị phát hành v1.1 (changeset; version + tag do chủ dự án)
 
 ## M15 — v1.2 (các mục còn lại)
 - [ ] **M15-01** Dự án & môi trường: chạy ma trận, dashboard theo cấp, template dự án, phiên bản sản phẩm [O-09, O-10, O-12, O-13, R-15]

@@ -3,6 +3,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { extname, join, normalize, sep } from 'node:path';
 import { handleRequest } from './api';
+import { DemoDb, tempDbPath } from './db';
 import { DemoStore } from './store';
 
 const TYPES: Record<string, string> = {
@@ -35,6 +36,8 @@ export interface SampleSite {
   /** e.g. `http://127.0.0.1:47180`. */
   readonly url: string;
   readonly store: DemoStore;
+  /** SQLite file that mirrors the leave requests (tests look into it) [X-05]. */
+  readonly dbPath: string;
   close(): Promise<void>;
 }
 
@@ -63,8 +66,11 @@ export async function startSampleSite(options: {
   dir: string;
   port?: number;
   syncDelayMs?: number;
+  /** Where the SQLite file goes; default: a temp folder. */
+  dbPath?: string;
 }): Promise<SampleSite> {
-  const store = new DemoStore({ syncDelayMs: options.syncDelayMs ?? 2000 });
+  const dbPath = options.dbPath ?? tempDbPath();
+  const store = new DemoStore({ syncDelayMs: options.syncDelayMs ?? 2000, db: new DemoDb(dbPath) });
   const server = createServer((req, res) => {
     handleRequest(store, req, res)
       .then(async (handled) => {
@@ -96,6 +102,7 @@ export async function startSampleSite(options: {
   return {
     url: `http://127.0.0.1:${port}`,
     store,
+    dbPath,
     close: () =>
       new Promise<void>((resolve, reject) => server.close((e) => (e ? reject(e) : resolve()))),
   };

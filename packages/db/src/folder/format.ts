@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
   DatasetChildSchema,
+  DbConnectionsSchema,
   EnvColorSchema,
   EnvTypeSchema,
   type FormSpec,
@@ -9,10 +10,14 @@ import {
   FormulasSchema,
   HttpAuthSchema,
   LocatorSchema,
+  type ManualCase,
+  ManualCasesSchema,
   type MessageCatalog,
   MessageCatalogSchema,
   type PageDecl,
   PageDeclsSchema,
+  PermissionMatricesSchema,
+  type PermissionMatrix,
   type PopupRule,
   PopupRulesSchema,
   ProductSchema,
@@ -20,6 +25,8 @@ import {
   SharedStepSchema,
   SshSettingsSchema,
   type TestCase,
+  type TestPlan,
+  TestPlansSchema,
   VariableNameSchema,
 } from '@kiemi/schema';
 import { z } from 'zod';
@@ -73,6 +80,12 @@ export const ProjectFileSchema = z.object({
   pages: PageDeclsSchema.default([]),
   /** Named formulas [P-03]. */
   formulas: FormulasSchema.default({}),
+  /** Manual test cases [T-03]. */
+  manualCases: ManualCasesSchema.default([]),
+  /** Test rounds [T-02]. */
+  testPlans: TestPlansSchema.default([]),
+  /** Permission matrices [Q-09]. */
+  permissionMatrices: PermissionMatricesSchema.default([]),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -104,6 +117,7 @@ export const EnvironmentEntrySchema = z.object({
   protected: z.boolean().default(false),
   locale: z.enum(['vi', 'en']).nullish(),
   httpAuth: HttpAuthSchema.nullish(),
+  dbConnections: DbConnectionsSchema.nullish(),
   /** Read only (files written before M9-05) → the first product's cell. */
   baseUrl: z.string().nullish(),
   proxy: ProxySchema.nullish(),
@@ -185,6 +199,9 @@ export interface ProjectSnapshot {
     messageCatalog: MessageCatalog;
     pages: PageDecl[];
     formulas: Formulas;
+    manualCases: ManualCase[];
+    testPlans: TestPlan[];
+    permissionMatrices: PermissionMatrix[];
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];

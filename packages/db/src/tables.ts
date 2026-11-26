@@ -1,16 +1,21 @@
 import type {
+  DbConnection,
   FormSpec,
   Formulas,
   HttpAuth,
   Locator,
+  ManualCase,
   MessageCatalog,
+  NotifyConfig,
   PageDecl,
+  PermissionMatrix,
   PopupRule,
   ProxySettings,
   SharedStep,
   SshSettings,
   Step,
   TestCase,
+  TestPlan,
 } from '@kiemi/schema';
 import { blob, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
@@ -66,6 +71,12 @@ export const projects = sqliteTable(
     pages: json<PageDecl[]>('pages'),
     /** Named formulas of the project [P-03] (migration 16). */
     formulas: json<Formulas>('formulas'),
+    /** Test cases written for people to run by hand [T-03] (migration 19). */
+    manualCases: json<ManualCase[]>('manual_cases'),
+    /** Test rounds per release [T-02] (migration 20). */
+    testPlans: json<TestPlan[]>('test_plans'),
+    /** Role × function permission matrices [Q-09] (migration 21). */
+    permissionMatrices: json<PermissionMatrix[]>('permission_matrices'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );
@@ -216,6 +227,8 @@ export const environments = sqliteTable(
     locale: text('locale', { enum: ['vi', 'en'] }),
     /** HTTP Basic / NTLM login of the environment (password = secret name) [W-01] (migration 18). */
     httpAuth: json<HttpAuth>('http_auth'),
+    /** Databases tests can query on this environment [X-05] (migration 23). */
+    dbConnections: json<DbConnection[]>('db_connections'),
   },
   (t) => [index('environments_project_idx').on(t.projectId)],
 );
@@ -379,6 +392,30 @@ export const settings = sqliteTable(
   (t) => [uniqueIndex('settings_workspace_key_idx').on(t.workspaceId, t.key)],
 );
 
+/** Where run results are announced: Slack, Teams, Google Chat, Telegram, email [X-03]. */
+export const notifyChannels = sqliteTable(
+  'notify_channels',
+  {
+    ...base,
+    projectId: text('project_id').notNull(),
+    name: text('name').notNull(),
+    kind: text('kind', { enum: ['slack', 'teams', 'gchat', 'telegram', 'email'] }).notNull(),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+    sendWhen: text('send_when', { enum: ['always', 'failed'] })
+      .notNull()
+      .default('always'),
+    /** Non-secret settings (chat id, SMTP host…). */
+    config: json<NotifyConfig>('config'),
+    /** Webhook URL / bot token / SMTP password, encrypted like secrets [N-07]. */
+    ciphertext: blob('ciphertext', { mode: 'buffer' }),
+    /** Result of the last send, to show in settings. */
+    lastOk: integer('last_ok', { mode: 'boolean' }),
+    lastMessage: text('last_message'),
+    lastAt: integer('last_at', { mode: 'timestamp_ms' }),
+  },
+  (t) => [index('notify_channels_project_idx').on(t.projectId)],
+);
+
 /** Saved login sessions (cookies + localStorage), reused by later tests until they expire [F-02]. */
 export const savedLogins = sqliteTable(
   'saved_logins',
@@ -443,5 +480,6 @@ export const ALL_TABLES = {
   artifacts,
   settings,
   savedLogins,
+  notifyChannels,
   sharedResources,
 } as const;

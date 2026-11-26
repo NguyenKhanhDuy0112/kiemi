@@ -4,6 +4,8 @@ export * from './io/bundle';
 export * from './io/csv';
 export * from './io/excel';
 export * from './io/field-spec-excel';
+export * from './io/manual-excel';
+export * from './io/permission-excel';
 export * from './io/table';
 export * from './migrations';
 export * from './repo';

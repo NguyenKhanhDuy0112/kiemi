@@ -82,3 +82,15 @@ export function describeRunError(error: RunErrorLike, t: Translate): ErrorDescri
     hint: t(`errors.codes.${code}.hint`, vars),
   };
 }
+
+type TextTree = { readonly [k: string]: string | TextTree };
+
+/** Translate function over a language tree, for code without i18next (main process, CLI). */
+export function plainTranslator(tree: TextTree): Translate {
+  return (key, vars = {}) => {
+    let node: string | TextTree | undefined = tree;
+    for (const part of key.split('.')) node = typeof node === 'object' ? node[part] : undefined;
+    if (typeof node !== 'string') return key;
+    return node.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_m, k: string) => String(vars[k] ?? ''));
+  };
+}

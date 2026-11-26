@@ -14,6 +14,9 @@ export type View =
   | 'forms'
   | 'coverage'
   | 'formulas'
+  | 'manual'
+  | 'plans'
+  | 'permissions'
   | 'elements'
   | 'settings';
 export type ThemeChoice = 'light' | 'dark' | 'system';

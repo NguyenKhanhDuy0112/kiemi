@@ -27,6 +27,7 @@ describe('database & migrations [M2-01]', () => {
         'environment_products',
         'environments',
         'folders',
+        'notify_channels',
         'products',
         'projects',
         'run_cases',

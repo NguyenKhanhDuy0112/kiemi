@@ -1,5 +1,6 @@
 import { type DemoSite, startDemoSite } from '@kiemi/demo-site/server';
 import {
+  type Env,
   type RunResult,
   type SharedStep,
   type StepInput,
@@ -9,6 +10,7 @@ import {
 } from '@kiemi/schema';
 import type { Browser } from 'playwright-core';
 import { createDefaultRegistry } from '../actions';
+import type { DbClient, DbQuery } from '../db/client';
 import type { EngineEvent } from '../events';
 import type { RunDebugger } from '../run/debug';
 import { type RunRequest, runTestCase } from '../runner';
@@ -27,6 +29,10 @@ export interface E2E {
       sharedSteps?: SharedStep[];
       /** Pause / fix a failed step while the run waits [FX-01]. */
       debugger?: RunDebugger;
+      /** Fake database driver for `queryDb` [X-05]. */
+      db?: DbClient;
+      /** Changes to the demo environment (connections, protection…). */
+      env?: Partial<Env>;
     },
   ): Promise<RunResult>;
   /** Extra browsers started by `openIn` with another browser [V-02]. */
@@ -47,7 +53,7 @@ export async function startE2E(syncDelayMs = 0): Promise<E2E> {
     browser,
     site,
     async run(steps, extra = {}) {
-      const { request, events, sharedSteps, debugger: dbg, ...tc } = extra;
+      const { request, events, sharedSteps, debugger: dbg, db, env: envExtra, ...tc } = extra;
       await fetch(`${site.url}/api/reset`, { method: 'POST' });
       const testCase = TestCaseSchema.parse({
         schemaVersion: 2,
@@ -69,6 +75,7 @@ export async function startE2E(syncDelayMs = 0): Promise<E2E> {
             apps: {},
             type: 'other',
             protected: false,
+            ...envExtra,
           },
           ...(sharedSteps ? { sharedSteps } : {}),
           ...request,
@@ -84,6 +91,7 @@ export async function startE2E(syncDelayMs = 0): Promise<E2E> {
             return other;
           },
           ...(dbg ? { debugger: dbg } : {}),
+          ...(db ? { db } : {}),
           ...(events ? { onEvent: (e) => events.push(e) } : {}),
         },
       );
@@ -118,3 +126,15 @@ export const step = (
   params,
   ...more,
 });
+
+/** Fake database: remembers every query and answers with the rows given. */
+export function fakeDb(rows: Record<string, unknown>[] = []): DbClient & { queries: DbQuery[] } {
+  const queries: DbQuery[] = [];
+  return {
+    queries,
+    async query(q) {
+      queries.push(q);
+      return { rows, affected: rows.length };
+    },
+  };
+}

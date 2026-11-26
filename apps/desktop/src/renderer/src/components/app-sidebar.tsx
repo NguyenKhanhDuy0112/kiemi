@@ -28,6 +28,7 @@ import { useTx } from '@renderer/lib/tx';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronsUpDown,
+  ClipboardCheck,
   ClipboardList,
   Crosshair,
   FileText,
@@ -36,11 +37,13 @@ import {
   Gauge,
   Globe,
   History,
+  ListChecks,
   Pin,
   PinOff,
   Plus,
   Search,
   Settings,
+  ShieldCheck,
   Sigma,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -53,6 +56,9 @@ const NAV: { view: View; icon: typeof FileText }[] = [
   { view: 'forms', icon: ClipboardList },
   { view: 'coverage', icon: Gauge },
   { view: 'formulas', icon: Sigma },
+  { view: 'manual', icon: ListChecks },
+  { view: 'plans', icon: ClipboardCheck },
+  { view: 'permissions', icon: ShieldCheck },
   { view: 'elements', icon: Crosshair },
   { view: 'settings', icon: Settings },
 ];

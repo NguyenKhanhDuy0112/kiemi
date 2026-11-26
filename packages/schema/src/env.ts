@@ -57,6 +57,43 @@ export const HttpAuthSchema = z.object({
 });
 export type HttpAuth = z.infer<typeof HttpAuthSchema>;
 
+/** Kinds of database a test can look into [X-05]. */
+export const DB_KINDS = ['postgres', 'mysql', 'mssql', 'sqlite'] as const;
+export const DbKindSchema = z.enum(DB_KINDS);
+export type DbKind = z.infer<typeof DbKindSchema>;
+
+/**
+ * A database a test may query on this environment [X-05]. The password is a secret NAME;
+ * for SQLite `database` is the file path and no host/user is needed.
+ */
+export const DbConnectionSchema = z.object({
+  /** Name used by the `queryDb` step. */
+  name: VariableNameSchema,
+  kind: DbKindSchema,
+  host: z.string().max(255).optional(),
+  port: z.number().int().min(1).max(65535).optional(),
+  database: z.string().min(1).max(500),
+  username: z.string().max(200).optional(),
+  passwordSecret: VariableNameSchema.optional(),
+  /** Encrypt the connection (TLS). */
+  ssl: z.boolean().default(false),
+});
+export type DbConnection = z.infer<typeof DbConnectionSchema>;
+
+/** Connection names are unique inside an environment. */
+export const DbConnectionsSchema = z.array(DbConnectionSchema).superRefine((all, ctx) => {
+  const seen = new Set<string>();
+  for (const [i, c] of all.entries()) {
+    if (seen.has(c.name))
+      ctx.addIssue({
+        code: 'custom',
+        message: `Duplicate connection "${c.name}"`,
+        path: [i, 'name'],
+      });
+    seen.add(c.name);
+  }
+});
+
 /**
  * One SSH hop. Credentials are secret NAMES (values live encrypted in the
  * environment's secrets) [G-07, E-08].
@@ -173,6 +210,8 @@ export const EnvSchema = z.object({
   secretNames: z.array(VariableNameSchema).default([]),
   /** HTTP Basic / NTLM / Windows auth for the sites of this env [W-01]. */
   httpAuth: HttpAuthSchema.optional(),
+  /** Databases the `queryDb` step can read on this env [X-05]. */
+  dbConnections: DbConnectionsSchema.optional(),
   /** Proxy used by every session of runs in this env [G-06]. */
   proxy: ProxySchema.optional(),
   /** SSH tunnel opened by the desktop app for runs in this env [G-07]. */

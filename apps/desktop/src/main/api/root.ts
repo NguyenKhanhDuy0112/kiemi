@@ -12,8 +12,13 @@ import {
   suitesRouter,
   testCasesRouter,
 } from './routers/data';
+import { dbQueryRouter } from './routers/db-query';
 import { formulasRouter } from './routers/formulas';
+import { manualRouter } from './routers/manual';
+import { notifyRouter } from './routers/notify';
+import { permissionsRouter } from './routers/permissions';
 import { formsRouter, recorderRouter, savedLoginsRouter } from './routers/recorder';
+import { reportsRouter } from './routers/reports';
 import { runsRouter } from './routers/runs';
 import { samplesRouter } from './routers/samples';
 import { searchRouter } from './routers/search';
@@ -41,6 +46,11 @@ export const rootRouter = router({
   forms: formsRouter,
   coverage: coverageRouter,
   formulas: formulasRouter,
+  manual: manualRouter,
+  permissions: permissionsRouter,
+  reports: reportsRouter,
+  notify: notifyRouter,
+  dbQuery: dbQueryRouter,
   savedLogins: savedLoginsRouter,
   updates: updatesRouter,
   sharedResources: sharedResourcesRouter,

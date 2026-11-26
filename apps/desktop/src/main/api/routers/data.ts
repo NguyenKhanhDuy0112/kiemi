@@ -22,9 +22,12 @@ import {
   FormSpecsSchema,
   FormulasSchema,
   LocatorSchema,
+  ManualCasesSchema,
   MessageCatalogSchema,
   PageDeclsSchema,
+  PermissionMatricesSchema,
   PopupRulesSchema,
+  TestPlansSchema,
 } from '@kiemi/schema';
 import { z } from 'zod';
 import { publicProcedure, router } from '../trpc';
@@ -60,6 +63,20 @@ export const projectsRouter = router({
     .input(z.object({ id, messages: MessageCatalogSchema }))
     .mutation(({ ctx, input }) =>
       ctx.services.projects.setMessageCatalog(input.id, input.messages),
+    ),
+  /** Manual test cases of the project [T-03]. */
+  setManualCases: publicProcedure
+    .input(z.object({ id, cases: ManualCasesSchema }))
+    .mutation(({ ctx, input }) => ctx.services.projects.setManualCases(input.id, input.cases)),
+  /** Test rounds per release [T-02]. */
+  setTestPlans: publicProcedure
+    .input(z.object({ id, plans: TestPlansSchema }))
+    .mutation(({ ctx, input }) => ctx.services.projects.setTestPlans(input.id, input.plans)),
+  /** Permission matrices of the project [Q-09]. */
+  setPermissionMatrices: publicProcedure
+    .input(z.object({ id, matrices: PermissionMatricesSchema }))
+    .mutation(({ ctx, input }) =>
+      ctx.services.projects.setPermissionMatrices(input.id, input.matrices),
     ),
   /** Named formulas of the project [P-03]. */
   setFormulas: publicProcedure

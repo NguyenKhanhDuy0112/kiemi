@@ -7,6 +7,6 @@ export const samplesRouter = router({
   install: publicProcedure.mutation(async ({ ctx }) => {
     if (!ctx.sampleSiteUrl)
       throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Sample site unavailable' });
-    return installSamples(ctx.services, await ctx.sampleSiteUrl());
+    return installSamples(ctx.services, await ctx.sampleSiteUrl(), await ctx.sampleSiteDb?.());
   }),
 });

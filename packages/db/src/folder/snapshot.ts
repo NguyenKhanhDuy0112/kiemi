@@ -19,6 +19,9 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       messageCatalog: p.messageCatalog ?? {},
       pages: p.pages ?? [],
       formulas: p.formulas ?? {},
+      manualCases: p.manualCases ?? [],
+      testPlans: p.testPlans ?? [],
+      permissionMatrices: p.permissionMatrices ?? [],
     },
     products: services.products.list(projectId).map((x) => ({
       id: x.id,
@@ -49,6 +52,7 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       protected: e.protected,
       locale: e.locale ?? null,
       httpAuth: e.httpAuth ?? null,
+      dbConnections: e.dbConnections ?? null,
       cells: services.environments.cells(e.id).map((c) => ({
         productId: c.productId,
         url: c.url,
@@ -165,7 +169,10 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
       !same(project.formSpecs ?? [], s.project.formSpecs ?? []) ||
       !same(project.messageCatalog ?? {}, s.project.messageCatalog ?? {}) ||
       !same(project.pages ?? [], s.project.pages ?? []) ||
-      !same(project.formulas ?? {}, s.project.formulas ?? {})
+      !same(project.formulas ?? {}, s.project.formulas ?? {}) ||
+      !same(project.manualCases ?? [], s.project.manualCases ?? []) ||
+      !same(project.testPlans ?? [], s.project.testPlans ?? []) ||
+      !same(project.permissionMatrices ?? [], s.project.permissionMatrices ?? [])
     )
       services.projects.repo.update(projectId, {
         name: s.project.name,
@@ -176,6 +183,9 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
         messageCatalog: s.project.messageCatalog ?? {},
         pages: s.project.pages ?? [],
         formulas: s.project.formulas ?? {},
+        manualCases: s.project.manualCases ?? [],
+        testPlans: s.project.testPlans ?? [],
+        permissionMatrices: s.project.permissionMatrices ?? [],
       });
 
     /** Generic reconcile of one table. `values` = columns from the file. */
@@ -290,6 +300,7 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
           protected: e.protected,
           locale: e.locale ?? null,
           httpAuth: e.httpAuth ?? null,
+          dbConnections: e.dbConnections ?? null,
           sortOrder: e.sortOrder,
           secretNames: [...new Set(e.secretNames)].sort(),
         },

@@ -1,5 +1,7 @@
 // biome-ignore-all lint/suspicious/noTemplateCurlyInString: electron-builder file name macros.
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 interface Target {
@@ -69,6 +71,22 @@ describe('electron-builder config [N-10, N-11, N-13]', () => {
   it('ships the sample site where the main process looks for it (ADR 0014)', () => {
     expect(config.extraResources).toContainEqual(
       expect.objectContaining({ from: '../demo-site/dist', to: 'sample-site' }),
+    );
+  });
+
+  it('ships the CLI launchers next to the app, and builds the CLI entry [X-04]', () => {
+    expect(config.extraResources).toContainEqual(
+      expect.objectContaining({ from: 'build/cli', to: 'cli' }),
+    );
+    const root = resolve(__dirname, '../..');
+    expect(readFileSync(join(root, 'build/cli/kiemi.cmd'), 'utf8')).toContain(
+      'ELECTRON_RUN_AS_NODE=1',
+    );
+    expect(readFileSync(join(root, 'build/cli/kiemi.sh'), 'utf8')).toContain(
+      'ELECTRON_RUN_AS_NODE=1',
+    );
+    expect(readFileSync(join(root, 'electron.vite.config.ts'), 'utf8')).toContain(
+      'src/cli/index.ts',
     );
   });
 

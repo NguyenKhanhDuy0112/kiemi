@@ -1,10 +1,14 @@
 export interface Me {
   username: string;
   fullName: string;
-  role: 'nhanvien' | 'quanly';
+  role: 'nhanvien' | 'quanly' | 'ketoan';
 }
 
-export const ROLE_LABEL: Record<Me['role'], string> = { nhanvien: 'Nhân viên', quanly: 'Quản lý' };
+export const ROLE_LABEL: Record<Me['role'], string> = {
+  nhanvien: 'Nhân viên',
+  quanly: 'Quản lý',
+  ketoan: 'Kế toán',
+};
 
 export async function api<T>(
   path: string,
@@ -47,7 +51,9 @@ export async function currentUser(): Promise<Me | null> {
 }
 
 /** Renders the top bar. Pass `requireRole` to redirect anonymous / wrong-role users to login. */
-export async function initPage(opts: { requireLogin?: boolean } = {}): Promise<Me | null> {
+export async function initPage(
+  opts: { requireLogin?: boolean; links?: boolean } = {},
+): Promise<Me | null> {
   const me = await currentUser();
   if (opts.requireLogin && !me) {
     location.href = `/login.html?next=${encodeURIComponent(location.pathname)}`;
@@ -57,7 +63,10 @@ export async function initPage(opts: { requireLogin?: boolean } = {}): Promise<M
   nav.className = 'topbar';
   nav.innerHTML = `
     <a href="/">Kiemi Demo</a>
-    <a href="/form.html">Tạo đơn</a>
+    ${
+      opts.links === false
+        ? ''
+        : `<a href="/form.html">Tạo đơn</a>
     <a href="/requests.html">Danh sách đơn</a>
     <a href="/table.html">Sản phẩm</a>
     <a href="/shop.html">Cửa hàng</a>
@@ -67,6 +76,8 @@ export async function initPage(opts: { requireLogin?: boolean } = {}): Promise<M
     <a href="/grid.html">Lưới</a>
     <a href="/promo.html">Khuyến mãi</a>
     <a href="/controls.html">Ô nhập đặc biệt</a>
+    <a href="/portal.html">Cổng nội bộ</a>`
+    }
     <span class="spacer"></span>
     ${
       me

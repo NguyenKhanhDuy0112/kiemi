@@ -30,6 +30,8 @@ export default defineConfig({
         grid: page('grid.html'),
         promo: page('promo.html'),
         controls: page('controls.html'),
+        portal: page('portal.html'),
+        portalFn: page('portal-fn.html'),
       },
     },
   },

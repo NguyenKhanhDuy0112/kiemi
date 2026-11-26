@@ -124,4 +124,22 @@ describe('demo API', () => {
   it('leaves non-API paths to Vite', async () => {
     expect(await (await fetch(`${base}/form.html`)).text()).toBe('not handled');
   });
+
+  it('portal: menu shows only "see" functions, direct URL is 403 only when blocked [Q-09]', async () => {
+    const emp = await login('nhanvien');
+    const menu = (await (await call('/api/portal/menu', emp)).json()) as { key: string }[];
+    expect(menu.map((f) => f.key)).toEqual(['don-nghi', 'kho']);
+    expect((await call('/api/portal/fn/don-nghi', emp)).status).toBe(200);
+    // hidden: not in the menu, but the address still opens
+    expect((await call('/api/portal/fn/bao-cao', emp)).status).toBe(200);
+    expect((await call('/api/portal/fn/bang-luong', emp)).status).toBe(403);
+    expect((await call('/api/portal/fn/khong-co', emp)).status).toBe(403);
+    expect((await call('/api/portal/menu', '')).status).toBe(401);
+    await fetch(`${base}/api/portal/leak`, {
+      method: 'POST',
+      body: JSON.stringify({ role: 'nhanvien', fn: 'bang-luong' }),
+    });
+    expect((await call('/api/portal/fn/bang-luong', emp)).status).toBe(200);
+    await fetch(`${base}/api/reset`, { method: 'POST' });
+  });
 });

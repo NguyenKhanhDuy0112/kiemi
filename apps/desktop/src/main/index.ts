@@ -16,6 +16,7 @@ import { autoUpdater } from 'electron-updater';
 import { rootRouter } from './api/root';
 import { CrashReports } from './crash/crash-reports';
 import { isTrustedRendererUrl } from './ipc-allow';
+import { notifyRun } from './notify/send';
 import { ProjectFolderManager } from './projects/folder-manager';
 import { SoftLocks } from './projects/locks';
 import { RecorderManager } from './record/recorder-manager';
@@ -64,11 +65,21 @@ let sampleSite: Promise<SampleSite> | undefined;
 
 /** Starts the sample site once and points the sample environment at it. */
 function sampleSiteUrl(services: Services): Promise<string> {
-  sampleSite ??= startSampleSite({ dir: sampleSiteDir, port: SAMPLE_PORT });
+  sampleSite ??= startSampleSite({
+    dir: sampleSiteDir,
+    port: SAMPLE_PORT,
+    dbPath: join(app.getPath('userData'), 'sample-site.db'),
+  });
   return sampleSite.then((site) => {
-    syncSampleEnvironment(services, site.url);
+    syncSampleEnvironment(services, site.url, site.dbPath);
     return site.url;
   });
+}
+
+/** SQLite file of the sample site (started by `sampleSiteUrl`). */
+async function sampleSiteDb(services: Services): Promise<string> {
+  await sampleSiteUrl(services);
+  return (await (sampleSite as Promise<SampleSite>)).dbPath;
 }
 
 /** Updates from GitHub Releases: background download (installed) or notice (portable) [N-12]. */
@@ -139,6 +150,7 @@ function registerIpc(data: { services: Services; defaultProjectId: string }): vo
     artifactsRoot: join(userData, 'runs'),
     browsersPath: join(userData, 'browsers'),
     openTunnel: (ssh, secrets) => openSshTunnel(ssh, secrets),
+    onFinished: (runId) => void notifyRun(data.services, runId),
   });
   runs = runManager;
   // Recording / Pick run in their own engine process too [M5].
@@ -182,6 +194,7 @@ function registerIpc(data: { services: Services; defaultProjectId: string }): vo
       runs: runManager,
       recorder: recorderManager,
       sampleSiteUrl: () => sampleSiteUrl(data.services),
+      sampleSiteDb: () => sampleSiteDb(data.services),
       updates: updateService,
       crashReports,
       projectFolders: folders,
@@ -199,6 +212,26 @@ function registerIpc(data: { services: Services; defaultProjectId: string }): vo
             ? await dialog.showOpenDialog(win, options)
             : await dialog.showOpenDialog(options);
           return r.canceled ? undefined : r.filePaths[0];
+        },
+        htmlToPdf: async (html: string) => {
+          // Hidden, locked-down window: no scripts, no Node, only the page text and styles.
+          const win = new BrowserWindow({
+            show: false,
+            webPreferences: {
+              sandbox: true,
+              contextIsolation: true,
+              nodeIntegration: false,
+              javascript: false,
+            },
+          });
+          try {
+            await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+            return new Uint8Array(
+              await win.webContents.printToPDF({ pageSize: 'A4', printBackground: true }),
+            );
+          } finally {
+            win.destroy();
+          }
         },
       },
     }),

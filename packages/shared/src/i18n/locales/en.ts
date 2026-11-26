@@ -119,6 +119,26 @@ export const en = {
           'Environment “{{environment}}” is protected, so Kiemi does not run tests with steps that write data (cleanup steps, API calls that add/change/delete).',
         hint: 'Run on another environment, or remove the data-writing steps from this test. Only turn protection off when you are sure.',
       },
+      DB_NOT_AVAILABLE: {
+        message: 'The database step cannot run here.',
+        hint: 'Run the test from the Kiemi app, or from the kiemi command line with database drivers.',
+      },
+      DB_CONNECTION_UNKNOWN: {
+        message: 'The environment has no database connection called “{{name}}”.',
+        hint: 'Go to Environments → Databases and add it (available: {{available}}).',
+      },
+      DB_WRITE_BLOCKED: {
+        message: 'Kiemi will not run this SQL because it may change data.',
+        hint: 'A database step may only read (SELECT, one statement per step). To write, turn on “Allow writing” and confirm — and writing is never allowed on a protected environment.',
+      },
+      DB_SECRET_MISSING: {
+        message: 'The secret “{{secret}}” (database password) has no value.',
+        hint: 'Go to Environments and enter the password under Secrets for the environment you run on.',
+      },
+      DB_QUERY_FAILED: {
+        message: 'Could not query the database “{{connection}}”: {{reason}}',
+        hint: 'Check the server address, user, password, table/column names, and the network/VPN to the server.',
+      },
       UNKNOWN_VARIABLE: {
         message: 'There is no variable “{{name}}”.',
         hint: 'Check the variable name, or add a “Save value to variable” step before this one.',

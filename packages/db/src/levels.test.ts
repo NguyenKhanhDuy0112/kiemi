@@ -175,6 +175,100 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     expect(other.projects.formulas(projectId)).toEqual(formulas);
   });
 
+  it('manual cases of a project travel through the project folder [T-03]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const cases = [
+      {
+        id: 'mc1',
+        name: 'Đăng nhập sai mật khẩu',
+        group: 'Đăng nhập',
+        preconditions: '',
+        priority: 'high' as const,
+        steps: [
+          {
+            id: 's1',
+            action: 'Nhập sai mật khẩu',
+            expected: 'Báo lỗi',
+            status: 'fail' as const,
+            actual: 'Không báo',
+            attachments: [],
+          },
+        ],
+      },
+    ];
+    s.projects.setManualCases(projectId, cases);
+    expect(() => s.projects.setManualCases(projectId, [{ id: 'x', name: '' }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-manual-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.manualCases(projectId)).toEqual(cases);
+  });
+
+  it('test plans of a project travel through the project folder [T-02]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const plans = [
+      {
+        id: 'pl1',
+        name: 'Đợt 1',
+        release: '3.2',
+        items: [
+          {
+            id: 'i1',
+            kind: 'manual' as const,
+            refId: 'mc1',
+            name: 'A',
+            assignee: 'An',
+            status: 'pass' as const,
+            note: '',
+          },
+        ],
+      },
+    ];
+    s.projects.setTestPlans(projectId, plans);
+    expect(() => s.projects.setTestPlans(projectId, [{ id: 'x', name: '' }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-plans-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.testPlans(projectId)).toEqual(plans);
+  });
+
+  it('permission matrices of a project travel through the project folder [Q-09]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const matrices = [
+      {
+        id: 'pm1',
+        name: 'Phân quyền',
+        homePath: '/',
+        loginPath: '/login.html',
+        usernameLabel: 'Tên đăng nhập',
+        passwordLabel: 'Mật khẩu',
+        loginButton: 'Đăng nhập',
+        deniedText: 'Bạn không có quyền',
+        roles: [{ key: 'qly', name: 'Quản lý', username: 'quanly', password: '{{pw}}' }],
+        functions: [{ key: 'luong', name: 'Bảng lương', path: '/luong' }],
+        cells: { 'qly|luong': 'see' as const },
+      },
+    ];
+    s.projects.setPermissionMatrices(projectId, matrices);
+    expect(() => s.projects.setPermissionMatrices(projectId, [{ id: 'x', name: '' }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-perm-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.permissionMatrices(projectId)).toEqual(matrices);
+  });
+
   it('declared pages of a project travel through the project folder [CV-02]', () => {
     const { services: s, defaultProjectId: projectId } = createMemoryServices();
     s.projects.setPages(projectId, [{ id: 'p1', name: 'Đăng ký', path: '/dang-ky', kind: 'form' }]);

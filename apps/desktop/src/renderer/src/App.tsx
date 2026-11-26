@@ -36,6 +36,21 @@ const CoverageScreen = lazy(() =>
     default: m.CoverageScreen,
   })),
 );
+const ManualScreen = lazy(() =>
+  import('@renderer/features/manual/manual-screen').then((m) => ({
+    default: m.ManualScreen,
+  })),
+);
+const PlansScreen = lazy(() =>
+  import('@renderer/features/plans/plans-screen').then((m) => ({
+    default: m.PlansScreen,
+  })),
+);
+const PermissionsScreen = lazy(() =>
+  import('@renderer/features/permissions/permissions-screen').then((m) => ({
+    default: m.PermissionsScreen,
+  })),
+);
 const FormulasScreen = lazy(() =>
   import('@renderer/features/formulas/formulas-screen').then((m) => ({
     default: m.FormulasScreen,
@@ -137,6 +152,9 @@ export function App() {
                 {view === 'forms' && <FormsScreen />}
                 {view === 'coverage' && <CoverageScreen />}
                 {view === 'formulas' && <FormulasScreen />}
+                {view === 'manual' && <ManualScreen />}
+                {view === 'plans' && <PlansScreen />}
+                {view === 'permissions' && <PermissionsScreen />}
                 {view === 'elements' && <ElementsScreen />}
                 {view === 'settings' && <SettingsScreen />}
                 {view === 'history' && <HistoryScreen />}
