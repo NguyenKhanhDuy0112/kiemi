@@ -1229,10 +1229,17 @@ export const viUi = {
       label: 'So sánh giữa 2 nơi',
       sentence: 'So sánh {{left}} với {{right}}',
     },
+    clock: {
+      label: 'Giả lập thời gian',
+      sentence: 'Đồng hồ trình duyệt: {{op}} {{time}}',
+    },
     assertVariable: { label: 'Kiểm tra biến', sentence: 'Kiểm tra biến {{name}} {{op}} {{value}}' },
     unknown: { label: 'Thao tác khác', sentence: 'Thao tác {{action}}' },
   },
   params: {
+    amount: 'Lượng',
+    unit: 'Đơn vị',
+    time: 'Ngày giờ',
     left: 'Bên trái',
     as: 'So sánh theo',
     urlContains: 'Địa chỉ chứa',

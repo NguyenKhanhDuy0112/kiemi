@@ -6,6 +6,7 @@ import { checkAction } from './check';
 import { clearAction } from './clear';
 import { clearDataAction } from './clear-data';
 import { clickAction } from './click';
+import { clockAction } from './clock';
 import { dialogAction } from './dialog';
 import { downloadAction } from './download';
 import { extractAction } from './extract';
@@ -63,6 +64,7 @@ export const builtinActions: ActionDefinition[] = [
   saveSessionAction,
   useSessionAction,
   clearDataAction,
+  clockAction,
   waitAction,
   extractAction,
   extractTableAction,

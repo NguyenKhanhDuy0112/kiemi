@@ -477,3 +477,44 @@ describe('compare two places in one step [V-03]', () => {
     expect(JSON.stringify(r.steps[5]?.error)).toContain('mismatched');
   });
 });
+
+describe('fake time [Y-01]', () => {
+  const page = (body: string) => `data:text/html;charset=utf-8,${encodeURIComponent(body)}`;
+  const shows = page(
+    '<p id="d"></p><script>d.textContent=new Date().toISOString().slice(0,16)</script>',
+  );
+  const read = (name: string) => step('extract', { target: { css: '#d' }, into: name });
+
+  it('sets, freezes, advances and resumes the browser clock', async () => {
+    const r = await e.run([
+      step('clock', { op: 'set', time: '15/03/2030 08:00' }),
+      step('goto', { url: shows }),
+      read('t1'),
+      step('assertVariable', { name: 't1', op: 'startsWith', value: '2030-03-1' }),
+      step('clock', { op: 'advance', amount: 2, unit: 'days' }),
+      step('goto', { url: shows }),
+      read('t2'),
+      step('assertVariable', { name: 't2', op: 'startsWith', value: '2030-03-17' }),
+      step('clock', { op: 'freeze', time: '01/01/2031 12:00' }),
+      step('goto', { url: shows }),
+      read('t3'),
+      step('assertVariable', { name: 't3', op: 'startsWith', value: '2031-01-01' }),
+      step('clock', { op: 'set', time: 'không phải ngày' }, { mode: 'soft' }),
+    ]);
+    expect(summary(r)).toEqual([
+      '1 passed',
+      '2 passed',
+      '3 passed',
+      '4 passed',
+      '5 passed',
+      '6 passed',
+      '7 passed',
+      '8 passed',
+      '9 passed',
+      '10 passed',
+      '11 passed',
+      '12 passed',
+      '13 failed INVALID_PARAMS',
+    ]);
+  });
+});

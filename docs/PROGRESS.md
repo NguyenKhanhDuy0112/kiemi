@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M13** đang làm trên nhánh `milestone/m13-real-web`: xong M13-01 → M13-03. Tiếp: M13-04 → M13-09. Việc còn treo của v1.0: `docs/RELEASE-CHECKLIST.md` mục C và D.
+**M13** đang làm trên nhánh `milestone/m13-real-web`: xong M13-01 → M13-04. Tiếp: M13-05 → M13-09. Việc còn treo của v1.0: `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
+- M13-04 xong: action `clock` (`actions/clock.ts`; op set|freeze|advance|resume, `time` dd/MM/yyyy [HH:mm] hoặc ISO, `amount`+`unit`) dùng `context.clock` (áp cho mọi tab của phiên). Chỉ giả lập trình duyệt, không đụng giờ server demo. Test dùng giờ giữa ngày để không phụ thuộc múi giờ CI.
 - M13-03 xong: check `same` → `assertSame` (`left/right: {target, session?, tab?}`, `as: text|number|table`, tolerance, `key`); `ctx.resolve(target,{at:{session,tab}})` + `readRows({at})`; lỗi giữ `details.places` → runner chụp ảnh từng nơi (`step-N-failed-1.png`, `-2`). Form tự sinh chỉ hiện gợi ý JSON cho object lồng (left/right) — chưa có UI riêng.
 - M13-02 xong: action `openIn` (`session`, `url`, `browser: same|msedge|chrome|chromium`, `name`) mở trang ở phiên khác/trình duyệt khác; `SessionPages.useBrowser(session, kind)` + `RunOptions.launchBrowser` (worker-core truyền; trình duyệt phụ đóng trong `closeAll`). Phiên mới phải có trong `testCase.sessions` để bước dùng được; e2e harness có `e.launched`.
 - M13-01 xong: tab có tên. `SessionPages.nameTab/tabNamed/nameOf` (tab đầu = `main`); action `captureTab` (đặt tên tab do click mở), `assertTabCount`; `newTab{name}`, `switchTab by:'name'`, `closeTab{name}`; `Step.tab` (ghim bước vào tab, runner `#activateTab`, badge ở step-table + ô ở props-panel). Recorder: tab mới do click → `captureTab`, quay lại tab cũ → `switchTab by name` (`tab-2`, `tab-3`). Thêm field Step → phải `vitest -u` snapshot JSON Schema.

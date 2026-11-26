@@ -1230,6 +1230,10 @@ export const enUi = {
       label: 'Compare two places',
       sentence: 'Compare {{left}} with {{right}}',
     },
+    clock: {
+      label: 'Fake the time',
+      sentence: 'Browser clock: {{op}} {{time}}',
+    },
     assertVariable: {
       label: 'Check variable',
       sentence: 'Check variable {{name}} {{op}} {{value}}',
@@ -1237,6 +1241,9 @@ export const enUi = {
     unknown: { label: 'Other action', sentence: 'Action {{action}}' },
   },
   params: {
+    amount: 'Amount',
+    unit: 'Unit',
+    time: 'Date and time',
     left: 'Left side',
     as: 'Compare as',
     urlContains: 'URL contains',
