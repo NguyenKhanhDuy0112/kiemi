@@ -15,6 +15,7 @@ Mục lục
 9. [Chia sẻ test](#9-chia-sẻ-test)
 10. [Cập nhật, sao lưu và báo lỗi](#10-cập-nhật-sao-lưu-và-báo-lỗi)
 11. [Câu hỏi thường gặp](#11-câu-hỏi-thường-gặp)
+12. [Làm việc nhóm QA: case thủ công, đợt test, báo cáo, thông báo, CSDL, dòng lệnh](#12-làm-việc-nhóm-qa)
 
 ---
 
@@ -122,3 +123,21 @@ Tắt *Chạy ngầm* trong Cài đặt, hoặc bật *Hiện cửa sổ trình 
 
 **Máy không có mạng?**
 Kiemi chạy hoàn toàn offline. Chỉ cần mạng để tải trình duyệt lần đầu (khi máy không có Edge/Chrome), kiểm tra cập nhật, và tất nhiên để vào trang bạn kiểm thử.
+
+## 12. Làm việc nhóm QA
+
+Các mục dưới đây nằm ở thanh bên trái của Kiemi. Cái nào cũng lưu theo **dự án**, nên chia sẻ cùng thư mục dự án (Git, ổ mạng).
+
+**Case thủ công** — soạn từng case gồm *làm gì* và *kết quả mong đợi*, chạy tay rồi bấm **Đạt / Lỗi / Bị chặn** cho từng bước, ghi *thực tế đã thấy* và đính ảnh. Muốn chuyển sang tự động: **Chuyển sang test tự động** tạo sẵn một test cùng tên rồi mở trình ghi. Có sẵn **Nhập từ Excel**: tải *file mẫu*, mỗi dòng là một bước (Mã/Tên case chỉ cần điền ở dòng đầu của case; ô "1. … 2. …" tự tách thành nhiều bước). Nhập lại file có cùng Mã sẽ cập nhật, không nhân đôi.
+
+**Đợt test** — một vòng test cho một bản phát hành: chọn test tự động và case thủ công, giao người, theo dõi **Chưa chạy / Đạt / Lỗi / Bị chặn**. Có dòng tóm tắt "Release 3.2: 120 case, 110 đạt…" (bấm biểu tượng chép để dán vào chat). **Lấy kết quả từ lần chạy…** điền kết quả cho các test tự động; **Lấy kết quả case thủ công** điền cho các case. **Xuất Excel** cho cả đợt.
+
+**Phân quyền** — lập bảng *chức năng × vai trò* (**Thấy** = có trong menu và mở được; **Không thấy** = không có trong menu; **Bị chặn** = gõ thẳng địa chỉ thì báo không có quyền), hoặc nhập từ Excel. Điền tên đăng nhập từng vai trò (mật khẩu dùng bí mật của môi trường, ví dụ `{{secret.matKhau}}`) rồi **Sinh test mỗi vai trò**. Khi có ô sai, kết quả ghi đúng "Vai trò × Chức năng".
+
+**Báo cáo** — ở màn Kết quả: **Xuất Excel** (sheet *Tổng hợp* và *Chi tiết* có cột Kỳ vọng / Thực tế) và **Xuất PDF**, ngoài báo cáo HTML.
+
+**Thông báo kết quả** — **Cài đặt → Thông báo kết quả**: thêm kênh Slack, Microsoft Teams, Google Chat, Telegram hoặc email (SMTP), chọn "Mọi lần chạy" hay "Chỉ khi có lỗi", bấm **Gửi thử**. Địa chỉ webhook và mật khẩu được mã hóa trên máy bạn, không nằm trong thư mục dự án.
+
+**Cơ sở dữ liệu** — **Môi trường → Cơ sở dữ liệu**: thêm kết nối PostgreSQL, MySQL, SQL Server hoặc file SQLite, chọn bí mật chứa mật khẩu, bấm **Thử kết nối**. Trong test dùng bước **Hỏi cơ sở dữ liệu**: viết câu `SELECT … WHERE mã = ?`, truyền giá trị ở *Tham số*, đặt *Số dòng phải trả về*. Mặc định **chỉ đọc**; ghi dữ liệu phải bật và xác nhận riêng, và **không bao giờ** chạy được trên môi trường được bảo vệ (Production).
+
+**Dòng lệnh và hẹn giờ** — chạy bộ test không cần mở Kiemi, xuất JUnit XML cho CI, in lệnh Task Scheduler/cron: xem [cli.md](cli.md).
