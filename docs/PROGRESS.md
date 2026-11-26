@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M13** đang làm trên nhánh `milestone/m13-real-web`: xong M13-01 → M13-09 (hết milestone; kiểm tra app thật đạt; chờ PR merge). Việc còn treo của v1.0: `docs/RELEASE-CHECKLIST.md` mục C và D.
+**M14** đang làm trên nhánh `milestone/m14-team-qa`: xong M14-01. Kế: M14-02 (test plan & đợt test) → M14-09. Việc còn treo của v1.0: `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
+- M14-01 xong: `ManualCase` (`schema/src/manual-case.ts`: steps{action,expected,status,actual,attachments ảnh data-URL ≤~1MB, ≤5/bước}, `automatedTestId`, `externalId` cho import Excel) lưu ở `projects.manual_cases` (migration 19) + `project.json`, tRPC `projects.setManualCases`; UI view `manual` (`features/manual/`). Kết quả bước nằm TRONG case (lần chạy gần nhất); M14-02 phải ghi kết quả theo từng đợt riêng. Ảnh nhúng JSON làm project.json phình — cân nhắc tách file nếu dùng nhiều.
 - Kiểm tra app thật M13 (script ngoài repo, `_electron.launch`): cài mẫu → thư mục 'Web thực tế' → test 8a → màn Môi trường có form đăng nhập HTTP. Lỗi tìm được: khóa i18n `ui.environments.{type,color,protected,locale…}` nằm nhầm trong `ui.actions` (từ M12-04) nên màn Môi trường hiện khóa thô → đã chuyển về `environments` (fix).
 - M13-09 xong: demo-site `promo.html` (giá khuyến mãi đến 30/06/2030, đếm ngược theo đồng hồ trình duyệt, quản lý sửa giá qua `/api/promo` POST, khách xem — poll 1s), `controls.html` (dropdown tìm kiếm, gợi ý, ô mặt nạ, rich text, date-range, file ẩn + kéo thả), `/secure/basic`; `grid.html` đã có từ M13-06a. Mẫu L-03 #8 = `installWebSamples` (`samples-data.ts`, thư mục 'Web thực tế', suite 'Mẫu web thực tế'); chỉ cho dự án mẫu MỚI. `clock advance` chia bước 1 ngày (fastForward >24 ngày bị tràn).
 - M13-08 xong: `upload` thêm `via: auto|input|chooser|drop` — tự thử ô file (chính nó / label.control / input con) → hộp thoại file (chờ ≤3s) → thả file giả lập `DragEvent` (File dựng từ base64, MIME theo đuôi). Test dùng trang `data:`.

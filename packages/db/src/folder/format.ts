@@ -9,6 +9,8 @@ import {
   FormulasSchema,
   HttpAuthSchema,
   LocatorSchema,
+  type ManualCase,
+  ManualCasesSchema,
   type MessageCatalog,
   MessageCatalogSchema,
   type PageDecl,
@@ -73,6 +75,8 @@ export const ProjectFileSchema = z.object({
   pages: PageDeclsSchema.default([]),
   /** Named formulas [P-03]. */
   formulas: FormulasSchema.default({}),
+  /** Manual test cases [T-03]. */
+  manualCases: ManualCasesSchema.default([]),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -185,6 +189,7 @@ export interface ProjectSnapshot {
     messageCatalog: MessageCatalog;
     pages: PageDecl[];
     formulas: Formulas;
+    manualCases: ManualCase[];
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];

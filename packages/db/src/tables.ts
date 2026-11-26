@@ -3,6 +3,7 @@ import type {
   Formulas,
   HttpAuth,
   Locator,
+  ManualCase,
   MessageCatalog,
   PageDecl,
   PopupRule,
@@ -66,6 +67,8 @@ export const projects = sqliteTable(
     pages: json<PageDecl[]>('pages'),
     /** Named formulas of the project [P-03] (migration 16). */
     formulas: json<Formulas>('formulas'),
+    /** Test cases written for people to run by hand [T-03] (migration 19). */
+    manualCases: json<ManualCase[]>('manual_cases'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );

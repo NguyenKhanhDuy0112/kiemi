@@ -22,6 +22,7 @@ import {
   FormSpecsSchema,
   FormulasSchema,
   LocatorSchema,
+  ManualCasesSchema,
   MessageCatalogSchema,
   PageDeclsSchema,
   PopupRulesSchema,
@@ -61,6 +62,10 @@ export const projectsRouter = router({
     .mutation(({ ctx, input }) =>
       ctx.services.projects.setMessageCatalog(input.id, input.messages),
     ),
+  /** Manual test cases of the project [T-03]. */
+  setManualCases: publicProcedure
+    .input(z.object({ id, cases: ManualCasesSchema }))
+    .mutation(({ ctx, input }) => ctx.services.projects.setManualCases(input.id, input.cases)),
   /** Named formulas of the project [P-03]. */
   setFormulas: publicProcedure
     .input(z.object({ id, formulas: FormulasSchema }))

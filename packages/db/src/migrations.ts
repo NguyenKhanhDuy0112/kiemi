@@ -412,4 +412,9 @@ CREATE INDEX "shared_resources_workspace_idx" ON "shared_resources" ("workspace_
     name: 'environment-http-auth',
     sql: `ALTER TABLE "environments" ADD COLUMN "http_auth" TEXT;`,
   },
+  {
+    id: 19,
+    name: 'project-manual-cases',
+    sql: `ALTER TABLE "projects" ADD COLUMN "manual_cases" TEXT;`,
+  },
 ];

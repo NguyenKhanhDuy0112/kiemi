@@ -36,6 +36,7 @@ import {
   Gauge,
   Globe,
   History,
+  ListChecks,
   Pin,
   PinOff,
   Plus,
@@ -53,6 +54,7 @@ const NAV: { view: View; icon: typeof FileText }[] = [
   { view: 'forms', icon: ClipboardList },
   { view: 'coverage', icon: Gauge },
   { view: 'formulas', icon: Sigma },
+  { view: 'manual', icon: ListChecks },
   { view: 'elements', icon: Crosshair },
   { view: 'settings', icon: Settings },
 ];

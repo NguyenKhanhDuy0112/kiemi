@@ -11,6 +11,7 @@ export * from './form-steps';
 export * from './formulas';
 export * from './json-schema';
 export * from './locator';
+export * from './manual-case';
 export * from './migrate';
 export * from './popup';
 export * from './product';

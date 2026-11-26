@@ -3,6 +3,8 @@ import {
   FormSpecsSchema,
   type Formulas,
   FormulasSchema,
+  type ManualCase,
+  ManualCasesSchema,
   type MessageCatalog,
   MessageCatalogSchema,
   type PageDecl,
@@ -90,6 +92,15 @@ export class ProjectService {
   }
   formulas(id: string): Formulas {
     return this.repo.get(id).formulas ?? {};
+  }
+  /** Test cases written for people to run by hand [T-03]. */
+  setManualCases(id: string, cases: unknown) {
+    const p = ManualCasesSchema.safeParse(cases);
+    if (!p.success) throw validation('manual cases', p.error.issues);
+    return this.repo.update(id, { manualCases: p.data });
+  }
+  manualCases(id: string): ManualCase[] {
+    return this.repo.get(id).manualCases ?? [];
   }
   /** Pages that should be tested [CV-02]. */
   setPages(id: string, pages: unknown) {
