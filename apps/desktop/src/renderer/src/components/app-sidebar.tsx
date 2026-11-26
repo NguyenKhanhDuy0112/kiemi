@@ -28,6 +28,7 @@ import { useTx } from '@renderer/lib/tx';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronsUpDown,
+  ClipboardList,
   Crosshair,
   FileText,
   FolderOpen,
@@ -47,6 +48,7 @@ const NAV: { view: View; icon: typeof FileText }[] = [
   { view: 'tests', icon: FileText },
   { view: 'history', icon: History },
   { view: 'environments', icon: Globe },
+  { view: 'forms', icon: ClipboardList },
   { view: 'elements', icon: Crosshair },
   { view: 'settings', icon: Settings },
 ];

@@ -121,7 +121,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 
 ## M11 — Validate form, thiết kế test & đo độ phủ
 - [x] **M11-01a** Schema `FormSpec`/`FieldSpec` (kiểu + quy tắc, phụ thuộc, so sánh giữa field, file) + lưu trong dự án (cột `form_specs`, `project.json`, tRPC `projects.setFormSpecs`) [R-01] [S]
-- [ ] **M11-01b** UI bảng đặc tả field (khai báo form 5 field không cần code) [R-01] [M]
+- [x] **M11-01b** UI bảng đặc tả field (khai báo form 5 field không cần code) [R-01] [M]
 - [ ] **M11-02** Tự suy ra đặc tả từ HTML form (+ OpenAPI/JSON Schema nếu có), QC duyệt [R-02]
 - [ ] **M11-03** Thư viện quy tắc VN & catalog thông báo dùng chung (Email, SĐT VN, CCCD, MST, …) [R-10]
 - [ ] **M11-04** Sinh test theo kỹ thuật chuẩn (phân vùng, biên, bảng quyết định, pairwise; 1 hợp lệ + mỗi case sai 1 field), chuyển biến thể M-03 cũ sang mô hình mới [R-03, M-03]

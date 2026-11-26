@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M11** đang làm trên nhánh `milestone/m11-validate-form`: tiếp **M11-01b** (UI bảng đặc tả field). M10 đã merge (PR #2).
+**M11** đang làm trên nhánh `milestone/m11-validate-form`: tiếp **M11-02** (suy đặc tả từ HTML form). M10 đã merge (PR #2).
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
