@@ -10,6 +10,7 @@ import {
   sumOf,
   validateImport,
 } from './data-pages';
+import { PORTAL_FUNCTIONS, portalAccess } from './portal';
 import { type DemoStore, LEAVE_TYPES, type RequestStatus, type User } from './store';
 import { handleWebForms } from './webforms';
 
@@ -151,6 +152,40 @@ export async function handleRequest(
         ...(q ? { q } : {}),
       }),
     );
+    return true;
+  }
+  if (path === '/api/portal/menu' && method === 'GET') {
+    if (!me) {
+      send(res, 401, { error: 'Chưa đăng nhập' });
+      return true;
+    }
+    send(
+      res,
+      200,
+      PORTAL_FUNCTIONS.filter((f) => portalAccess(me.role, f.key, store.portalLeaks) === 'see'),
+    );
+    return true;
+  }
+  if (path.startsWith('/api/portal/fn/') && method === 'GET') {
+    if (!me) {
+      send(res, 401, { error: 'Chưa đăng nhập' });
+      return true;
+    }
+    const key = decodeURIComponent(path.slice('/api/portal/fn/'.length));
+    const fn = PORTAL_FUNCTIONS.find((f) => f.key === key);
+    const access = fn ? portalAccess(me.role, key, store.portalLeaks) : null;
+    if (!fn || !access || access === 'blocked') {
+      send(res, 403, { error: 'Bạn không có quyền truy cập chức năng này' });
+      return true;
+    }
+    send(res, 200, fn);
+    return true;
+  }
+  /** Test helper: makes the portal wrongly open a blocked page to a role [Q-09]. */
+  if (path === '/api/portal/leak' && method === 'POST') {
+    const body = await readJson(req);
+    store.portalLeaks.add(`${String(body.role)}|${String(body.fn)}`);
+    send(res, 200, { ok: true });
     return true;
   }
   if (path === '/api/promo' && method === 'GET') {

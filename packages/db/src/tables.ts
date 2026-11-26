@@ -6,6 +6,7 @@ import type {
   ManualCase,
   MessageCatalog,
   PageDecl,
+  PermissionMatrix,
   PopupRule,
   ProxySettings,
   SharedStep,
@@ -72,6 +73,8 @@ export const projects = sqliteTable(
     manualCases: json<ManualCase[]>('manual_cases'),
     /** Test rounds per release [T-02] (migration 20). */
     testPlans: json<TestPlan[]>('test_plans'),
+    /** Role × function permission matrices [Q-09] (migration 21). */
+    permissionMatrices: json<PermissionMatrix[]>('permission_matrices'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );

@@ -240,6 +240,35 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     expect(other.projects.testPlans(projectId)).toEqual(plans);
   });
 
+  it('permission matrices of a project travel through the project folder [Q-09]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const matrices = [
+      {
+        id: 'pm1',
+        name: 'Phân quyền',
+        homePath: '/',
+        loginPath: '/login.html',
+        usernameLabel: 'Tên đăng nhập',
+        passwordLabel: 'Mật khẩu',
+        loginButton: 'Đăng nhập',
+        deniedText: 'Bạn không có quyền',
+        roles: [{ key: 'qly', name: 'Quản lý', username: 'quanly', password: '{{pw}}' }],
+        functions: [{ key: 'luong', name: 'Bảng lương', path: '/luong' }],
+        cells: { 'qly|luong': 'see' as const },
+      },
+    ];
+    s.projects.setPermissionMatrices(projectId, matrices);
+    expect(() => s.projects.setPermissionMatrices(projectId, [{ id: 'x', name: '' }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-perm-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.permissionMatrices(projectId)).toEqual(matrices);
+  });
+
   it('declared pages of a project travel through the project folder [CV-02]', () => {
     const { services: s, defaultProjectId: projectId } = createMemoryServices();
     s.projects.setPages(projectId, [{ id: 'p1', name: 'Đăng ký', path: '/dang-ky', kind: 'form' }]);

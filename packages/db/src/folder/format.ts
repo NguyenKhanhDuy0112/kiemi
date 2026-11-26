@@ -15,6 +15,8 @@ import {
   MessageCatalogSchema,
   type PageDecl,
   PageDeclsSchema,
+  PermissionMatricesSchema,
+  type PermissionMatrix,
   type PopupRule,
   PopupRulesSchema,
   ProductSchema,
@@ -81,6 +83,8 @@ export const ProjectFileSchema = z.object({
   manualCases: ManualCasesSchema.default([]),
   /** Test rounds [T-02]. */
   testPlans: TestPlansSchema.default([]),
+  /** Permission matrices [Q-09]. */
+  permissionMatrices: PermissionMatricesSchema.default([]),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -195,6 +199,7 @@ export interface ProjectSnapshot {
     formulas: Formulas;
     manualCases: ManualCase[];
     testPlans: TestPlan[];
+    permissionMatrices: PermissionMatrix[];
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];

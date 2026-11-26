@@ -9,6 +9,8 @@ import {
   MessageCatalogSchema,
   type PageDecl,
   PageDeclsSchema,
+  PermissionMatricesSchema,
+  type PermissionMatrix,
   type PopupRule,
   PopupRulesSchema,
   type TestPlan,
@@ -112,6 +114,15 @@ export class ProjectService {
   }
   testPlans(id: string): TestPlan[] {
     return this.repo.get(id).testPlans ?? [];
+  }
+  /** Role × function permission matrices [Q-09]. */
+  setPermissionMatrices(id: string, matrices: unknown) {
+    const p = PermissionMatricesSchema.safeParse(matrices);
+    if (!p.success) throw validation('permission matrices', p.error.issues);
+    return this.repo.update(id, { permissionMatrices: p.data });
+  }
+  permissionMatrices(id: string): PermissionMatrix[] {
+    return this.repo.get(id).permissionMatrices ?? [];
   }
   /** Pages that should be tested [CV-02]. */
   setPages(id: string, pages: unknown) {

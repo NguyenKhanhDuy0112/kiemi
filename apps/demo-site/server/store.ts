@@ -8,7 +8,7 @@ import { type ImportRow, type Person, seedPeople } from './data-pages';
 /** Promotion shown on `promo.html`. */
 export const DEFAULT_PROMO = { price: 99_000, base: 150_000, endsOn: '2030-06-30' };
 
-export type Role = 'nhanvien' | 'quanly';
+export type Role = 'nhanvien' | 'quanly' | 'ketoan';
 
 export interface User {
   username: string;
@@ -47,6 +47,7 @@ export const USERS: readonly User[] = [
   { username: 'nhanvien', password: '123456', fullName: 'Nguyễn Văn An', role: 'nhanvien' },
   { username: 'nhanvien2', password: '123456', fullName: 'Trần Thị Bình', role: 'nhanvien' },
   { username: 'quanly', password: '123456', fullName: 'Lê Minh Quân', role: 'quanly' },
+  { username: 'ketoan', password: '123456', fullName: 'Phạm Thu Hà', role: 'ketoan' },
 ];
 
 export const LEAVE_TYPES: Record<LeaveType, string> = {
@@ -106,10 +107,13 @@ export class DemoStore {
   readonly people: Person[] = seedPeople();
   /** Summer promotion: price while it runs, normal price after `endsOn` (local date) [Y-01, V-02]. */
   promo = { ...DEFAULT_PROMO };
+  /** Deliberate permission bugs ("role|function") for the portal [Q-09]. */
+  portalLeaks = new Set<string>();
 
   reset(): void {
     this.imported = [];
     this.promo = { ...DEFAULT_PROMO };
+    this.portalLeaks.clear();
     this.requests = [];
     this.products = seedProducts();
     this.seq = 0;

@@ -13,6 +13,7 @@ export * from './json-schema';
 export * from './locator';
 export * from './manual-case';
 export * from './migrate';
+export * from './permission-matrix';
 export * from './popup';
 export * from './product';
 export * from './run-result';

@@ -422,4 +422,9 @@ CREATE INDEX "shared_resources_workspace_idx" ON "shared_resources" ("workspace_
     name: 'project-test-plans',
     sql: `ALTER TABLE "projects" ADD COLUMN "test_plans" TEXT;`,
   },
+  {
+    id: 21,
+    name: 'project-permission-matrices',
+    sql: `ALTER TABLE "projects" ADD COLUMN "permission_matrices" TEXT;`,
+  },
 ];
