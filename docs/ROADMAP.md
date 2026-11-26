@@ -164,7 +164,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 ## M14 — Team & quy trình QA (→ phát hành v1.1)
 - [x] **M14-01** Case thủ công (bước + kỳ vọng, đánh dấu pass/fail, ảnh, chuyển dần sang tự động) [T-03]
 - [x] **M14-02** Test plan & đợt test theo release (giao người, Pass/Fail/Blocked/Chưa chạy, dashboard) [T-02]
-- [ ] **M14-03** Import test case từ Excel (file mẫu + map cột) thành case thủ công [X-08]
+- [x] **M14-03** Import test case từ Excel (file mẫu + map cột) thành case thủ công [X-08]
 - [ ] **M14-04** Ma trận phân quyền từ Excel → sinh test mỗi vai trò (menu, nút, URL trực tiếp) + demo-site 3 vai trò; mẫu L-03 #3 [Q-09, L-03]
 - [ ] **M14-05** Báo cáo Excel/PDF (sheet Tổng hợp + Chi tiết) [X-01]
 - [ ] **M14-06** Thông báo kết quả qua webhook (Teams, Slack, Google Chat, Telegram, SMTP) [X-03]

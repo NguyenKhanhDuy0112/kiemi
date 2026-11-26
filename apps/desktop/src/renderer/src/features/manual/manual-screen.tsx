@@ -1,4 +1,4 @@
-import { type ManualCase, type ManualStatus, manualCaseStatus } from '@kiemi/schema';
+import { type ManualCase, type ManualStatus, manualCaseStatus, mergeImported } from '@kiemi/schema';
 import { Button } from '@renderer/components/ui/button';
 import { Input } from '@renderer/components/ui/input';
 import { Textarea } from '@renderer/components/ui/textarea';
@@ -7,10 +7,21 @@ import { useAppStore } from '@renderer/lib/store';
 import { trpc, trpcClient } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, Bot, ImagePlus, ListChecks, Plus, Trash2, X } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  Bot,
+  FileSpreadsheet,
+  ImagePlus,
+  ListChecks,
+  Plus,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { fileToBase64 } from '../editor/editor-tabs';
+import { ImportPanel } from './import-panel';
 import { addAttachment, countCases, moveStep, newCase, newStep, patchStep } from './manual-edit';
 
 const STATUSES: ManualStatus[] = ['untested', 'pass', 'fail', 'blocked'];
@@ -39,6 +50,7 @@ export function ManualScreen() {
   const stored = project.data?.manualCases;
   const [cases, setCases] = useState<ManualCase[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
   useEffect(() => setCases(stored ?? []), [stored]);
   const dirty = JSON.stringify(cases) !== JSON.stringify(stored ?? []);
   const current = cases.find((c) => c.id === selected) ?? null;
@@ -71,6 +83,9 @@ export function ManualScreen() {
           {tx('ui.manual.summary', counts as unknown as Record<string, number>)}
         </span>
         <div className="ml-auto flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setImporting((v) => !v)}>
+            <FileSpreadsheet /> {tx('ui.manual.import.open')}
+          </Button>
           <Button variant="outline" size="sm" onClick={add}>
             <Plus /> {tx('ui.manual.add')}
           </Button>
@@ -79,6 +94,16 @@ export function ManualScreen() {
           </Button>
         </div>
       </header>
+      {importing && (
+        <ImportPanel
+          onImport={(imported) => {
+            const m = mergeImported(cases, imported);
+            setCases(m.cases);
+            setImporting(false);
+            toast.success(tx('ui.manual.import.done', { added: m.added, updated: m.updated }));
+          }}
+        />
+      )}
       <div className="flex min-h-0 flex-1 gap-4">
         <ul
           className="w-72 shrink-0 overflow-auto rounded-md border"

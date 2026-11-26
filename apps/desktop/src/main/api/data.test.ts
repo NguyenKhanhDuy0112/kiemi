@@ -131,3 +131,16 @@ describe('formulas router [P-03]', () => {
     expect(bad).toMatchObject({ ok: false, error: expect.stringContaining('takes 1 input') });
   });
 });
+
+describe('manual router [X-08]', () => {
+  it('previews the sample file and follows a chosen column mapping', async () => {
+    const { c } = caller();
+    const t = await c.manual.template();
+    const guess = await c.manual.preview({ data: t.data });
+    expect(guess.cases.map((x) => x.externalId)).toEqual(['TC-001', 'TC-002']);
+    expect(guess.mapping.name).toBe('Tên case');
+    const none = await c.manual.preview({ data: t.data, mapping: { action: 'Bước thực hiện' } });
+    expect(none.cases).toEqual([]);
+    expect(none.warnings[0]).toMatch(/Tên case/);
+  });
+});

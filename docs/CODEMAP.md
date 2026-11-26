@@ -24,6 +24,7 @@
 - `features/formulas/` → màn Công thức dùng chung theo dự án + thử từng bước (P-03)
 - `features/environments/http-auth.tsx` → đăng nhập HTTP Basic/NTLM của môi trường (W-01)
 - `features/manual/` → màn Case thủ công (T-03): `manual-screen.tsx`, `manual-edit.ts` (thuần, có test)
+- `features/manual/import-panel.tsx` → nhập case từ Excel (X-08) · logic ở `db/src/io/manual-excel.ts`, router `routers/manual.ts`
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)

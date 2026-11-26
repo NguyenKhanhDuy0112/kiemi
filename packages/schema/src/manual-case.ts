@@ -79,3 +79,40 @@ export function manualCaseOutline(
 ): { index: number; action: string; expected: string }[] {
   return c.steps.map((s, index) => ({ index: index + 1, action: s.action, expected: s.expected }));
 }
+
+/**
+ * Brings imported cases into the project's cases. A case whose `externalId` already exists is
+ * updated (its text replaced; results of steps whose text did not change are kept), others are added.
+ */
+export function mergeImported(
+  existing: ManualCase[],
+  imported: ManualCase[],
+): { cases: ManualCase[]; added: number; updated: number } {
+  const out = [...existing];
+  let added = 0;
+  let updated = 0;
+  for (const inc of imported) {
+    const at = inc.externalId ? out.findIndex((c) => c.externalId === inc.externalId) : -1;
+    const old = at >= 0 ? out[at] : undefined;
+    if (!old) {
+      out.push(inc);
+      added++;
+      continue;
+    }
+    out[at] = {
+      ...old,
+      name: inc.name,
+      group: inc.group,
+      priority: inc.priority,
+      preconditions: inc.preconditions,
+      steps: inc.steps.map((s, i) => {
+        const was = old.steps[i];
+        return was && was.action === s.action && was.expected === s.expected
+          ? was
+          : { ...s, id: was?.id ?? s.id };
+      }),
+    };
+    updated++;
+  }
+  return { cases: out, added, updated };
+}

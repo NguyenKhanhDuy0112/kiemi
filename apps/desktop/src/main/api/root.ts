@@ -13,6 +13,7 @@ import {
   testCasesRouter,
 } from './routers/data';
 import { formulasRouter } from './routers/formulas';
+import { manualRouter } from './routers/manual';
 import { formsRouter, recorderRouter, savedLoginsRouter } from './routers/recorder';
 import { runsRouter } from './routers/runs';
 import { samplesRouter } from './routers/samples';
@@ -41,6 +42,7 @@ export const rootRouter = router({
   forms: formsRouter,
   coverage: coverageRouter,
   formulas: formulasRouter,
+  manual: manualRouter,
   savedLogins: savedLoginsRouter,
   updates: updatesRouter,
   sharedResources: sharedResourcesRouter,
