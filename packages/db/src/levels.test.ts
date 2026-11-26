@@ -151,4 +151,18 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     openProjectFolder(other, dir);
     expect(other.projects.messageCatalog(projectId)).toEqual({ required: 'Vui lòng nhập {field}' });
   });
+
+  it('declared pages of a project travel through the project folder [CV-02]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    s.projects.setPages(projectId, [{ id: 'p1', name: 'Đăng ký', path: '/dang-ky', kind: 'form' }]);
+    expect(() => s.projects.setPages(projectId, [{ id: 'p', name: '', path: '/' }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-pages-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.pages(projectId)).toEqual(s.projects.pages(projectId));
+  });
 });

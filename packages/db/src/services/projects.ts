@@ -3,6 +3,8 @@ import {
   FormSpecsSchema,
   type MessageCatalog,
   MessageCatalogSchema,
+  type PageDecl,
+  PageDeclsSchema,
   type PopupRule,
   PopupRulesSchema,
   VariableNameSchema,
@@ -77,6 +79,15 @@ export class ProjectService {
   }
   messageCatalog(id: string): MessageCatalog {
     return this.repo.get(id).messageCatalog ?? {};
+  }
+  /** Pages that should be tested [CV-02]. */
+  setPages(id: string, pages: unknown) {
+    const p = PageDeclsSchema.safeParse(pages);
+    if (!p.success) throw validation('pages', p.error.issues);
+    return this.repo.update(id, { pages: p.data });
+  }
+  pages(id: string): PageDecl[] {
+    return this.repo.get(id).pages ?? [];
   }
   /** Project-level variables, inherited by every test of the project [O-04]. */
   setVariables(id: string, values: Record<string, string>) {

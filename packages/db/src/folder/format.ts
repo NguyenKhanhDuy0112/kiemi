@@ -7,6 +7,8 @@ import {
   LocatorSchema,
   type MessageCatalog,
   MessageCatalogSchema,
+  type PageDecl,
+  PageDeclsSchema,
   type PopupRule,
   PopupRulesSchema,
   ProductSchema,
@@ -63,6 +65,8 @@ export const ProjectFileSchema = z.object({
   formSpecs: FormSpecsSchema.default([]),
   /** Error messages the project changed [R-10]. */
   messageCatalog: MessageCatalogSchema.default({}),
+  /** Pages that should be tested [CV-02]. */
+  pages: PageDeclsSchema.default([]),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -170,6 +174,7 @@ export interface ProjectSnapshot {
     popupRules: PopupRule[];
     formSpecs: FormSpec[];
     messageCatalog: MessageCatalog;
+    pages: PageDecl[];
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];

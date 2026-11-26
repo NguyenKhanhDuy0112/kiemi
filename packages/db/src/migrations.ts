@@ -387,4 +387,9 @@ CREATE INDEX "shared_resources_workspace_idx" ON "shared_resources" ("workspace_
     name: 'message-catalog',
     sql: `ALTER TABLE "projects" ADD COLUMN "message_catalog" TEXT;`,
   },
+  {
+    id: 14,
+    name: 'project-pages',
+    sql: `ALTER TABLE "projects" ADD COLUMN "pages" TEXT;`,
+  },
 ];

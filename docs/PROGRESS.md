@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M11** đang làm trên nhánh `milestone/m11-validate-form`: tiếp **M11-10** (độ phủ trang + checklist). M10 đã merge (PR #2).
+**M11** đang làm trên nhánh `milestone/m11-validate-form`: tiếp **M11-11** (lint chất lượng test + nhắc sinh thêm case). M10 đã merge (PR #2).
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
@@ -20,6 +20,7 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 - M11-07 xong: `schema/src/form-matrix.ts` (`buildMatrix(form, outcomes)`, `ruleOfCase`, tag `form-case:<formId>|<caseId>` do `generate-tests.ts` gắn). Renderer `features/run/form-outcomes.ts` (đọc tag + bước soft lỗi từ `LiveCase`) + `form-matrix.tsx` (hiện đầu màn Kết quả khi run có test sinh từ form; bấm ô → danh sách case → mở test; xuất Excel qua tRPC `forms.tableToExcel`). Test sinh TRƯỚC M11-07 chưa có tag → không vào ma trận (sinh lại sau khi xóa thư mục form).
 - M11-08 xong: `db/src/io/field-spec-excel.ts` (`FIELD_SPEC_TEMPLATE`, `formFromTable` → `{form, warnings}`; nhận tiêu đề vi/en, kiểu vi/en, "Định dạng" = tên quy tắc có sẵn hoặc regex). tRPC `forms.specTemplate|fromExcel`; UI trong `infer-panel.tsx` (chọn file + tải file mẫu; dùng `fileToBase64` của `editor-tabs.tsx`). Cột "Thông báo lỗi" mới chỉ cảnh báo (chưa nhập vào catalog).
 - M11-09 xong: nhãn là tag `technique:<x>` / `quality:<y>` (`schema/src/design-labels.ts`: `TECHNIQUES`, `QUALITY_CHARS`, `labelsOf`, `withLabels`, `labelsOfCase`); test sinh từ form tự gắn; chọn tay ở hộp thoại sửa tên/tag (`components/name-dialog.tsx`). Báo cáo độ phủ theo nhãn → làm ở M11-10 (đọc tag của mọi test theo sản phẩm).
+- M11-10 xong: `schema/src/coverage.ts` (`PageDecl`, `CHECKLIST` theo loại trang, `computeCoverage`: trang đã có test = có `goto` tới path, nhóm phủ = tag `covers:<nhóm>` hoặc suy từ test sinh từ form; đếm theo kỹ thuật/đặc tính). Cột `projects.pages` (migration 14, `project.json`), tRPC `projects.setPages`, `coverage.get` (`routers/coverage.ts`). UI view `coverage` (`features/coverage/coverage-screen.tsx`). Chưa crawl trang tự động (R-11, v1.2); checklist ghi trong code, không đọc `QC-COVERAGE.md`.
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 

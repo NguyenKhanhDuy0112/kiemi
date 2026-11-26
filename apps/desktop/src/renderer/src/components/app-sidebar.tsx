@@ -33,6 +33,7 @@ import {
   FileText,
   FolderOpen,
   FolderSearch,
+  Gauge,
   Globe,
   History,
   Pin,
@@ -49,6 +50,7 @@ const NAV: { view: View; icon: typeof FileText }[] = [
   { view: 'history', icon: History },
   { view: 'environments', icon: Globe },
   { view: 'forms', icon: ClipboardList },
+  { view: 'coverage', icon: Gauge },
   { view: 'elements', icon: Crosshair },
   { view: 'settings', icon: Settings },
 ];

@@ -7,7 +7,14 @@ import {
   touchRecent,
 } from './recent-projects';
 
-export type View = 'tests' | 'history' | 'environments' | 'forms' | 'elements' | 'settings';
+export type View =
+  | 'tests'
+  | 'history'
+  | 'environments'
+  | 'forms'
+  | 'coverage'
+  | 'elements'
+  | 'settings';
 export type ThemeChoice = 'light' | 'dark' | 'system';
 
 interface AppState {

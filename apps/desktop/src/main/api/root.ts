@@ -1,4 +1,5 @@
 import { appRouter } from './routers/app';
+import { coverageRouter } from './routers/coverage';
 import {
   datasetsRouter,
   elementsRouter,
@@ -37,6 +38,7 @@ export const rootRouter = router({
   runs: runsRouter,
   recorder: recorderRouter,
   forms: formsRouter,
+  coverage: coverageRouter,
   savedLogins: savedLoginsRouter,
   updates: updatesRouter,
   sharedResources: sharedResourcesRouter,

@@ -21,6 +21,7 @@ import {
   FormSpecsSchema,
   LocatorSchema,
   MessageCatalogSchema,
+  PageDeclsSchema,
   PopupRulesSchema,
 } from '@kiemi/schema';
 import { z } from 'zod';
@@ -48,6 +49,10 @@ export const projectsRouter = router({
   setFormSpecs: publicProcedure
     .input(z.object({ id, forms: FormSpecsSchema }))
     .mutation(({ ctx, input }) => ctx.services.projects.setFormSpecs(input.id, input.forms)),
+  /** Pages the project should test [CV-02]. */
+  setPages: publicProcedure
+    .input(z.object({ id, pages: PageDeclsSchema }))
+    .mutation(({ ctx, input }) => ctx.services.projects.setPages(input.id, input.pages)),
   /** Error message wording of the project [R-10]. */
   setMessageCatalog: publicProcedure
     .input(z.object({ id, messages: MessageCatalogSchema }))

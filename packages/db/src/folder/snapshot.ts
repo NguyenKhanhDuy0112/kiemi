@@ -17,6 +17,7 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       popupRules: p.popupRules ?? [],
       formSpecs: p.formSpecs ?? [],
       messageCatalog: p.messageCatalog ?? {},
+      pages: p.pages ?? [],
     },
     products: services.products.list(projectId).map((x) => ({
       id: x.id,
@@ -158,7 +159,8 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
       !same(project.variables ?? {}, s.project.variables ?? {}) ||
       !same(project.popupRules ?? [], s.project.popupRules ?? []) ||
       !same(project.formSpecs ?? [], s.project.formSpecs ?? []) ||
-      !same(project.messageCatalog ?? {}, s.project.messageCatalog ?? {})
+      !same(project.messageCatalog ?? {}, s.project.messageCatalog ?? {}) ||
+      !same(project.pages ?? [], s.project.pages ?? [])
     )
       services.projects.repo.update(projectId, {
         name: s.project.name,
@@ -167,6 +169,7 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
         popupRules: s.project.popupRules ?? [],
         formSpecs: s.project.formSpecs ?? [],
         messageCatalog: s.project.messageCatalog ?? {},
+        pages: s.project.pages ?? [],
       });
 
     /** Generic reconcile of one table. `values` = columns from the file. */

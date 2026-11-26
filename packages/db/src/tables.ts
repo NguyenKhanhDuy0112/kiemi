@@ -2,6 +2,7 @@ import type {
   FormSpec,
   Locator,
   MessageCatalog,
+  PageDecl,
   PopupRule,
   ProxySettings,
   SharedStep,
@@ -59,6 +60,8 @@ export const projects = sqliteTable(
     formSpecs: json<FormSpec[]>('form_specs'),
     /** Error messages the project changed [R-10] (migration 13). */
     messageCatalog: json<MessageCatalog>('message_catalog'),
+    /** Pages of the project that should be tested [CV-02] (migration 14). */
+    pages: json<PageDecl[]>('pages'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );
