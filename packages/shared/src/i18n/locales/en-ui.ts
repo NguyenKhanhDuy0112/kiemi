@@ -1226,6 +1226,10 @@ export const enUi = {
       label: 'Check against expectation (Excel / formula)',
       sentence: '{{target}} matches the expectation',
     },
+    assertSame: {
+      label: 'Compare two places',
+      sentence: 'Compare {{left}} with {{right}}',
+    },
     assertVariable: {
       label: 'Check variable',
       sentence: 'Check variable {{name}} {{op}} {{value}}',
@@ -1233,6 +1237,9 @@ export const enUi = {
     unknown: { label: 'Other action', sentence: 'Action {{action}}' },
   },
   params: {
+    left: 'Left side',
+    as: 'Compare as',
+    urlContains: 'URL contains',
     target: 'Element',
     value: 'Value',
     url: 'Address',

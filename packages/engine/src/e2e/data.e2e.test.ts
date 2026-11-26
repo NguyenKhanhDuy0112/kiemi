@@ -1,3 +1,6 @@
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { EngineEvent } from '../events';
 import { type E2E, startE2E, step, summary } from './helpers';
@@ -405,5 +408,72 @@ describe('generate files to upload [P-09]', () => {
       '4 passed',
       '5 failed FILE_NOT_FOUND',
     ]);
+  });
+});
+
+describe('compare two places in one step [V-03]', () => {
+  const page = (body: string) => `data:text/html;charset=utf-8,${encodeURIComponent(body)}`;
+  const table = (rows: string[][]) =>
+    `<table id="t"><tr><th>Mã</th><th>Giá</th></tr>${rows
+      .map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`)
+      .join('')}</table>`;
+  const left = (css: string) => ({ target: { css }, tab: 'main' });
+  const right = (css: string) => ({ target: { css }, tab: 'admin' });
+
+  it('compares text, numbers with tolerance and tables across two tabs', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'kiemi-v03-'));
+    const r = await e.run(
+      [
+        step('goto', {
+          url: page(
+            `<p id="p">1.250.000 ₫</p>${table([
+              ['A', '10'],
+              ['B', '20'],
+            ])}`,
+          ),
+        }),
+        step('newTab', {
+          url: page(
+            `<p id="p">1250000</p>${table([
+              ['B', '20'],
+              ['A', '11'],
+            ])}`,
+          ),
+          name: 'admin',
+        }),
+        step('switchTab', { by: 'index', value: 1 }),
+        step('assertSame', { left: left('#p'), right: right('#p'), as: 'number' }),
+        step(
+          'assertSame',
+          { left: left('#p'), right: right('#p') },
+          { mode: 'soft', timeoutMs: 800 },
+        ),
+        step(
+          'assertSame',
+          {
+            left: left('#t'),
+            right: right('#t'),
+            as: 'table',
+            key: 'Mã',
+          },
+          { mode: 'soft', timeoutMs: 800 },
+        ),
+      ],
+      { request: { options: { artifacts: { dir, screenshots: 'onFailure' } } } },
+    );
+    expect(summary(r)).toEqual([
+      '1 passed',
+      '2 passed',
+      '3 passed',
+      '4 passed',
+      '5 failed ASSERTION_FAILED',
+      '6 failed ASSERTION_FAILED',
+    ]);
+    // Both tabs are shown when they differ.
+    expect(r.steps[4]?.artifacts.map((a) => a.path)).toEqual([
+      'step-5-failed-1.png',
+      'step-5-failed-2.png',
+    ]);
+    expect(JSON.stringify(r.steps[5]?.error)).toContain('mismatched');
   });
 });

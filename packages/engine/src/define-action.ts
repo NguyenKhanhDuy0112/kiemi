@@ -8,6 +8,12 @@ import type { RunServices } from './run/services';
 import type { TargetParam } from './run/target';
 import type { VariableStore } from './vars/store';
 
+/** Another tab / session to look in instead of the step's own page [V-03]. */
+export interface Place {
+  session?: string | undefined;
+  tab?: string | undefined;
+}
+
 /** What an action receives while it runs. */
 export interface ActionContext {
   readonly step: Step;
@@ -36,7 +42,7 @@ export interface ActionContext {
    */
   resolve(
     target: TargetParam,
-    options?: { state?: 'visible' | 'attached'; timeoutMs?: number },
+    options?: { state?: 'visible' | 'attached'; timeoutMs?: number; at?: Place },
   ): Promise<ResolvedLocator>;
   /** Runs nested steps (if/else, loops, shared steps) as children of this step. */
   runSteps(steps: readonly unknown[], frame?: Record<string, unknown>): Promise<void>;

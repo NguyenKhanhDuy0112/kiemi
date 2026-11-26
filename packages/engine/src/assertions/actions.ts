@@ -64,6 +64,8 @@ function assertionFor(check: CheckDef): ActionDefinition {
       }
       if (lastErr) throw lastErr;
       const p = params as Record<string, unknown>;
+      // Places (tabs/sessions) the check looked at: the runner screenshots each [V-03].
+      const { places, ...diff } = last?.details ?? {};
       throw new EngineError(
         'ASSERTION_FAILED',
         `Step ${ctx.stepNo}: expected ${check.name} ${describeOp(p)} "${stringify(last?.expected)}" but got "${stringify(last?.actual)}"`,
@@ -72,7 +74,8 @@ function assertionFor(check: CheckDef): ActionDefinition {
           op: describeOp(p),
           expected: stringify(last?.expected),
           actual: stringify(last?.actual),
-          ...(last?.details ? { diff: last.details } : {}),
+          ...(Object.keys(diff).length > 0 ? { diff } : {}),
+          ...(places ? { places } : {}),
         },
       );
     },

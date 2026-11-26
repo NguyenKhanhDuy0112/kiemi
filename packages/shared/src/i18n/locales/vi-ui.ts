@@ -1225,10 +1225,17 @@ export const viUi = {
       label: 'Kiểm tra theo kỳ vọng (Excel / công thức)',
       sentence: 'Giá trị {{target}} khớp kỳ vọng',
     },
+    assertSame: {
+      label: 'So sánh giữa 2 nơi',
+      sentence: 'So sánh {{left}} với {{right}}',
+    },
     assertVariable: { label: 'Kiểm tra biến', sentence: 'Kiểm tra biến {{name}} {{op}} {{value}}' },
     unknown: { label: 'Thao tác khác', sentence: 'Thao tác {{action}}' },
   },
   params: {
+    left: 'Bên trái',
+    as: 'So sánh theo',
+    urlContains: 'Địa chỉ chứa',
     target: 'Phần tử',
     value: 'Giá trị',
     url: 'Địa chỉ',

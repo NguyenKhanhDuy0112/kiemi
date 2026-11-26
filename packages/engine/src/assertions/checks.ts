@@ -50,8 +50,12 @@ const once = { timeoutMs: 0 } as const;
 
 const target = TargetParamSchema;
 
-async function elementText(ctx: ActionContext, t: z.infer<typeof target>): Promise<string> {
-  const { locator } = await ctx.resolve(t, once);
+async function elementText(
+  ctx: ActionContext,
+  t: z.infer<typeof target>,
+  at?: { session?: string | undefined; tab?: string | undefined },
+): Promise<string> {
+  const { locator } = await ctx.resolve(t, at ? { ...once, at } : once);
   return locator.evaluate((el) => {
     const h = el as HTMLElement;
     if (h instanceof HTMLInputElement || h instanceof HTMLTextAreaElement) return h.value;
@@ -463,6 +467,79 @@ export const tableCompareCheck = defineCheck({
   },
 });
 
+const placeParams = z.object({
+  target,
+  /** Session (user/role) the element is in; default: the step's own. */
+  session: z.string().min(1).optional(),
+  /** Named tab the element is in; default: the active tab. */
+  tab: z.string().min(1).optional(),
+});
+
+/**
+ * Two places compared in one step: `[Giá] ở tab Khách` = `[Giá] ở tab Admin` —
+ * text, numbers (with tolerance) or whole tables [V-03].
+ */
+export const sameCheck = defineCheck({
+  name: 'same',
+  params: z
+    .object({
+      left: placeParams,
+      right: placeParams,
+      as: z.enum(['text', 'number', 'table']).default('text'),
+      tolerance: z.unknown().optional(),
+      tolerancePercent: z.unknown().optional(),
+      /** Table: column that identifies a row. */
+      key: z.string().min(1).optional(),
+      columns: z.array(z.string().min(1)).optional(),
+      ...TextMatchOptions,
+    })
+    .refine((p) => p.as !== 'table' || p.key !== undefined, 'key is required to compare tables'),
+  async check(p, ctx) {
+    const locale = ctx.run.env?.locale ?? 'vi';
+    const places = [
+      { ...(p.left.session ? { session: p.left.session } : {}), tab: p.left.tab },
+      { ...(p.right.session ? { session: p.right.session } : {}), tab: p.right.tab },
+    ];
+    const details = { places: places.map((x) => ({ ...x })) };
+    if (p.as === 'table') {
+      const [l, r] = await Promise.all([
+        readRows(ctx, { target: p.left.target, once: true, at: places[0] }),
+        readRows(ctx, { target: p.right.target, once: true, at: places[1] }),
+      ]);
+      const key = p.key as string;
+      const diff = diffTables(l.rows, r.rows, key, p.columns, locale);
+      const clean = isClean(diff) && diff.duplicates.length === 0;
+      return {
+        pass: clean,
+        actual: clean ? `${l.rows.length} rows` : describeDiff(diff),
+        expected: `${r.rows.length} rows by ${key}`,
+        details: { ...diff, ...details },
+      };
+    }
+    const a = await elementText(ctx, p.left.target, places[0]);
+    const b = await elementText(ctx, p.right.target, places[1]);
+    if (p.as === 'number') {
+      const x = extractNumber(a, locale);
+      const y = extractNumber(b, locale);
+      if (x === undefined || y === undefined)
+        return { pass: false, actual: a, expected: b, details };
+      const tol = {
+        absolute: p.tolerance === undefined ? undefined : extractNumber(p.tolerance, locale),
+        percent:
+          p.tolerancePercent === undefined ? undefined : extractNumber(p.tolerancePercent, locale),
+      };
+      const gap = Number((x - y).toFixed(10));
+      return {
+        pass: compareNumber(x, 'eq', y, undefined, tol),
+        actual: gap === 0 ? x : `${x} (chênh ${gap > 0 ? '+' : ''}${gap})`,
+        expected: y,
+        details,
+      };
+    }
+    return { pass: compareText(a, 'equals', b, p), actual: a, expected: b, details };
+  },
+});
+
 /**
  * Expected value from two sources: a column the tester filled in the data and/or
  * a formula; with both they are cross-checked and a mismatch is warned [P-05].
@@ -701,6 +778,7 @@ export const CHECKS: readonly CheckDef[] = [
   sortedCheck,
   rowTotalCheck,
   expectedCheck,
+  sameCheck,
 ] as CheckDef[];
 
 export const CHECKS_BY_NAME: ReadonlyMap<string, CheckDef> = new Map(
