@@ -3,6 +3,7 @@ export * from './dataset';
 export * from './env';
 export * from './field-rules';
 export * from './form-cases';
+export * from './form-matrix';
 export * from './form-spec';
 export * from './form-steps';
 export * from './json-schema';

@@ -1,5 +1,11 @@
 import type { Services } from '@kiemi/db';
-import { caseSteps, caseTestName, expectedError, generateFormCases } from '@kiemi/schema';
+import {
+  caseSteps,
+  caseTestName,
+  expectedError,
+  formCaseTag,
+  generateFormCases,
+} from '@kiemi/schema';
 
 export interface GenerateResult {
   folderId: string;
@@ -57,6 +63,7 @@ export function generateFormTests(
         'form-validation',
         c.expect === 'reject' ? 'negative' : 'positive',
         `technique:${c.technique}`,
+        formCaseTag(form.id, c.id),
       ],
       steps: caseSteps(form, c, catalog),
     });

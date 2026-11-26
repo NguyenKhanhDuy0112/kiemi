@@ -37,6 +37,8 @@ import { EnvironmentPill } from '../environments/environment-badge';
 import { copyBugReport } from './copy-bug';
 import { FixLog } from './fix-log';
 import { FixStepPanel } from './fix-step-panel';
+import { FormMatrixView } from './form-matrix';
+import { outcomesOf } from './form-outcomes';
 import { buildHtmlReport } from './report';
 import { useStartRun } from './run-dialog';
 import { useRunFixes } from './run-fixes';
@@ -128,6 +130,8 @@ export function RunScreen({ runId }: { runId: string }) {
   const waitingStep = view?.paused?.stepId;
   // biome-ignore lint/correctness/useExhaustiveDependencies: forget the pick when the run moves on.
   useEffect(() => setFixPick(null), [waitingStep]);
+  const projectId = useAppStore((s) => s.projectId) ?? '';
+  const projectForms = useQuery(trpc.projects.get.queryOptions({ id: projectId }));
   const [shot, setShot] = useState<{ src: string; title: string } | null>(null);
 
   const testIds = useMemo(
@@ -144,6 +148,15 @@ export function RunScreen({ runId }: { runId: string }) {
     });
     return m;
   }, [testIds, tests]);
+  /** Results of tests generated from a form spec, for the Field × Rule matrix [R-09]. */
+  const formOutcomes = useMemo(() => outcomesOf(view?.cases ?? [], docs), [view?.cases, docs]);
+  const matrixForms = useMemo(
+    () =>
+      (projectForms.data?.formSpecs ?? []).filter((f) =>
+        formOutcomes.some((o) => o.formId === f.id),
+      ),
+    [projectForms.data?.formSpecs, formOutcomes],
+  );
   // Workspace library steps are called by id too [O-07].
   const library = useQuery(trpc.sharedResources.list.queryOptions({ kind: 'shared_step' }));
   const shared = useQuery({
@@ -445,6 +458,15 @@ export function RunScreen({ runId }: { runId: string }) {
           </nav>
         )}
         <div className="min-w-0 flex-1 overflow-auto">
+          {!running &&
+            matrixForms.map((f) => (
+              <FormMatrixView
+                key={f.id}
+                form={f}
+                outcomes={formOutcomes}
+                onOpenCase={setSelected}
+              />
+            ))}
           {view.cases.length === 0 ? (
             <p className="p-6 text-sm text-muted-foreground">
               {running ? tx('ui.run.preparing') : tx('ui.run.emptyRun')}

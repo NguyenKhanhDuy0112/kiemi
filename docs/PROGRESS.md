@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M11** đang làm trên nhánh `milestone/m11-validate-form`: tiếp **M11-07** (ma trận Field × Quy tắc). M10 đã merge (PR #2).
+**M11** đang làm trên nhánh `milestone/m11-validate-form`: tiếp **M11-08** (import đặc tả từ Excel). M10 đã merge (PR #2).
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
@@ -17,6 +17,7 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 - M11-04 xong: `schema/src/form-cases.ts` (`generateFormCases(form)` → `FormCase[]`: `valid`, `<field>:<rule>`; kỹ thuật valid/equivalence/boundary/decision/pairwise; `values` đủ mọi ô, case reject có `messageKey`; thuật toán `pairwise`), `form-steps.ts` (`caseSteps` goto→fill/select/check/upload→click submit, `expectedError`). `FieldSpec.example` (giá trị hợp lệ tự khai), `FormSpec.submit` (nút gửi, scan tự điền). Main `forms/generate-tests.ts` (thư mục theo tên form, bỏ qua test trùng tên) + tRPC `forms.generateTests`; UI `features/forms/generate-dialog.tsx`. Test sinh ra CHƯA có bước kiểm tra kết quả (M11-06 thêm vào `caseSteps`). Chưa làm: ngày min/max (đủ 18 tuổi…), trim, chuyển biến thể M-03 cũ (`recorder/src/variants.ts` vẫn dùng đường cũ) — ghi tồn đọng.
 - M11-05 xong: `schema/src/bad-data.ts` (`BAD_DATA`: khoảng trắng, NFC/NFD, emoji, ký tự đặc biệt, 10.000 ký tự, vượt maxlength, script/HTML/SQL, số âm/0/thập phân/khoa học/0 đầu/rất lớn, ngày 31/02 & 29/02; mỗi cái có `label` tiếng Việt + `outcome` accept|reject|safe). `FieldSpec.badData` (bật/tắt theo field, UI checkbox "Thêm dữ liệu xấu chuẩn"); case id `<field>:bad.<id>`, kỹ thuật `badData`, mặc định KHÔNG tick; `FormCase.expect` thêm `safe` (không lỗi, không chạy mã lạ — M11-06 cần kiểm tra).
 - M11-06 xong: checks mới `fieldError` (thông báo trong khối bao riêng ô đó/aria-describedby/validationMessage) + `focus` (`assertFieldError`, `assertFocus`, `engine/src/assertions/checks.ts`); toast `notContains/notEquals` giờ đúng với MỌI thông báo. `caseSteps(form, c, catalog)` thêm bước kiểm tra `soft` với id cố định `CHECK_IDS` (`chk-message|focus|kept|not-sent|sent|saved-<field>`) → M11-07 gom theo id này. Thêm `FormSpec.successMessage/detailPath`, `FieldSpec.trim/readBack` (round-trip, `normalizeSpace:false`). Demo-site `register.html?bug=msg,field,clear,nofocus,sent,trim,accent`; e2e `e2e/form-validation.e2e.test.ts` (chậm ~5 phút: chạy từng case). Email có case độ dài (maxLength) khi không có pattern/rule.
+- M11-07 xong: `schema/src/form-matrix.ts` (`buildMatrix(form, outcomes)`, `ruleOfCase`, tag `form-case:<formId>|<caseId>` do `generate-tests.ts` gắn). Renderer `features/run/form-outcomes.ts` (đọc tag + bước soft lỗi từ `LiveCase`) + `form-matrix.tsx` (hiện đầu màn Kết quả khi run có test sinh từ form; bấm ô → danh sách case → mở test; xuất Excel qua tRPC `forms.tableToExcel`). Test sinh TRƯỚC M11-07 chưa có tag → không vào ma trận (sinh lại sau khi xóa thư mục form).
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 

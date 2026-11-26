@@ -1,3 +1,4 @@
+import { writeExcel } from '@kiemi/db';
 import { formSpecsFromSchema, inferForm } from '@kiemi/engine';
 import { LocatorSchema } from '@kiemi/schema';
 import { TRPCError } from '@trpc/server';
@@ -81,6 +82,21 @@ export const savedLoginsRouter = router({
 
 /** Field specs derived without a browser [R-02], tests generated from them [R-03]. */
 export const formsRouter = router({
+  /** A simple table → .xlsx (base64), e.g. the result matrix [R-09]. */
+  tableToExcel: publicProcedure
+    .input(
+      z.object({
+        columns: z.array(z.string()).min(1).max(100),
+        rows: z.array(z.record(z.string(), z.string())).max(5000),
+        sheetName: z.string().min(1).max(31).default('Ma trận'),
+      }),
+    )
+    .mutation(async ({ input }) => ({
+      data: Buffer.from(
+        await writeExcel({ columns: input.columns, rows: input.rows }, input.sheetName),
+      ).toString('base64'),
+    })),
+
   /** Creates test cases for the ticked cases of a form's generated list. */
   generateTests: publicProcedure
     .input(
