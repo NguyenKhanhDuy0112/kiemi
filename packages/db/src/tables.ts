@@ -1,5 +1,6 @@
 import type {
   FormSpec,
+  Formulas,
   Locator,
   MessageCatalog,
   PageDecl,
@@ -62,6 +63,8 @@ export const projects = sqliteTable(
     messageCatalog: json<MessageCatalog>('message_catalog'),
     /** Pages of the project that should be tested [CV-02] (migration 14). */
     pages: json<PageDecl[]>('pages'),
+    /** Named formulas of the project [P-03] (migration 16). */
+    formulas: json<Formulas>('formulas'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );

@@ -1,6 +1,8 @@
 import {
   type FormSpec,
   FormSpecsSchema,
+  type Formulas,
+  FormulasSchema,
   type MessageCatalog,
   MessageCatalogSchema,
   type PageDecl,
@@ -79,6 +81,15 @@ export class ProjectService {
   }
   messageCatalog(id: string): MessageCatalog {
     return this.repo.get(id).messageCatalog ?? {};
+  }
+  /** Named formulas shared by every test of the project [P-03]. */
+  setFormulas(id: string, formulas: unknown) {
+    const p = FormulasSchema.safeParse(formulas);
+    if (!p.success) throw validation('formulas', p.error.issues);
+    return this.repo.update(id, { formulas: p.data });
+  }
+  formulas(id: string): Formulas {
+    return this.repo.get(id).formulas ?? {};
   }
   /** Pages that should be tested [CV-02]. */
   setPages(id: string, pages: unknown) {

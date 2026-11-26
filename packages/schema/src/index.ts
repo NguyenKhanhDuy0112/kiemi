@@ -8,6 +8,7 @@ export * from './form-cases';
 export * from './form-matrix';
 export * from './form-spec';
 export * from './form-steps';
+export * from './formulas';
 export * from './json-schema';
 export * from './locator';
 export * from './migrate';

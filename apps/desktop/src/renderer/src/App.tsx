@@ -36,6 +36,11 @@ const CoverageScreen = lazy(() =>
     default: m.CoverageScreen,
   })),
 );
+const FormulasScreen = lazy(() =>
+  import('@renderer/features/formulas/formulas-screen').then((m) => ({
+    default: m.FormulasScreen,
+  })),
+);
 const FormsScreen = lazy(() =>
   import('@renderer/features/forms/forms-screen').then((m) => ({ default: m.FormsScreen })),
 );
@@ -131,6 +136,7 @@ export function App() {
                 {view === 'environments' && <EnvironmentsScreen />}
                 {view === 'forms' && <FormsScreen />}
                 {view === 'coverage' && <CoverageScreen />}
+                {view === 'formulas' && <FormulasScreen />}
                 {view === 'elements' && <ElementsScreen />}
                 {view === 'settings' && <SettingsScreen />}
                 {view === 'history' && <HistoryScreen />}

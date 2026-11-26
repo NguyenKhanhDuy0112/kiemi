@@ -21,6 +21,7 @@
 - `features/run/` → `fix-step-panel.tsx` (sửa step khi run chờ, FX-02/03), `run-screen.tsx`, `run-dialog.tsx` (`useStartRun`), `run-store.ts`, `report.ts`, `confirm-protected.tsx`
 - `features/editor/quality-button.tsx` → cảnh báo chất lượng test (CV-07)
 - `features/test-coverage/` → màn Độ phủ (CV-01/02/04)
+- `features/formulas/` → màn Công thức dùng chung theo dự án + thử từng bước (P-03)
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)
 - `features/{record,history,elements,settings,onboarding,projects,update}/`

@@ -13,6 +13,7 @@ export type View =
   | 'environments'
   | 'forms'
   | 'coverage'
+  | 'formulas'
   | 'elements'
   | 'settings';
 export type ThemeChoice = 'light' | 'dark' | 'system';

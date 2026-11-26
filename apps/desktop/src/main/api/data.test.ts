@@ -115,3 +115,19 @@ describe('workspace search index [O-08]', () => {
     expect(idx.sharedSteps).toMatchObject([{ name: 'Chung', projectId: null }]);
   });
 });
+
+describe('formulas router [P-03]', () => {
+  it('explains a formula step by step and reports errors instead of throwing', async () => {
+    const { c } = caller();
+    const formulas = { Vat: { params: ['x'], expression: 'ROUND(x * 1.08)' } };
+    const ok = await c.formulas.explain({
+      expression: 'Vat(SUM(ds, "tt"))',
+      formulas,
+      values: { ds: '[{"tt":"100"},{"tt":"150"}]' },
+    });
+    expect(ok).toMatchObject({ ok: true, value: '270' });
+    expect(ok.ok && ok.steps.map((s) => s.value)).toContain('250');
+    const bad = await c.formulas.explain({ expression: 'Vat()', formulas, values: {} });
+    expect(bad).toMatchObject({ ok: false, error: expect.stringContaining('takes 1 input') });
+  });
+});

@@ -152,6 +152,29 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     expect(other.projects.messageCatalog(projectId)).toEqual({ required: 'Vui lòng nhập {field}' });
   });
 
+  it('named formulas of a project travel through the project folder [P-03]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const formulas = { TongDon: { params: ['ds', 'giam'], expression: "SUM(ds, 'tt') - giam" } };
+    s.projects.setFormulas(projectId, formulas);
+    expect(() =>
+      s.projects.setFormulas(projectId, { '1x': { params: [], expression: '1' } }),
+    ).toThrow();
+    expect(() =>
+      s.projects.setFormulas(projectId, {
+        A: { params: [], expression: '1' },
+        a: { params: [], expression: '2' },
+      }),
+    ).toThrow(/Invalid formulas/);
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-formulas-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.formulas(projectId)).toEqual(formulas);
+  });
+
   it('declared pages of a project travel through the project folder [CV-02]', () => {
     const { services: s, defaultProjectId: projectId } = createMemoryServices();
     s.projects.setPages(projectId, [{ id: 'p1', name: 'Đăng ký', path: '/dang-ky', kind: 'form' }]);

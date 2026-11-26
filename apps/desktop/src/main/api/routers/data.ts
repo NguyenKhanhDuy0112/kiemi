@@ -20,6 +20,7 @@ import { explainVariables } from '@kiemi/engine';
 import {
   DatasetChildSchema,
   FormSpecsSchema,
+  FormulasSchema,
   LocatorSchema,
   MessageCatalogSchema,
   PageDeclsSchema,
@@ -60,6 +61,10 @@ export const projectsRouter = router({
     .mutation(({ ctx, input }) =>
       ctx.services.projects.setMessageCatalog(input.id, input.messages),
     ),
+  /** Named formulas of the project [P-03]. */
+  setFormulas: publicProcedure
+    .input(z.object({ id, formulas: FormulasSchema }))
+    .mutation(({ ctx, input }) => ctx.services.projects.setFormulas(input.id, input.formulas)),
   get: publicProcedure
     .input(z.object({ id }))
     .query(({ ctx, input }) => ctx.services.projects.get(input.id)),

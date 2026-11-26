@@ -119,3 +119,29 @@ describe('nested datasets [P-01]', () => {
     expect(summary(r)).toEqual(['1 failed INVALID_PARAMS']);
   });
 });
+
+describe('project formulas in a run [P-03]', () => {
+  it('uses named formulas inside {{ }} of any step', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/table.html' }),
+        step('waitUntil', {
+          condition: { assert: 'visible', target: { css: '#products-table tbody tr:first-child' } },
+          timeoutSec: 5,
+        }),
+        step('extractTable', { target: { css: '#products-table' }, into: 'sp' }),
+        step('assertNumber', {
+          actual: "{{Tong(sp, 'Tồn kho')}}",
+          op: 'gte',
+          value: "{{Tong(sp, 'Tồn kho') - 1}}",
+        }),
+      ],
+      {
+        request: {
+          formulas: { Tong: { params: ['ds', 'cot'], expression: 'SUM(ds, cot)' } },
+        },
+      },
+    );
+    expect(summary(r)).toEqual(['1 passed', '2 passed', '3 passed', '4 passed']);
+  });
+});

@@ -58,6 +58,8 @@ export interface RunRequest {
   sharedSteps?: SharedStep[];
   /** Popups to close wherever they show up [W-09]. */
   popupRules?: PopupRule[];
+  /** Named formulas of the project, callable in `{{ }}` [P-03]. */
+  formulas?: Record<string, { params: string[]; expression: string }>;
   /** Suite-level variables [E-02]. */
   suiteVariables?: Record<string, string>;
   /** Inherited variables of the workspace, project and the test's product [O-04]. */
@@ -166,6 +168,7 @@ class Run {
         workspace: request.variables?.workspace,
         project: request.variables?.project,
         productVariables: request.variables?.product,
+        formulas: request.formulas,
       },
       this.#now,
     );

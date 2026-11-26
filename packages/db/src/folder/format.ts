@@ -5,6 +5,8 @@ import {
   EnvTypeSchema,
   type FormSpec,
   FormSpecsSchema,
+  type Formulas,
+  FormulasSchema,
   LocatorSchema,
   type MessageCatalog,
   MessageCatalogSchema,
@@ -68,6 +70,8 @@ export const ProjectFileSchema = z.object({
   messageCatalog: MessageCatalogSchema.default({}),
   /** Pages that should be tested [CV-02]. */
   pages: PageDeclsSchema.default([]),
+  /** Named formulas [P-03]. */
+  formulas: FormulasSchema.default({}),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -177,6 +181,7 @@ export interface ProjectSnapshot {
     formSpecs: FormSpec[];
     messageCatalog: MessageCatalog;
     pages: PageDecl[];
+    formulas: Formulas;
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];
