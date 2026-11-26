@@ -9,9 +9,9 @@ Docs: `docs/SPEC.md` (yêu cầu + ID), `docs/ROADMAP.md` (task), `docs/PROGRESS
 
 ## 2. Quy trình mỗi phiên (BẮT BUỘC)
 1. Đọc `docs/PROGRESS.md` → mục **"Tiếp theo"**, **"Lưu ý cho task sau"**, **"Vấn đề tồn đọng"**. Tra các ID SPEC của task bằng `node scripts/spec-lookup.mjs <ID>...` (xem §8).
-2. **Mỗi phiên (chat) làm 1 task** trong ROADMAP (vd M9-08). Không làm task kế, không làm ngoài phạm vi ROADMAP.
+2. **Mỗi phiên (chat) làm trọn milestone hiện tại**: lần lượt từng task trong ROADMAP (vd M9-08a → M9-11), tự động, không dừng hỏi giữa các task. Mỗi task vẫn theo đủ quy trình bên dưới (kế hoạch ngắn, test, 1 commit, cập nhật docs). Không làm sang milestone kế, không làm ngoài phạm vi ROADMAP.
    - Task ước lượng > ~400 dòng thay đổi hoặc > 8 file → dừng, đề xuất chia nhỏ (M9-08a, M9-08b…) trước khi code.
-   - Phải dừng giữa chừng → dừng ở điểm ổn định, commit, ghi phần còn lại vào PROGRESS mục **"Đang làm dở"**.
+   - Chỉ dừng giữa milestone khi: task cần chia nhỏ (đề xuất trước khi code), cần quyết định của người dùng, lỗi không tự xử lý được, hoặc context gần đầy → dừng ở điểm ổn định, commit, ghi phần còn lại vào PROGRESS mục **"Đang làm dở"**.
 3. Trước mỗi task: nêu kế hoạch ngắn (file tạo/sửa, cách test).
 4. **Trong lúc code**: viết kèm test (unit/e2e) của task; chỉ chạy test liên quan (§8). Trước khi commit chạy **1 lần** `pnpm lint && pnpm typecheck && pnpm test` (phải pass hết).
    **Task cuối của milestone** → thêm kiểm tra luồng chính trên app thật (build, `_electron.launch`) nếu milestone có UI. Sửa lỗi tìm được (commit `fix(...)`).
@@ -31,9 +31,9 @@ Docs: `docs/SPEC.md` (yêu cầu + ID), `docs/ROADMAP.md` (task), `docs/PROGRESS
    - Phát hành: tag `vX.Y.Z` (beta: `vX.Y.Z-beta.N`) trên `main`.
    - Chưa có remote `origin` → nhắc người dùng cung cấp URL repo, không tự tạo repo.
    - Không `push --force` lên `main`.
-7. Nếu người dùng chỉ nói "làm tiếp" / "continue" → làm task trong mục "Tiếp theo" (hoặc mục "Đang làm dở" nếu có).
-8. **Kết thúc phiên**: sau khi commit (và push nếu là task cuối milestone), DỪNG — không tự làm task kế. Báo ngắn gọn (≤ 10 dòng): đã xong gì, kết quả test, task tiếp theo, và nhắc người dùng `/clear` (hoặc mở chat mới) rồi gõ `Làm tiếp.`
-9. Chạy tự động không cần mở chat: xem `START-PROMPT.md` (vòng lặp `claude -p "Làm tiếp."`, mỗi lần = 1 phiên mới = 1 task).
+7. Nếu người dùng chỉ nói "làm tiếp" / "continue" → làm từ task trong mục "Tiếp theo" (hoặc "Đang làm dở" nếu có) cho tới hết milestone đó.
+8. **Kết thúc phiên** = hết milestone: sau task cuối chạy kiểm tra app thật (nếu có UI), push nhánh, mở PR theo quy ước (mục 6). Rồi DỪNG — không tự làm milestone kế. Báo ngắn gọn (≤ 10 dòng): các task đã xong, kết quả test, link PR, milestone tiếp theo, và nhắc người dùng `/clear` (hoặc mở chat mới) rồi gõ `Làm tiếp.`
+9. Chạy tự động không cần mở chat: xem `START-PROMPT.md` (vòng lặp `claude -p "Làm tiếp."`, mỗi lần = 1 phiên mới = 1 milestone).
 
 ## 2b. Quy trình thay đổi yêu cầu (BẮT BUỘC)
 Khi người dùng đưa yêu cầu mới / muốn sửa / bỏ một yêu cầu (vd "thêm tính năng X", "đổi Y", "bỏ Z"):
@@ -124,7 +124,7 @@ docs/
 - `docs/ARCHITECTURE.md` / ADR: chỉ đọc khi task đụng tới ranh giới giữa các khối.
 
 ### Phạm vi mỗi phiên
-- **1 task / phiên** (§2). Không đọc file "cho chắc": tìm có mục tiêu (`rg`, go-to-definition) trước, chỉ mở file cần sửa.
+- **1 milestone / phiên** (§2), làm lần lượt từng task; khi context dài thì compact (xem cuối §8). Không đọc file "cho chắc": tìm có mục tiêu (`rg`, go-to-definition) trước, chỉ mở file cần sửa.
 
 ### Chạy test
 - Trong lúc làm: chỉ chạy test liên quan: `pnpm vitest run <đường-dẫn-hoặc-tên>` / `pnpm --filter <package> test`.

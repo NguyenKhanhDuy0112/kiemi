@@ -1,6 +1,6 @@
 # Prompt dùng với Claude Code
 
-> Nguyên tắc: **1 chat = 1 task** (CLAUDE.md §2, §8). Claude làm 1 task, test, commit và dừng; task cuối của milestone thì test cả milestone + push. Task mới bắt đầu bằng chat mới để không tốn token cho lịch sử cũ.
+> Nguyên tắc: **1 chat = 1 milestone** (CLAUDE.md §2, §8). Claude tự làm lần lượt các task (mỗi task 1 commit), hết milestone thì test cả milestone + push + mở PR rồi dừng. Task mới bắt đầu bằng chat mới để không tốn token cho lịch sử cũ.
 
 ## Cách 1 — Thủ công (khuyên dùng)
 Trong VS Code (Claude Code):
