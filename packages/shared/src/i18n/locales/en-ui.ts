@@ -379,11 +379,28 @@ export const enUi = {
     backToDefault: 'Back to the shared data',
     saveRows: 'Save data',
   },
+  bug: {
+    title: 'Test failed: {{test}}',
+    environment: 'Environment',
+    steps: 'Steps to reproduce',
+    expected: 'Expected',
+    actual: 'Actual',
+    error: 'Error',
+    screenshots: 'Screenshots',
+    copy: 'Copy bug report',
+    copied: 'Bug report copied — paste it into Jira / Redmine / chat.',
+    copyFailed: 'Could not copy to the clipboard.',
+  },
   fix: {
+    changeIsRight: 'The change is right — update the expectation',
+    isBug: "It's a bug — copy the report",
+    cannotUpdate: 'This check needs a manual edit in the form below.',
     hint: {
       notFound: 'Element not found — the page may have changed. Quick fixes:',
       timeout: 'Timed out — the page may load slower than usual.',
       blocked: 'Something covers the element (usually a popup).',
+      assertion:
+        'The value on the page differs from the expectation. Is the change right, or is it a bug?',
       network: 'Network / API error — retrying is often enough, or check the request.',
     },
     repick: 'Pick the element again',

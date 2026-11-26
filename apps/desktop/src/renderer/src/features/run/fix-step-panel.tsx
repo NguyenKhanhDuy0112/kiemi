@@ -21,6 +21,8 @@ import { toast } from 'sonner';
 import { defaultParams, findStep, insertStep, newStepId, updateStep } from '../editor/doc-model';
 import { type PickSource, PickSourceContext } from '../editor/pick-context';
 import { StepForm } from '../editor/props-panel';
+import { expectationUpdate, mismatchOf } from './bug-report';
+import { copyBugReport } from './copy-bug';
 import { classifyFailure, type QuickFixActions, QuickFixes } from './quick-fixes';
 import { useRunStore } from './run-store';
 
@@ -65,6 +67,8 @@ export function FixStepPanel({
   doc,
   version,
   projectId,
+  environmentName,
+  screenshots,
   stepId,
   failed,
   error,
@@ -77,6 +81,9 @@ export function FixStepPanel({
   /** The run waits on this step because it failed (so "Thử lại" makes sense). */
   failed: boolean;
   projectId: string;
+  environmentName?: string | null | undefined;
+  /** Screenshot files of the failed step (for the bug report). */
+  screenshots?: string[] | undefined;
   /** Why the step failed, for the quick fixes. */
   error?: RunError | undefined;
 }) {
@@ -236,6 +243,21 @@ export function FixStepPanel({
       setAdded((a) => [...a, entry]);
       setDraft(next);
       void apply(true, next, [...added, entry]);
+    },
+    mismatch: mismatchOf(error?.details),
+    canUpdate:
+      !!waiting &&
+      !!error &&
+      !!mismatchOf(error.details) &&
+      expectationUpdate(waiting, mismatchOf(error.details)?.actual ?? '') !== undefined,
+    onUpdateExpectation: () => {
+      const m = mismatchOf(error?.details);
+      const params = waiting && m ? expectationUpdate(waiting, m.actual) : undefined;
+      if (params) retryWith(updateStep(draft, stepId, { params }));
+    },
+    onCopyBug: () => {
+      if (error)
+        void copyBugReport({ doc: draft, stepId, error, environmentName, screenshots, tx });
     },
     onAddPopupRule: (when, button) => {
       void (async () => {

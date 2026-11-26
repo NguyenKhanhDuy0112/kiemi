@@ -15,6 +15,7 @@ import { cn } from '@renderer/lib/utils';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
+  Bug,
   CircleAlert,
   Download,
   FileSearch,
@@ -32,6 +33,7 @@ import { toast } from 'sonner';
 import { childLists } from '../editor/doc-model';
 import { StepSentence } from '../editor/step-sentence';
 import { EnvironmentPill } from '../environments/environment-badge';
+import { copyBugReport } from './copy-bug';
 import { FixStepPanel } from './fix-step-panel';
 import { buildHtmlReport } from './report';
 import { useStartRun } from './run-dialog';
@@ -422,6 +424,22 @@ export function RunScreen({ runId }: { runId: string }) {
               onToggleBreakpoint={(stepId) => toggleBreakpoint(current.testCaseId, stepId, runId)}
               fixStepId={single && view.paused ? (fixPick ?? view.paused.stepId) : undefined}
               onSelectStep={single && view.paused ? setFixPick : undefined}
+              onCopyBug={(stepId) => {
+                const doc = docs[current.testCaseId];
+                const error = current.steps[stepId]?.error;
+                if (doc && error)
+                  void copyBugReport({
+                    doc,
+                    stepId,
+                    error,
+                    environmentName: detail?.environmentName,
+                    screenshots: current.steps[stepId]?.artifacts
+                      .filter((a) => a.kind === 'screenshot')
+                      .map((a) => a.path),
+                    sharedNames,
+                    tx,
+                  });
+              }}
               onRunTo={
                 view.paused?.runCaseId === current.runCaseId && single
                   ? (stepId) => void runTo(runId, stepId)
@@ -438,6 +456,8 @@ export function RunScreen({ runId }: { runId: string }) {
             doc={docs[current.testCaseId] as TestCase}
             version={tests[testIds.indexOf(current.testCaseId)]?.data?.version ?? 0}
             projectId={detail?.projectId ?? ''}
+            environmentName={detail?.environmentName ?? null}
+            screenshots={current.steps[view.paused.stepId]?.artifacts.map((x) => x.path)}
             error={view.paused.error}
             stepId={fixPick ?? view.paused.stepId}
             failed={
@@ -469,6 +489,7 @@ function CaseView({
   breakpoints,
   onToggleBreakpoint,
   onRunTo,
+  onCopyBug,
   fixStepId,
   onSelectStep,
   onShot,
@@ -482,6 +503,8 @@ function CaseView({
   onToggleBreakpoint: (stepId: string) => void;
   /** Set while the run is paused: run to a later step and pause there [FX-05]. */
   onRunTo: ((stepId: string) => void) | undefined;
+  /** "Copy báo cáo bug" of a failed step [X-02]. */
+  onCopyBug: (stepId: string) => void;
   /** Step shown in the "Sửa bước" panel, and how to open another one [FX-02]. */
   fixStepId: string | undefined;
   onSelectStep: ((stepId: string) => void) | undefined;
@@ -595,6 +618,14 @@ function CaseView({
                   <p className="text-xs text-muted-foreground">
                     {describeRunError(r.error, tx).hint}
                   </p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="mt-1 h-6 px-2 text-xs"
+                    onClick={() => onCopyBug(step.id)}
+                  >
+                    <Bug /> {tx('ui.bug.copy')}
+                  </Button>
                 </div>
               )}
               {r?.artifacts.some((a) => a.kind === 'screenshot') && (

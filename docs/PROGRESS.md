@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M10** đang làm trên nhánh `milestone/m10-fix-on-fail`: tiếp M10-07 (xem ROADMAP). M9 đã merge (PR #1).
+**M10** đang làm trên nhánh `milestone/m10-fix-on-fail`: tiếp M10-08 (xem ROADMAP). M9 đã merge (PR #1).
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
@@ -16,6 +16,7 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 - M10-04 xong: chèn step khi run chờ. Engine: `DebugController.insert/takeInserted/hasInserted`; runner `#runInserted` chạy step chèn (đánh số `3-1`, `3+1`), `retry` có step chèn trước thì `redo` (chạy chúng rồi mới thử lại). Ghi thao tác: worker `liveRecordStart/Stop` (recorder `capture:true` trên context của run) → `runs.liveRecord`; step ghi đã làm tay nên chỉ lưu vào test, không chạy lại. UI trong `fix-step-panel.tsx` (menu Thêm bước trước/sau, nút Ghi).
 - M10-05 xong: popup toàn cục. `PopupRuleSchema` (`packages/schema/src/popup.ts`: `when` locator → `click` target | `escape`), cột `projects.popup_rules` (migration 11) + `project.json` (`popupRules`), `ProjectService.setPopupRules`, tRPC `projects.setPopupRules`. Engine: `run/popups.ts` `closePopups` (nhìn 1 lần, không chờ); runner gọi trước mỗi step và khi step lỗi thì đóng popup rồi thử lại ≤ 2 lần (`MAX_POPUP_RETRIES`). UI: `features/environments/popup-rules.tsx` (cuối màn Môi trường, quy tắc theo chữ). Chuỗi i18n không dùng khóa `then` (Biome cấm).
 - M10-06 xong: sửa nhanh theo loại lỗi. `features/run/quick-fixes.tsx` (`classifyFailure` + nút) gắn trong `fix-step-panel.tsx` (mọi sửa → gửi `edit` + `decide retry`). Engine `locator/similar.ts` `findSimilar` (fingerprint → ≤ 3 ứng viên) qua `liveSimilar` (worker/manager/tRPC `runs.liveSimilar`); `edit` thêm `popupRules` (runner dùng `popupRulesEdit()` trước bản lúc bắt đầu). Loại `assertion` chưa có nút (M10-07: cập nhật kỳ vọng + Copy báo cáo bug).
+- M10-07 xong: `features/run/bug-report.ts` (`expectationUpdate`, `mismatchOf`, `buildBugReport`), `copy-bug.ts` (`copyBugReport` → clipboard). Loại lỗi `assertion` ở `quick-fixes.tsx` có câu hỏi "Thay đổi đúng / Đây là bug"; nút "Copy báo cáo bug" cũng nằm ở mỗi step lỗi trên màn Kết quả. Báo cáo chỉ ghi tên file ảnh (chưa nhúng ảnh).
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 
@@ -101,3 +102,4 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 | 2026-11-26 | M10-04 | xong | Chèn step trước/sau step lỗi (thêm tay hoặc ghi thao tác từ trạng thái hiện tại); test `debug.test.ts`, `worker-core.test.ts`, `run-manager.test.ts` |
 | 2026-11-26 | M10-05 | xong | Popup toàn cục cấp dự án (schema, DB migration 11, thư mục dự án, engine, UI); e2e `popups.e2e.test.ts`, `levels.test.ts` |
 | 2026-11-26 | M10-06 | xong | Sửa nhanh theo loại lỗi: chọn lại / phần tử tương tự (fingerprint) / chờ lâu hơn / thêm bước chờ / thêm trình xử lý popup; test `similar.e2e.test.ts`, `quick-fixes.test.ts`, `worker-core.test.ts` |
+| 2026-11-26 | M10-07 | xong | Cập nhật kỳ vọng bằng giá trị thực + hỏi "Thay đổi đúng / Đây là bug" + Copy báo cáo bug (Markdown); test `bug-report.test.ts` |
