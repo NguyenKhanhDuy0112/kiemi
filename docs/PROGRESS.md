@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M9-11** (demo-site 2 app khác domain + e2e 2 sản phẩm + kiểm tra cả M9 + app thật + mở PR) → M9-10 → M9-11.
+**M10** (nhánh mới `milestone/m10-<tên>` từ `main`; xem ROADMAP). M9 đã xong, PR chờ merge.
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
@@ -93,3 +93,4 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 | 2026-11-26 | M9-09a | xong | Bảng `shared_resources` + service + router + gộp vào run; test `shared-resources.test.ts` |
 | 2026-11-26 | M9-09b | xong | UI thư viện workspace + danh sách test bị ảnh hưởng; test `usersOfSharedStep` |
 | 2026-11-26 | M9-10 | xong | Chuyển dự án nhanh (ghim/gần đây) + Ctrl/⌘K tìm test/phần tử/step toàn workspace; test `recent-projects`, `search.index` |
+| 2026-11-26 | M9-11 | xong | Demo-site 2 app khác tên miền (`site.apps.web/admin`, Chromium `DEMO_HOST_RULES`); e2e `products.e2e.test.ts` (1 test đi qua 2 sản phẩm, đổi môi trường đúng URL/tài khoản). Cả M9: lint + typecheck + test pass; app thật `_electron.launch`: palette dự án, thư viện dùng chéo, tab Môi trường OK |

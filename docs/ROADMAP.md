@@ -104,7 +104,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M9-09a** Phạm vi tài nguyên dùng chung — DB/schema: bảng `shared_resources`, cột phạm vi Sản phẩm/Dự án/Workspace, service + migration [O-07, M]
 - [x] **M9-09b** Phạm vi tài nguyên dùng chung — UI: menu "Dùng chéo dự án", danh sách test bị ảnh hưởng khi sửa step dùng chung [O-07, M]
 - [x] **M9-10** Chuyển dự án nhanh (bộ chọn, gần đây, ghim) + tìm kiếm toàn workspace Ctrl/Cmd+K [O-08, S]
-- [ ] **M9-11** Demo-site: 2 app khác domain (admin/web) + e2e: 1 test đi qua 2 sản phẩm, đổi môi trường lấy đúng URL/tài khoản; test cả milestone M9 + app thật + mở PR [L]
+- [x] **M9-11** Demo-site: 2 app khác domain (admin/web) + e2e: 1 test đi qua 2 sản phẩm, đổi môi trường lấy đúng URL/tài khoản; test cả milestone M9 + app thật + mở PR [L]
 
 ## M10 — Sửa khi fail
 - [ ] **M10-01** Tạm dừng khi lỗi: giữ trình duyệt + mọi tab/phiên, chọn sẵn step lỗi, highlight phần tử (bật mặc định khi chạy tay, tắt khi suite/CLI) [FX-01] [S]

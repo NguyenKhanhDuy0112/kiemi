@@ -1,3 +1,4 @@
+import { DEMO_HOST_RULES } from '@kiemi/demo-site/server';
 import { type Browser, chromium } from 'playwright-core';
 
 /**
@@ -9,7 +10,11 @@ export async function launchTestBrowser(): Promise<Browser> {
   const errors: string[] = [];
   for (const channel of ['chrome', 'msedge', undefined] as const) {
     try {
-      return await chromium.launch(channel ? { channel, headless: true } : { headless: true });
+      return await chromium.launch(
+        channel
+          ? { channel, headless: true, args: [DEMO_HOST_RULES] }
+          : { headless: true, args: [DEMO_HOST_RULES] },
+      );
     } catch (err) {
       errors.push(
         `${channel ?? 'chromium'}: ${err instanceof Error ? err.message.split('\n')[0] : String(err)}`,
