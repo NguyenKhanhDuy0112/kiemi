@@ -114,6 +114,14 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
         const result = await run(request, {
           registry,
           browser: launched.browser,
+          launchBrowser: async (kind) =>
+            (
+              await launch({
+                settings: { ...msg.launch.settings, browser: kind },
+                browsersPath: msg.launch.browsersPath,
+                signal: abort.signal,
+              })
+            ).browser,
           signal: abort.signal,
           debugger: debug,
           onEvent: (event) => post({ type: 'event', event }),

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BROWSER_KINDS } from '../browser/detect';
 import { defineAction } from '../define-action';
 import { EngineError } from '../errors';
 import { left, text } from './_common';
@@ -144,5 +145,36 @@ export const assertTabCountAction = defineAction({
       }
       await new Promise((r) => setTimeout(r, 100));
     }
+  },
+});
+
+/**
+ * Open a page in ANOTHER session (other role, or a fresh anonymous visitor) or
+ * in another browser (Edge vs Chrome) — the session is created on first use.
+ * Later steps use it through their own `session` [V-02].
+ */
+export const openInAction = defineAction({
+  type: 'openIn',
+  params: z.object({
+    session: text,
+    url: text,
+    browser: z.enum(['same', ...BROWSER_KINDS]).default('same'),
+    name: text.optional(),
+  }),
+  ui: { label: 'actions.openIn', icon: 'app-window', group: 'tabs' },
+  async execute({ session, url, browser, name }, ctx) {
+    const pages = ctx.run.pages;
+    await ctx.page();
+    const fresh = !pages.isOpen(session);
+    if (browser !== 'same') pages.useBrowser(session, browser);
+    const first = await pages.page(session);
+    let page = first;
+    if (!fresh) {
+      page = await (await pages.context(session)).newPage();
+      await pages.setActivePage(session, page);
+    }
+    if (name) pages.nameTab(session, name, page);
+    await page.goto(ctx.run.url(url), { timeout: left(ctx) });
+    ctx.log(`Opened ${url} in session "${session}"${browser === 'same' ? '' : ` (${browser})`}`);
   },
 });

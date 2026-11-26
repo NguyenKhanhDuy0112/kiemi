@@ -1144,6 +1144,10 @@ export const enUi = {
     closeTab: { label: 'Close tab', sentence: 'Close the current tab' },
     captureTab: { label: 'Name the new tab', sentence: 'Name the tab that just opened “{{name}}”' },
     assertTabCount: { label: 'Check tab count', sentence: '{{count}} tab(s) are open' },
+    openIn: {
+      label: 'Open in another session / browser',
+      sentence: 'Open {{url}} in session “{{session}}”',
+    },
     dialog: { label: 'Answer dialog', sentence: 'Next dialog: {{action}}' },
     switchSession: { label: 'Switch session', sentence: 'Switch to this session' },
     clearData: { label: 'Clear cookies / data', sentence: 'Clear cookies and page data' },

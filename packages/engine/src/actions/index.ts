@@ -28,6 +28,7 @@ import {
   captureTabAction,
   closeTabAction,
   newTabAction,
+  openInAction,
   switchTabAction,
 } from './tabs';
 import { uploadAction } from './upload';
@@ -56,6 +57,7 @@ export const builtinActions: ActionDefinition[] = [
   closeTabAction,
   captureTabAction,
   assertTabCountAction,
+  openInAction,
   dialogAction,
   switchSessionAction,
   saveSessionAction,

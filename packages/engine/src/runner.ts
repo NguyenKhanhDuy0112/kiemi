@@ -20,7 +20,13 @@ import {
 } from '@kiemi/schema';
 import type { Browser, Page, Locator as PwLocator } from 'playwright-core';
 import type { z } from 'zod';
-import { ensureFfmpeg, proxyFor, SessionPages, type ViewportSettings } from './browser';
+import {
+  type BrowserKind,
+  ensureFfmpeg,
+  proxyFor,
+  SessionPages,
+  type ViewportSettings,
+} from './browser';
 import type { ActionContext, ActionRegistry } from './define-action';
 import { EngineError, StepFailure, toRunError } from './errors';
 import type { EngineEvent, EngineEventListener, LogLevel, StepPhase } from './events';
@@ -99,6 +105,8 @@ export interface RunOptions {
   onEvent?: EngineEventListener;
   /** Launched browser (see `launchBrowser`); each session gets its own context. */
   browser?: Browser;
+  /** Starts another browser for a session opened in a different one [V-02]. */
+  launchBrowser?: (kind: BrowserKind) => Promise<Browser>;
   /** Abort to cancel the run; cleanup still runs. */
   signal?: AbortSignal;
   /** Pause / step / breakpoints [H-03]. */
@@ -319,6 +327,7 @@ class Run {
         videoDir: video && artifactsOpt ? join(artifactsOpt.dir, 'video') : undefined,
         traceDir: artifactsOpt?.trace ? artifactsOpt.dir : undefined,
         onPage: (session, page) => this.#onPage(session, page),
+        ...(this.#opts.launchBrowser ? { launchBrowser: this.#opts.launchBrowser } : {}),
       });
       this.#services = this.#makeServices();
 

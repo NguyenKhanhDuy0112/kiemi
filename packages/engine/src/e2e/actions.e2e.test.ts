@@ -205,6 +205,38 @@ describe('tabs, dialogs, iframes, sessions, storage [A-13 → A-18, F-01]', () =
     ]);
   });
 
+  it('opens pages in another session and in another browser [V-02]', async () => {
+    const before = e.launched.length;
+    const r = await e.run(
+      [
+        step('goto', { url: '/table.html' }),
+        step('openIn', { session: 'khach', url: '/dialogs.html' }),
+        step('assertTitle', { op: 'contains', value: 'Hộp thoại' }, { session: 'khach' }),
+        step('openIn', { session: 'khach', url: '/popup.html', name: 'phu' }),
+        step('assertTabCount', { count: 2 }, { session: 'khach' }),
+        step('assertTabCount', { count: 1 }), // the first session is untouched
+        step('openIn', { session: 'edge', url: '/form.html', browser: 'chromium' }),
+        step('assertUrl', { op: 'contains', value: 'form.html' }, { session: 'edge' }),
+        step('assertUrl', { op: 'contains', value: 'table.html' }), // default session stays on its page
+        step('openIn', { session: 'edge', url: '/form.html', browser: 'msedge' }, { mode: 'soft' }),
+      ],
+      { sessions: ['default', 'khach', 'edge'] },
+    );
+    expect(summary(r)).toEqual([
+      '1 passed',
+      '2 passed',
+      '3 passed',
+      '4 passed',
+      '5 passed',
+      '6 passed',
+      '7 passed',
+      '8 passed',
+      '9 passed',
+      '10 failed ACTION_FAILED',
+    ]);
+    expect(e.launched.length - before).toBe(1);
+  });
+
   it('finds elements inside nested iframes automatically', async () => {
     const r = await e.run([
       step('goto', { url: '/iframe.html' }),

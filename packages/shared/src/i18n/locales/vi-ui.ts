@@ -1140,6 +1140,10 @@ export const viUi = {
     closeTab: { label: 'Đóng tab', sentence: 'Đóng tab đang mở' },
     captureTab: { label: 'Đặt tên tab mới mở', sentence: 'Đặt tên “{{name}}” cho tab vừa mở' },
     assertTabCount: { label: 'Kiểm tra số tab', sentence: 'Có {{count}} tab đang mở' },
+    openIn: {
+      label: 'Mở trang ở phiên / trình duyệt khác',
+      sentence: 'Mở {{url}} ở phiên “{{session}}”',
+    },
     dialog: { label: 'Trả lời hộp thoại', sentence: 'Hộp thoại tiếp theo: {{action}}' },
     switchSession: { label: 'Đổi phiên', sentence: 'Chuyển sang phiên này' },
     clearData: { label: 'Xóa cookie / dữ liệu', sentence: 'Xóa cookie và dữ liệu trang' },

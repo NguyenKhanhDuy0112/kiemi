@@ -150,7 +150,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 
 ## M13 — Web thực tế & kiểm tra chéo
 - [x] **M13-01** Tab có tên: mở/bắt tab do thao tác mở, đặt tên, chuyển theo tên, nhãn tab trên step, recorder tự đặt tên [V-01]
-- [ ] **M13-02** Phạm vi khi mở tab: cùng phiên / phiên khác / trình duyệt khác [V-02]
+- [x] **M13-02** Phạm vi khi mở tab: cùng phiên / phiên khác / trình duyệt khác [V-02]
 - [ ] **M13-03** So sánh trực tiếp giữa 2 nơi trong 1 step (text, số có sai lệch, bảng vs bảng), ảnh cả 2 tab khi lệch [V-03]
 - [ ] **M13-04** Giả lập thời gian (đặt giờ, tua nhanh, đóng băng) [Y-01]
 - [ ] **M13-05** HTTP Basic / NTLM / Windows auth theo môi trường [W-01]

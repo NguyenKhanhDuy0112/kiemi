@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import type { Browser, BrowserContext, Page } from 'playwright-core';
 import { EngineError } from '../errors';
+import type { BrowserKind } from './detect';
 import { contextEmulation, type ViewportSettings } from './options';
 import type { ContextProxy } from './proxy';
 
@@ -23,6 +24,8 @@ export interface SessionPagesOptions {
   videoDir?: string | undefined;
   /** Record a Playwright trace per session into this folder [I-03]. */
   traceDir?: string | undefined;
+  /** Starts another browser (Edge vs Chrome…) for sessions opened "in another browser" [V-02]. */
+  launchBrowser?: (kind: BrowserKind) => Promise<Browser>;
   /** Called for every page of every session (first page, new tabs, popups). */
   onPage?: (session: string, page: Page) => void;
 }
@@ -36,6 +39,10 @@ export class SessionPages {
   readonly #browser: Browser | undefined;
   readonly #options: SessionPagesOptions;
   readonly #sessions = new Map<string, Promise<SessionState>>();
+  /** Browsers started on demand, by kind; closed with the sessions [V-02]. */
+  readonly #extraBrowsers = new Map<BrowserKind, Promise<Browser>>();
+  /** Browser kind chosen for a session before its first use. */
+  readonly #kinds = new Map<string, BrowserKind>();
   /** Tab names per session; the first tab is `main` [V-01]. */
   readonly #names = new Map<string, Map<string, Page>>();
 
@@ -100,6 +107,33 @@ export class SessionPages {
     return [...(this.#names.get(session) ?? [])].filter(([, p]) => !p.isClosed()).map(([n]) => n);
   }
 
+  /** Makes `session` (not opened yet) run in another browser [V-02]. */
+  useBrowser(session: string, kind: BrowserKind): void {
+    if (this.#sessions.has(session)) {
+      if (this.#kinds.get(session) === kind) return;
+      throw new EngineError('ACTION_FAILED', `Session "${session}" is already open`, {
+        reason: `Session "${session}" is already open in another browser`,
+      });
+    }
+    this.#kinds.set(session, kind);
+  }
+
+  async #browserFor(session: string): Promise<Browser | undefined> {
+    const kind = this.#kinds.get(session);
+    if (kind === undefined) return this.#browser;
+    const launch = this.#options.launchBrowser;
+    if (!launch) {
+      throw new EngineError('NO_BROWSER', 'This run cannot start another browser', { session });
+    }
+    let browser = this.#extraBrowsers.get(kind);
+    if (!browser) {
+      browser = launch(kind);
+      this.#extraBrowsers.set(kind, browser);
+      browser.catch(() => this.#extraBrowsers.delete(kind));
+    }
+    return browser;
+  }
+
   /** Sessions opened so far. */
   opened(): string[] {
     return [...this.#sessions.keys()];
@@ -110,13 +144,14 @@ export class SessionPages {
   }
 
   #state(session: string): Promise<SessionState> {
-    const browser = this.#browser;
-    if (!browser) {
+    if (!this.#browser) {
       return Promise.reject(new EngineError('NO_BROWSER', 'This run has no browser', { session }));
     }
     let state = this.#sessions.get(session);
     if (!state) {
       state = (async () => {
+        const browser = await this.#browserFor(session);
+        if (!browser) throw new EngineError('NO_BROWSER', 'This run has no browser', { session });
         const o = this.#options;
         const emulation = contextEmulation(o.viewport ?? {});
         const context = await browser.newContext({
@@ -173,6 +208,10 @@ export class SessionPages {
         }
       }),
     );
+    for (const pending of this.#extraBrowsers.values()) {
+      await (await pending.catch(() => undefined))?.close().catch(() => undefined);
+    }
+    this.#extraBrowsers.clear();
     return artifacts;
   }
 }
