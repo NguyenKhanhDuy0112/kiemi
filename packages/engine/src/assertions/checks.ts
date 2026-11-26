@@ -5,6 +5,7 @@ import { countMatches } from '../locator/resolve';
 import { TargetParamSchema, toLocator } from '../run/target';
 import { stringify } from '../vars/evaluate';
 import {
+  allowance,
   CountOpSchema,
   compareDate,
   compareNumber,
@@ -167,22 +168,40 @@ export const numberCheck = defineCheck({
       value: z.unknown(),
       /** Upper bound for `between`. */
       max: z.unknown().optional(),
+      /** Allowed gap for `eq`/`ne`, in the same unit [P-04]. */
+      tolerance: z.unknown().optional(),
+      /** Allowed gap for `eq`/`ne`, as % of the expected value [P-04]. */
+      tolerancePercent: z.unknown().optional(),
     })
     .refine(
       (p) => p.target !== undefined || p.actual !== undefined,
       'target or actual is required',
     ),
   async check(p, ctx) {
+    const locale = ctx.run.env?.locale ?? 'vi';
     const text = p.target ? await elementText(ctx, p.target) : stringify(p.actual);
-    const actual = extractNumber(text);
-    const a = extractNumber(p.value);
-    const b = p.max === undefined ? undefined : extractNumber(p.max);
+    const actual = extractNumber(text, locale);
+    const a = extractNumber(p.value, locale);
+    const b = p.max === undefined ? undefined : extractNumber(p.max, locale);
+    const tolerance = {
+      absolute: p.tolerance === undefined ? undefined : extractNumber(p.tolerance, locale),
+      percent:
+        p.tolerancePercent === undefined ? undefined : extractNumber(p.tolerancePercent, locale),
+    };
     if (actual === undefined || a === undefined)
       return { pass: false, actual: text, expected: p.value };
+    const allowed = p.op === 'eq' || p.op === 'ne' ? allowance(a, tolerance) : 0;
+    const gap = Number((actual - a).toFixed(10));
     return {
-      pass: compareNumber(actual, p.op, a, b),
-      actual,
-      expected: p.op === 'between' ? `${a} – ${b}` : a,
+      pass: compareNumber(actual, p.op, a, b, tolerance),
+      // Shows by how much it misses, so the tester can judge the tolerance [P-04].
+      actual: allowed > 0 ? `${actual} (chênh ${gap > 0 ? '+' : ''}${gap})` : actual,
+      expected:
+        p.op === 'between'
+          ? `${a} – ${b}`
+          : allowed > 0
+            ? `${a} ± ${Number(allowed.toFixed(10))}`
+            : a,
     };
   },
 });

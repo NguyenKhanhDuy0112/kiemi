@@ -140,7 +140,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M12-02b** Dataset lồng nhau — UI: dạng cây trong tab Dữ liệu, chọn cột khóa, nhập nhiều sheet [P-01]
 - [x] **M12-03a** ADR 0019 + engine công thức: so sánh, `SUM/COUNT/MIN/MAX/AVG/SUMIF/COUNTIF/FILTER/IF/AND/OR/ROUND*`, công thức có tên, vết từng bước [P-03]
 - [x] **M12-03b** Công thức dùng chung theo dự án: lưu DB/`project.json`, truyền vào run, màn quản lý + thử (hiện từng bước tính) [P-03]
-- [ ] **M12-04** So sánh số có sai lệch + định dạng số/tiền/ngày VN theo môi trường [P-04, P-10]
+- [x] **M12-04** So sánh số có sai lệch + định dạng số/tiền/ngày VN theo môi trường [P-04, P-10]
 - [ ] **M12-05** Kỳ vọng 2 nguồn (cột Excel + công thức) + so sánh bảng với danh sách kỳ vọng theo khóa [P-05, P-06]
 - [ ] **M12-06** Kiểm tra bảng: mọi dòng thỏa điều kiện, đã sắp xếp (thứ tự tiếng Việt), duyệt mọi trang + tổng khớp nhãn [Q-01, Q-02, Q-03]
 - [ ] **M12-07** File tải về: tên/loại/dung lượng, đọc Excel/CSV/PDF → biến [Q-04]

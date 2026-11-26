@@ -402,4 +402,9 @@ CREATE INDEX "shared_resources_workspace_idx" ON "shared_resources" ("workspace_
     name: 'project-formulas',
     sql: `ALTER TABLE "projects" ADD COLUMN "formulas" TEXT;`,
   },
+  {
+    id: 17,
+    name: 'environment-locale',
+    sql: `ALTER TABLE "environments" ADD COLUMN "locale" TEXT;`,
+  },
 ];

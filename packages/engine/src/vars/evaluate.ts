@@ -4,7 +4,14 @@ import { addDuration, formatDate, parseDate } from './dates';
 import { type Duration, type Node, nodeText, parseExpression } from './expression';
 import { FAKE, GENERATORS, randomInt, randomString } from './generators';
 import { SHEET_FUNCTIONS, truthy } from './sheet';
-import { compareValues, stringify, toNumber } from './values';
+import {
+  compareValues,
+  formatMoney,
+  formatNumber,
+  type Locale,
+  stringify,
+  toNumber,
+} from './values';
 
 export { stringify, toNumber };
 
@@ -31,6 +38,8 @@ export interface EvalEnv {
   formulas?: Readonly<Record<string, NamedFormula>> | undefined;
   /** Receives every operation result, innermost first. */
   trace?: ((step: TraceStep) => void) | undefined;
+  /** Reading/writing of numbers and money, from the environment [P-10]. */
+  locale?: Locale | undefined;
   /** Nesting of named formulas (guards recursion). */
   depth?: number;
 }
@@ -46,8 +55,8 @@ function fail(
   return new EngineError(code, message, details);
 }
 
-function num(v: unknown, op: string): number {
-  const n = toNumber(v);
+function num(v: unknown, op: string, locale?: Locale): number {
+  const n = toNumber(v, locale);
   if (n === undefined)
     throw fail('INVALID_EXPRESSION', `"${stringify(v)}" is not a number (${op})`, {
       value: stringify(v),
@@ -60,7 +69,18 @@ const FUNCTIONS: Record<string, (args: unknown[], env: EvalEnv) => unknown> = {
   floor: ([x]) => Math.floor(num(x, 'floor')),
   ceil: ([x]) => Math.ceil(num(x, 'ceil')),
   abs: ([x]) => Math.abs(num(x, 'abs')),
-  number: ([x]) => num(x, 'number'),
+  number: ([x], env) => num(x, 'number', env.locale),
+  /** `parseNumber('1.250.000 ₫')` → 1250000 (reads by the environment's locale). */
+  parseNumber: ([x], env) => num(x, 'parseNumber', env.locale),
+  /** `formatNumber(1250000)` → `1.250.000` (`vi`) / `1,250,000` (`en`); optional decimals. */
+  formatNumber: ([x, d], env) =>
+    formatNumber(
+      num(x, 'formatNumber', env.locale),
+      env.locale,
+      d === undefined ? undefined : num(d, 'formatNumber'),
+    ),
+  /** `formatMoney(1250000)` → `1.250.000 ₫` (`vi`) / `₫1,250,000` (`en`). */
+  formatMoney: ([x], env) => formatMoney(num(x, 'formatMoney', env.locale), env.locale),
   random: ([a, b]) =>
     a === undefined
       ? randomInt(100000, 999999)
@@ -151,7 +171,7 @@ function evalNode(node: Node, env: EvalEnv): unknown {
     case 'dur':
       return node.v;
     case 'neg':
-      return -num(evaluate(node.e, env), '-');
+      return -num(evaluate(node.e, env), '-', env.locale);
     case 'cmp':
       return compareValues(evaluate(node.l, env), node.op, evaluate(node.r, env));
     case 'call': {
@@ -212,12 +232,12 @@ function evalNode(node: Node, env: EvalEnv): unknown {
         return addDuration(l, r, node.op === '+' ? 1 : -1);
       }
       if (node.op === '+') {
-        const a = toNumber(l);
-        const b = toNumber(r);
+        const a = toNumber(l, env.locale);
+        const b = toNumber(r, env.locale);
         return a !== undefined && b !== undefined ? a + b : stringify(l) + stringify(r);
       }
-      const a = num(l, node.op);
-      const b = num(r, node.op);
+      const a = num(l, node.op, env.locale);
+      const b = num(r, node.op, env.locale);
       if (node.op === '-') return a - b;
       if (node.op === '*') return a * b;
       if ((node.op === '/' || node.op === '%') && b === 0) {

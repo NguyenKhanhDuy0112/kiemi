@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M12** đang làm trên nhánh `milestone/m12-data-compute`: M12-01 → M12-03 xong → M12-04. M11 đã merge.
+**M12** đang làm trên nhánh `milestone/m12-data-compute`: M12-01 → M12-04 xong → M12-05. M11 đã merge.
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
@@ -28,6 +28,7 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 - M12-02b xong: tab Dữ liệu có hộp "Các sheet khác thành bảng con" (→ `importFile{linked}`) và cây `features/editor/dataset-tree-view.tsx` (+ `dataset-tree.ts` thuần: `buildTree`, `orphanCount`); chọn lại cột khóa qua `datasets.update{children}`. Cạm bẫy: `./x` ưu tiên `x.ts` trước `x.tsx` → đặt tên component khác tên helper.
 - M12-03a xong: ADR 0019. `engine/src/vars/`: `values.ts` (`toNumber/stringify/compareValues/matchesCriteria`), `sheet.ts` (hàm bảng tính), `evaluate.ts` (`cmp`, `IF` lười, `callFormula`, `trace`), `expression.ts` (so sánh, `f(x).y`, `nodeText`), `VariableScopes.formulas` + `VariableStore.explain(expr)` → `{value, steps}`. Hàm tra không phân biệt hoa/thường. Test `vars/formulas.test.ts`. M12-03b: lưu theo dự án (mẫu: `messageCatalog` M11-03) + UI thử công thức.
 - M12-03b xong: `schema/src/formulas.ts` (`FormulasSchema`), cột `projects.formulas` (migration 16) + `project.json`, tRPC `projects.setFormulas`, `formulas.explain` (`routers/formulas.ts`, chạy `VariableStore.explain`), `RunRequest.formulas` ← `run-manager`. UI view mới `formulas` (sidebar "Công thức", `features/formulas/`: `formula-edit.ts` thuần + `formulas-screen.tsx` có ô "Thử công thức" hiện từng bước). Tên công thức trùng hàm có sẵn → công thức thắng.
+- M12-04 xong: `assertNumber` thêm `tolerance` (tuyệt đối) / `tolerancePercent` (lấy mức lớn hơn; lỗi hiện `1000 (chênh -100)` vs `1100 ± 55`); `Env.locale` ('vi' mặc định | 'en'; cột `environments.locale` migration 17, thư mục dự án, ô chọn ở màn Môi trường) quyết định cách đọc `1.250`; `toNumber(v, locale)`, hàm `parseNumber/formatNumber/formatMoney` (`vars/values.ts`). Chưa làm: ngày theo locale (`dd/MM` vs `MM/dd`) — vẫn mặc định dd/MM/yyyy.
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 

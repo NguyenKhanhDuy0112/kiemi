@@ -50,7 +50,7 @@ function sample() {
   });
   const t2 = s.testCases.create({ projectId, name: 'Đơn khác' });
   const env = s.environments.list(projectId)[0] as { id: string };
-  s.environments.update(env.id, { baseUrl: 'https://uat.example.com' });
+  s.environments.update(env.id, { baseUrl: 'https://uat.example.com', locale: 'en' });
   s.environments.setVariables(env.id, { portal: 'https://p' });
   s.environments.setSecret(env.id, 'nvPass', 'TOP-SECRET');
   const admin = s.products.create({ projectId, name: 'Admin' });
@@ -325,6 +325,7 @@ describe('attach / open / sync', () => {
       url: 'https://admin.uat.example.com',
       variables: { user: 'admin01' },
     });
+    expect(other.environments.forRun(env.id).env.locale).toBe('en'); // [P-10]
     // A teammate on an older build wrote the v1.0 shape: one URL, no cells.
     doc.environments[0] = {
       ...doc.environments[0],

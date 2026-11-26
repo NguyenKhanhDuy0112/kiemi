@@ -186,6 +186,7 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
           type: e.type,
           ...(e.color ? { color: e.color } : {}),
           protected: e.protected,
+          ...(e.locale ? { locale: e.locale } : {}),
           cells: [...e.cells]
             .sort(
               byKey(

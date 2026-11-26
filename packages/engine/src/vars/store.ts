@@ -206,7 +206,12 @@ export class VariableStore {
   }
 
   #env(): EvalEnv {
-    return { lookup: (n) => this.#lookup(n), now: this.#now(), formulas: this.#scopes.formulas };
+    return {
+      lookup: (n) => this.#lookup(n),
+      now: this.#now(),
+      formulas: this.#scopes.formulas,
+      locale: this.#scopes.env?.locale,
+    };
   }
 
   /** Values from env/suite/test/data may themselves contain templates. */

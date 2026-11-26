@@ -780,6 +780,24 @@ function EnvironmentDetails({ id, onChanged }: { id: string; onChanged: () => vo
         </div>
         <div className="flex items-start justify-between gap-4 rounded-md border p-3">
           <div>
+            <Label htmlFor="env-locale">{tx('ui.environments.locale')}</Label>
+            <p className="mt-1 text-xs text-muted-foreground">{tx('ui.environments.localeHint')}</p>
+          </div>
+          <Select
+            value={e.locale ?? 'vi'}
+            onValueChange={(v) => void update({ locale: v === 'en' ? 'en' : null })}
+          >
+            <SelectTrigger id="env-locale" className="w-56">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="vi">{tx('ui.environments.localeVi')}</SelectItem>
+              <SelectItem value="en">{tx('ui.environments.localeEn')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+          <div>
             <Label htmlFor="env-protected" className="flex items-center gap-1.5">
               <ShieldAlert className="size-4 text-fail-text" aria-hidden />
               {tx('ui.environments.protected')}

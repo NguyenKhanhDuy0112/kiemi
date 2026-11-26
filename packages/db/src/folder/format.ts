@@ -101,6 +101,7 @@ export const EnvironmentEntrySchema = z.object({
   type: EnvTypeSchema.default('other'),
   color: EnvColorSchema.nullish(),
   protected: z.boolean().default(false),
+  locale: z.enum(['vi', 'en']).nullish(),
   /** Read only (files written before M9-05) → the first product's cell. */
   baseUrl: z.string().nullish(),
   proxy: ProxySchema.nullish(),

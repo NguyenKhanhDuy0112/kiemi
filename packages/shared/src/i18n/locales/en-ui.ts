@@ -94,6 +94,11 @@ export const enUi = {
     colorHint:
       'Shown on the title bar, the Run screen and reports so environments are never mixed up.',
     protected: 'Protect this environment',
+    locale: 'Number and money format',
+    localeHint:
+      'How “1.250” reads: 1250 (Vietnam) or 1.25 (English). Used by number checks and formatNumber/formatMoney.',
+    localeVi: 'Vietnam (1.250.000 ₫)',
+    localeEn: 'English (₫1,250,000)',
     protectedHint:
       'Tests with data-writing steps (cleanup, API add/change/delete) are refused, and every run needs two confirmations. On by default for Production.',
     protectedBadge: 'Protected',

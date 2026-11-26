@@ -1,5 +1,7 @@
+import { EnvSchema } from '@kiemi/schema';
 import { describe, expect, it } from 'vitest';
 import { VariableStore } from './store';
+import { toNumber } from './values';
 
 const cart = [
   { ten: 'Áo', nhom: 'Thời trang', sl: '2', gia: '150.000 ₫', thanhTien: '300.000 ₫' },
@@ -94,5 +96,29 @@ describe('step-by-step trace [P-03]', () => {
       ['ConVat(SUM(gioHang, "thanhTien") - 90000)', 756000],
     ]);
     expect(steps.find((x) => x.text === 'x * 1.08')?.depth).toBe(1);
+  });
+});
+
+describe('Vietnamese / English numbers [P-10]', () => {
+  const en = new VariableStore({ env: EnvSchema.parse({ id: 'e', name: 'EN', locale: 'en' }) });
+  const vi = new VariableStore({});
+
+  it('reads the same text by the environment locale', () => {
+    expect(vi.evaluate("parseNumber('1.250.000 ₫')")).toBe(1250000);
+    expect(vi.evaluate("parseNumber('1.250')")).toBe(1250);
+    expect(vi.evaluate("parseNumber('12,5')")).toBe(12.5);
+    expect(en.evaluate("parseNumber('1.250')")).toBe(1.25);
+    expect(en.evaluate("parseNumber('1,250,000')")).toBe(1250000);
+    expect(en.evaluate("parseNumber('1,250.75')")).toBe(1250.75);
+    expect(toNumber('1.250', 'en')).toBe(1.25);
+  });
+
+  it('formats numbers and money by locale', () => {
+    expect(vi.evaluate('formatNumber(1250000)')).toBe('1.250.000');
+    expect(vi.evaluate('formatNumber(1234.5, 2)')).toBe('1.234,50');
+    expect(vi.evaluate('formatMoney(1250000)')).toBe('1.250.000 ₫');
+    expect(vi.evaluate('formatMoney(-999)')).toBe('-999 ₫');
+    expect(en.evaluate('formatNumber(1234.5, 2)')).toBe('1,234.50');
+    expect(en.evaluate('formatMoney(1250000)')).toBe('₫1,250,000');
   });
 });

@@ -211,6 +211,8 @@ export const environments = sqliteTable(
     color: text('color'),
     /** Refuses steps that write data [W-10]; on by default for Production. */
     protected: integer('protected', { mode: 'boolean' }).notNull().default(false),
+    /** How numbers/money read and print on this environment; null = `vi` [P-10] (migration 17). */
+    locale: text('locale', { enum: ['vi', 'en'] }),
   },
   (t) => [index('environments_project_idx').on(t.projectId)],
 );

@@ -92,6 +92,11 @@ export const viUi = {
     color: 'Màu nhận diện',
     colorHint: 'Hiện trên thanh tiêu đề, màn Chạy và báo cáo để không nhầm môi trường.',
     protected: 'Bảo vệ môi trường này',
+    locale: 'Định dạng số và tiền',
+    localeHint:
+      'Cách đọc “1.250”: 1250 (Việt Nam) hay 1,25 (Anh/Mỹ). Dùng khi so sánh số và hàm formatNumber/formatMoney.',
+    localeVi: 'Việt Nam (1.250.000 ₫)',
+    localeEn: 'Anh/Mỹ (₫1,250,000)',
     protectedHint:
       'Không chạy test có bước ghi dữ liệu (dọn dẹp, gọi API thêm/sửa/xóa) và phải xác nhận 2 lần trước khi chạy. Production tự bật.',
     protectedBadge: 'Được bảo vệ',

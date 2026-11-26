@@ -145,3 +145,47 @@ describe('project formulas in a run [P-03]', () => {
     expect(summary(r)).toEqual(['1 passed', '2 passed', '3 passed', '4 passed']);
   });
 });
+
+describe('number tolerance and locale [P-04, P-10]', () => {
+  it('passes within the allowed gap and shows the difference when outside', async () => {
+    const r = await e.run(
+      [
+        step('assertNumber', { actual: '333.396', op: 'eq', value: '333.400', tolerance: 100 }),
+        step('assertNumber', { actual: '1.250.000 ₫', op: 'eq', value: 1250000 }),
+        step('assertNumber', { actual: '1.000', op: 'eq', value: 1030, tolerancePercent: 5 }),
+        step('assertNumber', { actual: '1.250', op: 'eq', value: 1250 }),
+        step('assertNumber', { actual: '1.000', op: 'eq', value: 1100, tolerancePercent: 5 }),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 1000 } } },
+    );
+    expect(summary(r)).toEqual([
+      '1 passed',
+      '2 passed',
+      '3 passed',
+      '4 passed',
+      '5 failed ASSERTION_FAILED',
+    ]);
+    const failed = JSON.stringify(r);
+    expect(failed).toContain('1100 ± 55');
+    expect(failed).toContain('1000 (chênh -100)');
+  });
+
+  it('reads "1.250" as 1.25 when the environment is English', async () => {
+    const r = await e.run([step('assertNumber', { actual: '1.250', op: 'eq', value: 1.25 })], {
+      request: {
+        env: {
+          id: 'en',
+          name: 'EN',
+          baseUrl: e.site.url,
+          variables: {},
+          secretNames: [],
+          apps: {},
+          type: 'other',
+          protected: false,
+          locale: 'en',
+        },
+      },
+    });
+    expect(summary(r)).toEqual(['1 passed']);
+  });
+});
