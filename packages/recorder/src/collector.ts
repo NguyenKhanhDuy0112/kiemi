@@ -38,6 +38,8 @@ export class StepCollector {
   private readonly newId: () => string;
   /** Tab the last step ran in. */
   private currentTab: number | undefined;
+  /** Name of every tab seen: the first is `main`, then `tab-2`, `tab-3`… [V-01]. */
+  private readonly tabNames = new Map<number, string>();
   /** Ids of "Nhập" steps typed into password fields [K-05]. */
   readonly passwords = new Set<string>();
 
@@ -52,17 +54,35 @@ export class StepCollector {
     return this.entries.map((e) => e.step);
   }
 
+  private nameOf(tab: number): string {
+    let name = this.tabNames.get(tab);
+    if (name === undefined) {
+      name = this.tabNames.size === 0 ? 'main' : `tab-${this.tabNames.size + 1}`;
+      this.tabNames.set(tab, name);
+    }
+    return name;
+  }
+
   push(event: RecordedEvent): StepChange[] {
     const changes: StepChange[] = [];
 
     if (event.kind === 'newTab') {
       this.currentTab = event.tab.id;
-      changes.push(this.add('newTab', { url: this.relative(event.url) }));
+      changes.push(
+        this.add('newTab', { url: this.relative(event.url), name: this.nameOf(event.tab.id) }),
+      );
       return changes;
     }
     if (this.currentTab !== undefined && this.currentTab !== event.tab.id) {
-      changes.push(this.add('switchTab', { by: 'index', value: String(event.tab.index) }));
+      const known = this.tabNames.get(event.tab.id);
+      // A tab opened by a click is named once, then switched to by name [V-01].
+      changes.push(
+        known === undefined
+          ? this.add('captureTab', { name: this.nameOf(event.tab.id) })
+          : this.add('switchTab', { by: 'name', value: known }),
+      );
     }
+    this.nameOf(event.tab.id);
     this.currentTab = event.tab.id;
 
     const last = this.entries.at(-1);

@@ -196,7 +196,7 @@ describe('recorder [K-01, K-02]', () => {
     expect(brief(list)).toEqual([
       'goto {"url":"/dialogs.html"}',
       'click {"variant":"single"}',
-      'switchTab {"by":"index","value":"2"}',
+      'captureTab {"name":"tab-2"}',
       'fill {"value":"ghi chú"}',
     ]);
     await replay(list, [

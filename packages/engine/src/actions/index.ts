@@ -23,7 +23,13 @@ import { saveSessionAction, useSessionAction } from './saved-login';
 import { scrollAction } from './scroll';
 import { selectAction } from './select';
 import { switchSessionAction } from './switch-session';
-import { closeTabAction, newTabAction, switchTabAction } from './tabs';
+import {
+  assertTabCountAction,
+  captureTabAction,
+  closeTabAction,
+  newTabAction,
+  switchTabAction,
+} from './tabs';
 import { uploadAction } from './upload';
 import { waitAction } from './wait';
 import { waitUntilAction } from './wait-until';
@@ -48,6 +54,8 @@ export const builtinActions: ActionDefinition[] = [
   newTabAction,
   switchTabAction,
   closeTabAction,
+  captureTabAction,
+  assertTabCountAction,
   dialogAction,
   switchSessionAction,
   saveSessionAction,

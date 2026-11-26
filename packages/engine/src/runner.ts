@@ -581,6 +581,7 @@ class Run {
       try {
         const action = this.#opts.registry.get(step.action);
         container = action?.container === true;
+        if (step.tab) await this.#activateTab(step.session, step.tab);
         const run = await this.#executeStep(step, stepNo, topNo, signal, self, (l) => {
           lastLocator = l;
         });
@@ -657,6 +658,20 @@ class Run {
       result,
       stop: cancelled || (error !== undefined && step.mode === 'hard' && !keepGoing),
     };
+  }
+
+  /** Makes the named tab the active one before a step that is pinned to it [V-01]. */
+  async #activateTab(session: string, name: string): Promise<void> {
+    await this.#pages.page(session);
+    const tab = this.#pages.tabNamed(session, name);
+    if (!tab) {
+      throw new EngineError('TAB_NOT_FOUND', `No tab named "${name}"`, {
+        by: 'name',
+        value: name,
+        tabs: this.#pages.tabNames(session).length,
+      });
+    }
+    await this.#pages.setActivePage(session, tab);
   }
 
   /** Applies the project's popup rules to the session's page; true when one was closed. */

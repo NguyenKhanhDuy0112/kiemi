@@ -25,6 +25,8 @@ export const StepSchema = z.object({
   enabled: z.boolean().default(true),
   /** `soft` failures are recorded but the test keeps running. */
   mode: z.enum(['hard', 'soft']).default('hard'),
+  /** Run this step in the tab with this name (switches first) [V-01]. */
+  tab: z.string().min(1).optional(),
   /** Per-step timeout override in milliseconds [D-07]. */
   timeoutMs: z.number().int().positive().optional(),
   /** Skip the step when this condition holds [D-06]; validated by the engine. */

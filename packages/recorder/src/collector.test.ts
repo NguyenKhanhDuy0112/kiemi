@@ -146,7 +146,7 @@ describe('StepCollector [K-01, K-02]', () => {
     expect(brief(steps)).toEqual([
       'fill {"value":"1"}',
       'fill {"value":"2"}',
-      'switchTab {"by":"index","value":"2"}',
+      'captureTab {"name":"tab-2"}',
       'fill {"value":"3"}',
     ]);
   });
@@ -163,15 +163,16 @@ describe('StepCollector [K-01, K-02]', () => {
     expect(steps.map((s) => s.action)).toEqual([
       'goto',
       'click',
-      'switchTab',
+      'captureTab',
       'click',
       'switchTab',
       'click',
       'newTab',
       'click',
     ]);
-    expect(steps[2]?.params).toEqual({ by: 'index', value: '2' });
-    expect(steps[4]?.params).toEqual({ by: 'index', value: '1' });
+    expect(steps[2]?.params).toEqual({ name: 'tab-2' });
+    expect(steps[4]?.params).toEqual({ by: 'name', value: 'main' });
+    expect(steps[6]?.params).toMatchObject({ name: 'tab-3' });
   });
 
   it('stores URLs under the base URL as relative paths and drops repeated loads', () => {

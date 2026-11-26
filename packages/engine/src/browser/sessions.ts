@@ -36,6 +36,8 @@ export class SessionPages {
   readonly #browser: Browser | undefined;
   readonly #options: SessionPagesOptions;
   readonly #sessions = new Map<string, Promise<SessionState>>();
+  /** Tab names per session; the first tab is `main` [V-01]. */
+  readonly #names = new Map<string, Map<string, Page>>();
 
   constructor(browser: Browser | undefined, options: SessionPagesOptions = {}) {
     this.#browser = browser;
@@ -71,6 +73,31 @@ export class SessionPages {
     const state = await this.#state(session);
     state.page = page;
     await page.bringToFront().catch(() => undefined);
+  }
+
+  /** Gives `page` the name `name` (a name belongs to one tab; renaming moves it) [V-01]. */
+  nameTab(session: string, name: string, page: Page): void {
+    const names = this.#names.get(session) ?? new Map<string, Page>();
+    for (const [n, p] of names) if (p === page) names.delete(n);
+    names.set(name, page);
+    this.#names.set(session, names);
+  }
+
+  /** The open tab called `name`, if any. */
+  tabNamed(session: string, name: string): Page | undefined {
+    const page = this.#names.get(session)?.get(name);
+    return page && !page.isClosed() ? page : undefined;
+  }
+
+  /** Name of `page`, if it has one. */
+  nameOf(session: string, page: Page): string | undefined {
+    for (const [n, p] of this.#names.get(session) ?? []) if (p === page) return n;
+    return undefined;
+  }
+
+  /** Names of the open tabs of `session`. */
+  tabNames(session: string): string[] {
+    return [...(this.#names.get(session) ?? [])].filter(([, p]) => !p.isClosed()).map(([n]) => n);
   }
 
   /** Sessions opened so far. */
@@ -109,6 +136,7 @@ export class SessionPages {
         });
         const page = await context.newPage();
         holder.state = { context, page };
+        this.nameTab(session, 'main', page);
         return holder.state;
       })();
       this.#sessions.set(session, state);

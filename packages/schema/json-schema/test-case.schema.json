@@ -665,6 +665,10 @@
               "soft"
             ]
           },
+          "tab": {
+            "type": "string",
+            "minLength": 1
+          },
           "timeoutMs": {
             "type": "integer",
             "exclusiveMinimum": 0,
@@ -728,6 +732,10 @@
               "hard",
               "soft"
             ]
+          },
+          "tab": {
+            "type": "string",
+            "minLength": 1
           },
           "timeoutMs": {
             "type": "integer",

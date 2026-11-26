@@ -108,6 +108,15 @@ export function StepForm({
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
+            <Label htmlFor="step-tab">{tx('ui.props.tab')}</Label>
+            <Input
+              id="step-tab"
+              placeholder={tx('ui.props.tabHint')}
+              value={step.tab ?? ''}
+              onChange={(e) => patch(e.target.value ? { tab: e.target.value } : { tab: undefined })}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="step-mode">{tx('ui.props.mode')}</Label>
             <Select
               value={step.mode}
