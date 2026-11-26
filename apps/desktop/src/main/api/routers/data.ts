@@ -17,7 +17,7 @@ import {
   SuiteItemInputSchema,
 } from '@kiemi/db';
 import { explainVariables } from '@kiemi/engine';
-import { PopupRulesSchema } from '@kiemi/schema';
+import { LocatorSchema, PopupRulesSchema } from '@kiemi/schema';
 import { z } from 'zod';
 import { publicProcedure, router } from '../trpc';
 
@@ -274,7 +274,42 @@ export const sharedStepsRouter = router({
     .mutation(({ ctx, input }) => ctx.services.sharedSteps.remove(input.id)),
 });
 
+const strategiesInput = z.array(z.record(z.string(), z.unknown())).min(1);
+
 export const elementsRouter = router({
+  /** Tests that hold the same element (name + locator) — what "edit everywhere" touches [FX-08]. */
+  usersOf: publicProcedure
+    .input(z.object({ projectId: id, name: z.string().min(1), strategies: strategiesInput }))
+    .query(({ ctx, input }) =>
+      ctx.services.testCases.usersOfElement(input.projectId, input.name, input.strategies),
+    ),
+  /** New locator for the element in every test and library entry that holds it [FX-08]. */
+  replaceEverywhere: publicProcedure
+    .input(
+      z.object({
+        projectId: id,
+        name: z.string().min(1),
+        from: strategiesInput,
+        locator: LocatorSchema,
+        exceptTestId: id.optional(),
+      }),
+    )
+    .mutation(({ ctx, input }) => {
+      const s = ctx.services;
+      const tests = s.testCases.replaceElement(
+        input.projectId,
+        input.name,
+        input.from,
+        input.locator,
+        input.exceptTestId,
+      );
+      const key = JSON.stringify(input.from);
+      for (const el of s.elements.list(input.projectId)) {
+        if (el.name === input.name && JSON.stringify(el.locator.strategies) === key)
+          s.elements.update(el.id, { locator: input.locator });
+      }
+      return { tests };
+    }),
   list: publicProcedure
     .input(z.object({ projectId: id, productId: id.optional() }))
     .query(({ ctx, input }) => ctx.services.elements.list(input.projectId, input.productId)),

@@ -1,5 +1,6 @@
 import {
   CURRENT_SCHEMA_VERSION,
+  type Locator,
   parseTestCase,
   type TestCase,
   TestCaseSchema,
@@ -59,6 +60,50 @@ export class TestCaseService {
       .list(undefined, testCases.name)
       .filter((r) => callsShared([r.content.steps, r.content.cleanup], sharedId))
       .map((r) => ({ id: r.id, name: r.name, projectId: r.projectId }));
+  }
+
+  /**
+   * Tests of the project that hold the same element — same name and same
+   * locator strategies — i.e. what editing it "everywhere" would touch [FX-08].
+   */
+  usersOfElement(
+    projectId: string,
+    name: string,
+    strategies: unknown,
+  ): { id: string; name: string; refs: string[] }[] {
+    const key = JSON.stringify(strategies);
+    const out: { id: string; name: string; refs: string[] }[] = [];
+    for (const r of this.repo.list(eq(testCases.projectId, projectId), testCases.name)) {
+      const refs = Object.entries(r.content.elements)
+        .filter(([, el]) => el.name === name && JSON.stringify(el.strategies) === key)
+        .map(([ref]) => ref);
+      if (refs.length) out.push({ id: r.id, name: r.name, refs });
+    }
+    return out;
+  }
+
+  /**
+   * Gives the element a new locator in every test that holds it (see
+   * `usersOfElement`), except `exceptId` (saved by the caller) [FX-08].
+   * Returns the tests changed.
+   */
+  replaceElement(
+    projectId: string,
+    name: string,
+    strategies: unknown,
+    locator: Locator,
+    exceptId?: string,
+  ): string[] {
+    const changed: string[] = [];
+    for (const u of this.usersOfElement(projectId, name, strategies)) {
+      if (u.id === exceptId) continue;
+      const row = this.get(u.id);
+      const elements = { ...row.content.elements };
+      for (const ref of u.refs) elements[ref] = { ...locator, name };
+      this.save(u.id, { ...row.content, elements });
+      changed.push(u.id);
+    }
+    return changed;
   }
 
   get(id: string): TestCaseRow {

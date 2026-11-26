@@ -93,6 +93,22 @@ export function FixStepPanel({
   const { data: actions } = useActions();
   const project = useQuery(trpc.projects.get.queryOptions({ id: projectId }));
   const [draft, setDraft] = useState(doc);
+  /** Where a changed element applies: this test, or every test holding it [FX-08]. */
+  const [scope, setScope] = useState<'test' | 'all'>('test');
+  const targetRef = (() => {
+    const t = findStep(doc, stepId)?.params.target as { ref?: string } | undefined;
+    return t && typeof t.ref === 'string' ? t.ref : undefined;
+  })();
+  const savedElement = targetRef ? doc.elements[targetRef] : undefined;
+  const sharedWith = useQuery({
+    ...trpc.elements.usersOf.queryOptions({
+      projectId,
+      name: savedElement?.name ?? '-',
+      strategies: (savedElement?.strategies ?? [{ kind: 'css', value: '-' }]) as never,
+    }),
+    enabled: !!savedElement && !!projectId,
+  });
+  const others = (sharedWith.data ?? []).filter((u) => u.id !== testCaseId);
   const [busy, setBusy] = useState(false);
   /** Step being edited: the waiting one, or one just added next to it [FX-04]. */
   const [focusId, setFocusId] = useState(stepId);
@@ -179,6 +195,8 @@ export function FixStepPanel({
           await edit({ type: 'edit', insert: { stepId: a.anchor, where: a.where, steps: [s] } });
       }
       // The waiting step itself, unless it is one of the steps just added.
+      const elementsChanged = base.elements !== doc.elements;
+      if (elementsChanged) await edit({ type: 'edit', elements: base.elements });
       const edited = sendAdded.some((a) => a.id === stepId) ? undefined : findStep(base, stepId);
       if (edited) await edit({ type: 'edit', step: edited });
       try {
@@ -186,6 +204,17 @@ export function FixStepPanel({
         await qc.invalidateQueries({ queryKey: trpc.testCases.get.queryKey({ id: testCaseId }) });
       } catch (err) {
         toast.warning(`${tx('ui.run.fixNotSaved')} ${errorMessage(err, tx)}`);
+      }
+      const nextEl = targetRef ? base.elements[targetRef] : undefined;
+      if (scope === 'all' && savedElement && nextEl && nextEl !== savedElement) {
+        const { tests } = await trpcClient.elements.replaceEverywhere.mutate({
+          projectId,
+          name: savedElement.name,
+          from: savedElement.strategies as never,
+          locator: nextEl,
+          exceptTestId: testCaseId,
+        });
+        if (tests.length) toast.success(tx('ui.run.scopeApplied', { count: tests.length }));
       }
       setAdded([]);
       if (retry) await decide(runId, 'retry');
@@ -203,14 +232,25 @@ export function FixStepPanel({
     setDraft(next);
     void apply(true, next);
   };
+  /** New locator for the step's target: edits the saved element when it uses one. */
+  const withTarget = (locator: Locator): TestCase => {
+    if (targetRef && draft.elements[targetRef])
+      return {
+        ...draft,
+        elements: {
+          ...draft.elements,
+          [targetRef]: { ...locator, name: draft.elements[targetRef]?.name ?? targetRef },
+        },
+      };
+    return updateStep(draft, stepId, { params: { ...waiting?.params, target: locator } });
+  };
   const quick: QuickFixActions = {
     hasTarget: waiting?.params.target !== undefined,
     busy,
     onRepick: () => {
       void (async () => {
         const picked = await source.pick().catch(() => null);
-        if (picked)
-          retryWith(updateStep(draft, stepId, { params: { ...waiting?.params, target: picked } }));
+        if (picked) retryWith(withTarget(picked));
       })();
     },
     onSimilar: async () => {
@@ -220,8 +260,7 @@ export function FixStepPanel({
       return (await trpcClient.runs.liveSimilar.mutate({ runId, locator }))
         .candidates as SimilarCandidate[];
     },
-    onUseCandidate: (c) =>
-      retryWith(updateStep(draft, stepId, { params: { ...waiting?.params, target: c.locator } })),
+    onUseCandidate: (c) => retryWith(withTarget(c.locator)),
     onWaitLonger: () =>
       retryWith(
         updateStep(draft, stepId, {
@@ -319,6 +358,33 @@ export function FixStepPanel({
         )}
         <InsertMenu label={tx('ui.run.insertAfter')} onPick={(t) => addStep(t, 'after')} />
       </div>
+      {others.length > 0 && savedElement && (
+        <fieldset className="flex flex-col gap-1.5 border-t px-4 py-3 text-xs">
+          <legend className="sr-only">
+            {tx('ui.run.scopeTitle', { name: savedElement.name })}
+          </legend>
+          <p className="font-medium">{tx('ui.run.scopeTitle', { name: savedElement.name })}</p>
+          {(['test', 'all'] as const).map((v) => (
+            <label key={v} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="fix-scope"
+                checked={scope === v}
+                onChange={() => setScope(v)}
+              />
+              {v === 'test'
+                ? tx('ui.run.scopeTest')
+                : tx('ui.run.scopeAll', { count: others.length })}
+            </label>
+          ))}
+          <ul className="ml-5 list-disc text-muted-foreground" aria-label={tx('ui.run.scopeList')}>
+            {others.slice(0, 8).map((u) => (
+              <li key={u.id}>{u.name}</li>
+            ))}
+            {others.length > 8 && <li>… +{others.length - 8}</li>}
+          </ul>
+        </fieldset>
+      )}
       <div className="sticky bottom-0 flex gap-2 border-t bg-background p-3">
         {failed && (
           <Button size="sm" disabled={busy} onClick={() => void apply(true)}>
