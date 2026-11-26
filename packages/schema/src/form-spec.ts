@@ -24,6 +24,7 @@ export type FieldType = z.infer<typeof FieldTypeSchema>;
 /** Characters a text field accepts; `any` = no restriction. */
 export const ALLOWED_CHARS = ['any', 'digits', 'letters', 'alnum', 'no-special'] as const;
 export const AllowedCharsSchema = z.enum(ALLOWED_CHARS);
+export type AllowedChars = z.infer<typeof AllowedCharsSchema>;
 
 export const FIELD_CONDITION_OPS = ['equals', 'notEquals', 'filled', 'empty'] as const;
 /** "Field `field` is …": used by `visibleWhen` and `requiredWhen`. */

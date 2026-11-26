@@ -1,6 +1,8 @@
 import {
   type FormSpec,
   FormSpecsSchema,
+  type MessageCatalog,
+  MessageCatalogSchema,
   type PopupRule,
   PopupRulesSchema,
   VariableNameSchema,
@@ -66,6 +68,15 @@ export class ProjectService {
   }
   formSpecs(id: string): FormSpec[] {
     return this.repo.get(id).formSpecs ?? [];
+  }
+  /** Error messages the project words differently from the defaults [R-10]. */
+  setMessageCatalog(id: string, messages: unknown) {
+    const p = MessageCatalogSchema.safeParse(messages);
+    if (!p.success) throw validation('messageCatalog', p.error.issues);
+    return this.repo.update(id, { messageCatalog: p.data });
+  }
+  messageCatalog(id: string): MessageCatalog {
+    return this.repo.get(id).messageCatalog ?? {};
   }
   /** Project-level variables, inherited by every test of the project [O-04]. */
   setVariables(id: string, values: Record<string, string>) {

@@ -1,6 +1,7 @@
 import type {
   FormSpec,
   Locator,
+  MessageCatalog,
   PopupRule,
   ProxySettings,
   SharedStep,
@@ -56,6 +57,8 @@ export const projects = sqliteTable(
     popupRules: json<PopupRule[]>('popup_rules'),
     /** Field specs of the project's forms [R-01] (migration 12). */
     formSpecs: json<FormSpec[]>('form_specs'),
+    /** Error messages the project changed [R-10] (migration 13). */
+    messageCatalog: json<MessageCatalog>('message_catalog'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );

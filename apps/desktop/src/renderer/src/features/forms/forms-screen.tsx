@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { FieldRow } from './field-row';
 import { cleanField, firstFormProblem, newField, newForm } from './form-edit';
 import { InferPanel } from './infer-panel';
+import { MessageCatalogEditor } from './message-catalog';
 
 /**
  * "Biểu mẫu": the field specification of each form of the project — type and
@@ -155,6 +156,7 @@ export function FormsScreen() {
           </div>
         </section>
       )}
+      <MessageCatalogEditor projectId={projectId} />
     </div>
   );
 }

@@ -70,7 +70,7 @@ function locatorOf(c: ScannedControl): Locator {
 function validPattern(p: string | null): string | undefined {
   if (!p) return undefined;
   try {
-    new RegExp(`^(?:${p})$`, 'v');
+    new RegExp(`^(?:${p})$`, 'u');
     return p;
   } catch {
     return undefined;

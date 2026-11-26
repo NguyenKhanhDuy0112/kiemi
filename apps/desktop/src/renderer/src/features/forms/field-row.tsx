@@ -6,6 +6,7 @@ import {
   type FieldCondition,
   type FieldSpec,
   type FormSpec,
+  rulesFor,
 } from '@kiemi/schema';
 import { Button } from '@renderer/components/ui/button';
 import { Checkbox } from '@renderer/components/ui/checkbox';
@@ -370,6 +371,30 @@ export function FieldRow({
               )}
             </div>
           </Box>
+          {rulesFor(field.type).length > 0 && (
+            <div className="flex flex-col gap-1 text-xs md:col-span-2">
+              {tx('ui.forms.libraryRules')}
+              <div className="flex flex-wrap gap-4">
+                {rulesFor(field.type).map((r) => (
+                  <div key={r.id} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={field.ruleRefs.includes(r.id)}
+                      aria-label={tx(`ui.forms.rules.${r.id}`)}
+                      onCheckedChange={(v) =>
+                        set({
+                          ruleRefs:
+                            v === true
+                              ? [...field.ruleRefs, r.id]
+                              : field.ruleRefs.filter((x) => x !== r.id),
+                        })
+                      }
+                    />
+                    {tx(`ui.forms.rules.${r.id}`)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-4 text-xs md:col-span-2">
             <div className="flex items-center gap-2">
               <Checkbox

@@ -17,7 +17,12 @@ import {
   SuiteItemInputSchema,
 } from '@kiemi/db';
 import { explainVariables } from '@kiemi/engine';
-import { FormSpecsSchema, LocatorSchema, PopupRulesSchema } from '@kiemi/schema';
+import {
+  FormSpecsSchema,
+  LocatorSchema,
+  MessageCatalogSchema,
+  PopupRulesSchema,
+} from '@kiemi/schema';
 import { z } from 'zod';
 import { publicProcedure, router } from '../trpc';
 
@@ -43,6 +48,12 @@ export const projectsRouter = router({
   setFormSpecs: publicProcedure
     .input(z.object({ id, forms: FormSpecsSchema }))
     .mutation(({ ctx, input }) => ctx.services.projects.setFormSpecs(input.id, input.forms)),
+  /** Error message wording of the project [R-10]. */
+  setMessageCatalog: publicProcedure
+    .input(z.object({ id, messages: MessageCatalogSchema }))
+    .mutation(({ ctx, input }) =>
+      ctx.services.projects.setMessageCatalog(input.id, input.messages),
+    ),
   get: publicProcedure
     .input(z.object({ id }))
     .query(({ ctx, input }) => ctx.services.projects.get(input.id)),

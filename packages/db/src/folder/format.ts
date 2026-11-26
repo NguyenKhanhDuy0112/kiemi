@@ -5,6 +5,8 @@ import {
   type FormSpec,
   FormSpecsSchema,
   LocatorSchema,
+  type MessageCatalog,
+  MessageCatalogSchema,
   type PopupRule,
   PopupRulesSchema,
   ProductSchema,
@@ -59,6 +61,8 @@ export const ProjectFileSchema = z.object({
   popupRules: PopupRulesSchema.default([]),
   /** Field specs of the project's forms [R-01]. */
   formSpecs: FormSpecsSchema.default([]),
+  /** Error messages the project changed [R-10]. */
+  messageCatalog: MessageCatalogSchema.default({}),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -165,6 +169,7 @@ export interface ProjectSnapshot {
     variables: Record<string, string>;
     popupRules: PopupRule[];
     formSpecs: FormSpec[];
+    messageCatalog: MessageCatalog;
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];

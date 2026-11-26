@@ -137,4 +137,18 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     openProjectFolder(other, dir);
     expect(other.projects.formSpecs(projectId)).toEqual(s.projects.formSpecs(projectId));
   });
+
+  it('message catalog of a project travels through the project folder [R-10]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    s.projects.setMessageCatalog(projectId, { required: 'Vui lòng nhập {field}' });
+    expect(() => s.projects.setMessageCatalog(projectId, { required: '' })).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-catalog-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.messageCatalog(projectId)).toEqual({ required: 'Vui lòng nhập {field}' });
+  });
 });
