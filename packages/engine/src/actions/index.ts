@@ -6,6 +6,7 @@ import { checkAction } from './check';
 import { clearAction } from './clear';
 import { clearDataAction } from './clear-data';
 import { clickAction } from './click';
+import { clockAction } from './clock';
 import { dialogAction } from './dialog';
 import { downloadAction } from './download';
 import { extractAction } from './extract';
@@ -13,17 +14,26 @@ import { extractTableAction } from './extract-table';
 import { fillAction } from './fill';
 import { generateFileAction } from './generate-file';
 import { gotoAction } from './goto';
+import { gridFilterAction, gridRowAction } from './grid';
 import { hoverAction } from './hover';
 import { ifAction } from './if';
 import { loopAction } from './loop';
 import { navigateAction } from './navigate';
-import { pickDateAction } from './pick-date';
+import { pickDateAction, pickDateRangeAction } from './pick-date';
+import { pickOptionAction } from './pick-option';
 import { pressAction } from './press';
 import { saveSessionAction, useSessionAction } from './saved-login';
 import { scrollAction } from './scroll';
 import { selectAction } from './select';
 import { switchSessionAction } from './switch-session';
-import { closeTabAction, newTabAction, switchTabAction } from './tabs';
+import {
+  assertTabCountAction,
+  captureTabAction,
+  closeTabAction,
+  newTabAction,
+  openInAction,
+  switchTabAction,
+} from './tabs';
 import { uploadAction } from './upload';
 import { waitAction } from './wait';
 import { waitUntilAction } from './wait-until';
@@ -41,6 +51,8 @@ export const builtinActions: ActionDefinition[] = [
   selectAction,
   checkAction,
   pickDateAction,
+  pickDateRangeAction,
+  pickOptionAction,
   pressAction,
   scrollAction,
   uploadAction,
@@ -48,11 +60,17 @@ export const builtinActions: ActionDefinition[] = [
   newTabAction,
   switchTabAction,
   closeTabAction,
+  captureTabAction,
+  assertTabCountAction,
+  openInAction,
   dialogAction,
   switchSessionAction,
   saveSessionAction,
   useSessionAction,
   clearDataAction,
+  clockAction,
+  gridRowAction,
+  gridFilterAction,
   waitAction,
   extractAction,
   extractTableAction,

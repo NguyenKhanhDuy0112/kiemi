@@ -18,6 +18,7 @@ function doc(
   tags: string[],
   steps: StepInput[],
   cleanup: StepInput[] = [],
+  sessions: string[] = ['default'],
 ) {
   return TestCaseSchema.parse({
     schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -25,6 +26,7 @@ function doc(
     name,
     description,
     tags: ['mẫu', ...tags],
+    sessions,
     steps: steps.map((s, i) => ({ ...s, id: `s${i + 1}` })),
     cleanup: cleanup.map((s, i) => ({ ...s, id: `c${i + 1}` })),
   });
@@ -247,6 +249,83 @@ export function installDataSamples(services: Services, projectId: string, enviro
   ];
   const rows = docs.map((d) => services.testCases.insertDocument(projectId, folder.id, d));
   const suite = services.suites.create({ projectId, name: DATA_SAMPLE_SUITE, environmentId });
+  services.suites.setItems(
+    suite.id,
+    rows.map((r) => ({ testCaseId: r.id })),
+  );
+  return rows;
+}
+
+/** Folder and suite of the "real web" sample (L-03 #8). */
+export const WEB_SAMPLE_FOLDER = 'Web thực tế';
+export const WEB_SAMPLE_SUITE = 'Mẫu web thực tế';
+
+const price = { css: '#price' };
+
+/** Installs L-03 #8: act in one place, check another; promotion by date [M13-09]. */
+export function installWebSamples(services: Services, projectId: string, environmentId: string) {
+  const folder = services.folders.create({ projectId, name: WEB_SAMPLE_FOLDER });
+  const docs = [
+    doc(
+      'Mẫu 8a. Quản lý sửa giá, khách thấy giá mới',
+      'Quản lý (phiên chính) đổi giá khuyến mãi; khách chưa đăng nhập (phiên "khach") mở cùng trang và thấy đúng giá đó — so sánh 2 nơi trong một bước.',
+      ['nhiều phiên'],
+      [
+        reset,
+        { action: 'goto', params: { url: '/login.html' } },
+        { action: 'fill', params: { target: { css: '#username' }, value: 'quanly' } },
+        { action: 'fill', params: { target: { css: '#password' }, value: '123456' } },
+        { action: 'click', params: { target: { role: 'button', name: 'Đăng nhập' } } },
+        { action: 'goto', params: { url: '/promo.html' } },
+        { action: 'openIn', params: { session: 'khach', url: '/promo.html' } },
+        {
+          action: 'assertSame',
+          params: {
+            left: { target: price, session: 'default' },
+            right: { target: price, session: 'khach' },
+          },
+        },
+        { action: 'fill', params: { target: { label: 'Giá khuyến mãi mới' }, value: '120000' } },
+        { action: 'click', params: { target: { role: 'button', name: 'Lưu giá' } } },
+        {
+          action: 'assertText',
+          params: { target: price, value: '120.000 ₫' },
+          session: 'khach',
+        },
+        {
+          action: 'assertSame',
+          params: {
+            left: { target: price, session: 'default' },
+            right: { target: price, session: 'khach' },
+          },
+        },
+      ],
+      [reset],
+      ['default', 'khach'],
+    ),
+    doc(
+      'Mẫu 8b. Khuyến mãi hết hạn theo ngày',
+      'Đặt đồng hồ trình duyệt về 01/06/2030 (còn khuyến mãi, có đếm ngược) rồi tua 30 ngày: khuyến mãi tắt, giá về giá gốc.',
+      ['thời gian'],
+      [
+        { action: 'clock', params: { op: 'set', time: '01/06/2030 08:00' } },
+        { action: 'goto', params: { url: '/promo.html' } },
+        { action: 'assertText', params: { target: price, value: '99.000 ₫' } },
+        {
+          action: 'assertText',
+          params: { target: testId('countdown'), op: 'contains', value: 'Còn 29 ngày' },
+        },
+        { action: 'clock', params: { op: 'advance', amount: 30, unit: 'days' } },
+        {
+          action: 'assertText',
+          params: { target: testId('promo-status'), value: 'Khuyến mãi đã kết thúc' },
+        },
+        { action: 'assertText', params: { target: price, value: '150.000 ₫' } },
+      ],
+    ),
+  ];
+  const rows = docs.map((d) => services.testCases.insertDocument(projectId, folder.id, d));
+  const suite = services.suites.create({ projectId, name: WEB_SAMPLE_SUITE, environmentId });
   services.suites.setItems(
     suite.id,
     rows.map((r) => ({ testCaseId: r.id })),

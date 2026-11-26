@@ -20,8 +20,15 @@ import {
 } from '@kiemi/schema';
 import type { Browser, Page, Locator as PwLocator } from 'playwright-core';
 import type { z } from 'zod';
-import { ensureFfmpeg, proxyFor, SessionPages, type ViewportSettings } from './browser';
-import type { ActionContext, ActionRegistry } from './define-action';
+import {
+  type BrowserKind,
+  ensureFfmpeg,
+  httpAuthFor,
+  proxyFor,
+  SessionPages,
+  type ViewportSettings,
+} from './browser';
+import type { ActionContext, ActionRegistry, Place } from './define-action';
 import { EngineError, StepFailure, toRunError } from './errors';
 import type { EngineEvent, EngineEventListener, LogLevel, StepPhase } from './events';
 import { evaluateCondition } from './flow/condition';
@@ -99,6 +106,8 @@ export interface RunOptions {
   onEvent?: EngineEventListener;
   /** Launched browser (see `launchBrowser`); each session gets its own context. */
   browser?: Browser;
+  /** Starts another browser for a session opened in a different one [V-02]. */
+  launchBrowser?: (kind: BrowserKind) => Promise<Browser>;
   /** Abort to cancel the run; cleanup still runs. */
   signal?: AbortSignal;
   /** Pause / step / breakpoints [H-03]. */
@@ -110,6 +119,13 @@ export interface RunOptions {
    * closes them) instead of closing them — e.g. to record from step X [K-04].
    */
   keepSessions?: (pages: SessionPages) => void;
+}
+
+/** Places (session/tab) a failed comparison looked at, from its error details [V-03]. */
+function placesOf(error: RunError | undefined): Place[] {
+  const raw = error?.details?.places;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((p): p is Place => typeof p === 'object' && p !== null);
 }
 
 /** How many times a failing step is retried after closing a popup [W-09]. */
@@ -316,9 +332,11 @@ class Run {
       this.#pages = new SessionPages(this.#opts.browser, {
         ...(this.#req.options?.viewport ? { viewport: this.#req.options.viewport } : {}),
         proxy: proxyFor(this.#req.env, this.#req.secrets),
+        httpCredentials: httpAuthFor(this.#req.env, this.#req.secrets),
         videoDir: video && artifactsOpt ? join(artifactsOpt.dir, 'video') : undefined,
         traceDir: artifactsOpt?.trace ? artifactsOpt.dir : undefined,
         onPage: (session, page) => this.#onPage(session, page),
+        ...(this.#opts.launchBrowser ? { launchBrowser: this.#opts.launchBrowser } : {}),
       });
       this.#services = this.#makeServices();
 
@@ -581,6 +599,7 @@ class Run {
       try {
         const action = this.#opts.registry.get(step.action);
         container = action?.container === true;
+        if (step.tab) await this.#activateTab(step.session, step.tab);
         const run = await this.#executeStep(step, stepNo, topNo, signal, self, (l) => {
           lastLocator = l;
         });
@@ -634,8 +653,19 @@ class Run {
       !cancelled &&
       (policy === 'always' || (policy === 'onFailure' && status === 'failed'))
     ) {
-      const ref = await this.#screenshot(step.session, stepNo, status, lastLocator);
-      if (ref) {
+      const refs: ArtifactRef[] = [];
+      // A comparison between two places: show both [V-03].
+      const places = status === 'failed' ? placesOf(error) : [];
+      if (places.length > 0) {
+        for (const [i, place] of places.entries()) {
+          const ref = await this.#screenshot(step.session, stepNo, status, undefined, place, i + 1);
+          if (ref) refs.push(ref);
+        }
+      } else {
+        const ref = await this.#screenshot(step.session, stepNo, status, lastLocator);
+        if (ref) refs.push(ref);
+      }
+      for (const ref of refs) {
         artifacts.push(ref);
         this.#emit({ type: 'artifact', runId: this.#req.runId, stepId: step.id, artifact: ref });
       }
@@ -657,6 +687,36 @@ class Run {
       result,
       stop: cancelled || (error !== undefined && step.mode === 'hard' && !keepGoing),
     };
+  }
+
+  /** Page of another session / named tab, or the step's own active page [V-03]. */
+  async #pageAt(session: string, at?: Place): Promise<Page> {
+    const where = at?.session ?? session;
+    const page = await this.#pages.page(where);
+    if (!at?.tab) return page;
+    const tab = this.#pages.tabNamed(where, at.tab);
+    if (!tab) {
+      throw new EngineError('TAB_NOT_FOUND', `No tab named "${at.tab}"`, {
+        by: 'name',
+        value: at.tab,
+        tabs: this.#pages.tabNames(where).length,
+      });
+    }
+    return tab;
+  }
+
+  /** Makes the named tab the active one before a step that is pinned to it [V-01]. */
+  async #activateTab(session: string, name: string): Promise<void> {
+    await this.#pages.page(session);
+    const tab = this.#pages.tabNamed(session, name);
+    if (!tab) {
+      throw new EngineError('TAB_NOT_FOUND', `No tab named "${name}"`, {
+        by: 'name',
+        value: name,
+        tabs: this.#pages.tabNames(session).length,
+      });
+    }
+    await this.#pages.setActivePage(session, tab);
   }
 
   /** Applies the project's popup rules to the session's page; true when one was closed. */
@@ -745,12 +805,17 @@ class Run {
     stepNo: string,
     status: string,
     highlight: PwLocator | undefined,
+    place?: Place,
+    n?: number,
   ): Promise<ArtifactRef | undefined> {
     const dir = this.#req.options?.artifacts?.dir;
-    if (!dir || !this.#pages.isOpen(session)) return undefined;
+    if (!dir || !this.#pages.isOpen(place?.session ?? session)) return undefined;
     try {
-      const page = await this.#pages.page(session);
-      const path = join(dir, `step-${stepNo.replace(/\./g, '_')}-${status}.png`);
+      const page = await this.#pageAt(session, place);
+      const path = join(
+        dir,
+        `step-${stepNo.replace(/\./g, '_')}-${status}${n === undefined ? '' : `-${n}`}.png`,
+      );
       // Red frame around the element the step worked on [I-02].
       const restore = highlight
         ? await highlight
@@ -842,7 +907,7 @@ class Run {
           target,
           this.#opts.debugger?.elementsEdit?.() ?? this.#req.testCase.elements,
         );
-        const page = await this.#pages.page(step.session);
+        const page = await this.#pageAt(step.session, opts?.at);
         const resolved: ResolvedLocator = await resolveLocator(
           () => [page.mainFrame(), ...page.frames().filter((f) => f !== page.mainFrame())],
           this.#vars.interpolate(locator),

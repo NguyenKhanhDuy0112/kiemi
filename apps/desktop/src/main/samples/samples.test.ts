@@ -7,7 +7,12 @@ import { createCaller } from '../api/root';
 import type { RunFeedEvent } from '../run/run-manager';
 import { createTestRunManager } from '../run/testing';
 import { SAMPLE_ENV, SAMPLE_PROJECT, sampleWorkbook, syncSampleEnvironment } from './samples';
-import { DATA_SAMPLE_FOLDER, DATA_SAMPLE_SUITE } from './samples-data';
+import {
+  DATA_SAMPLE_FOLDER,
+  DATA_SAMPLE_SUITE,
+  WEB_SAMPLE_FOLDER,
+  WEB_SAMPLE_SUITE,
+} from './samples-data';
 
 async function launch(): Promise<Browser> {
   for (const channel of ['chrome', 'msedge', undefined] as const) {
@@ -152,6 +157,34 @@ describe('sample tests [L-01, S-08]', () => {
     expect(failed).toEqual([]);
     expect(run.status).toBe('passed');
   }, 300_000);
+
+  it('has the real-web sample (two places, promotion by date) and it passes [L-03 #8]', async () => {
+    const { services, caller } = setup();
+    const { projectId } = await caller.samples.install();
+    const suite = services.suites.list(projectId).find((s) => s.name === WEB_SAMPLE_SUITE);
+    const folder = services.folders.list(projectId).find((f) => f.name === WEB_SAMPLE_FOLDER);
+    expect(services.testCases.list(projectId, folder?.id).map((t) => t.name)).toEqual([
+      'Mẫu 8a. Quản lý sửa giá, khách thấy giá mới',
+      'Mẫu 8b. Khuyến mãi hết hạn theo ngày',
+    ]);
+    const { runId } = await caller.runs.start({
+      target: { kind: 'suite', suiteId: suite?.id ?? '' },
+      options: { headless: true },
+    });
+    await collect(await caller.runs.events({ runId }));
+    const run = await caller.runs.get({ runId });
+    const failed = run.cases
+      .filter((c) => c.status !== 'passed')
+      .map((c) => ({
+        test: c.testName,
+        steps: services.runs
+          .listSteps(c.id)
+          .filter((x) => x.status !== 'passed')
+          .map((x) => `${x.stepNo} ${x.status} ${JSON.stringify(x.error)}`),
+      }));
+    expect(failed).toEqual([]);
+    expect(run.status).toBe('passed');
+  }, 120_000);
 
   it('follows the sample site to its new address', async () => {
     const { services, caller } = setup();

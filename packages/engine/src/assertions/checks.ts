@@ -50,8 +50,12 @@ const once = { timeoutMs: 0 } as const;
 
 const target = TargetParamSchema;
 
-async function elementText(ctx: ActionContext, t: z.infer<typeof target>): Promise<string> {
-  const { locator } = await ctx.resolve(t, once);
+async function elementText(
+  ctx: ActionContext,
+  t: z.infer<typeof target>,
+  at?: { session?: string | undefined; tab?: string | undefined },
+): Promise<string> {
+  const { locator } = await ctx.resolve(t, at ? { ...once, at } : once);
   return locator.evaluate((el) => {
     const h = el as HTMLElement;
     if (h instanceof HTMLInputElement || h instanceof HTMLTextAreaElement) return h.value;
@@ -275,9 +279,38 @@ export const tableCheck = defineCheck({
     column: z.string().min(1),
     op: TextOpSchema.default('equals'),
     value: z.unknown().optional(),
+    /** Virtual-scroll grid: scroll it to find the row [W-03]. */
+    virtual: z.boolean().default(false),
     ...TextMatchOptions,
   }),
   async check(p, ctx) {
+    if (p.virtual) {
+      const { rows } = await readRows(ctx, { target: p.target, virtual: true, once: true });
+      const norm = (s: string) => s.replace(/\s+/g, ' ').trim().toLocaleLowerCase('vi');
+      const cell = (r: Record<string, unknown>, column: string) => {
+        const key = Object.keys(r).find((k) => norm(k) === norm(column));
+        return key === undefined ? undefined : stringify(r[key]);
+      };
+      const row = rows.find((r) =>
+        cell(r, p.where.column) === undefined
+          ? false
+          : norm(cell(r, p.where.column) as string) === norm(stringify(p.where.value)),
+      );
+      if (!row)
+        return {
+          pass: false,
+          actual: `no row with ${p.where.column} = ${stringify(p.where.value)} (${rows.length} rows read)`,
+          expected: p.value,
+          final: true,
+        };
+      const actual = cell(row, p.column) ?? '';
+      return {
+        pass: compareText(actual, p.op, p.value, p),
+        actual,
+        expected: p.value,
+        final: true,
+      };
+    }
     const { locator } = await ctx.resolve(p.target, once);
     const table = await locator.evaluate((el) => {
       const rowsOf = (root: Element) => [...root.querySelectorAll('tr, [role="row"]')];
@@ -315,6 +348,8 @@ export const tableCheck = defineCheck({
 /** Shared by the checks that read a whole table, optionally every page [Q-01 → Q-03]. */
 const tableScope = {
   target,
+  /** Virtual-scroll grid: scroll it to read every row [W-03]. */
+  virtual: z.boolean().default(false),
   allPages: z.boolean().default(false),
   next: target.optional(),
   maxPages: z.coerce.number().int().positive().max(200).default(50),
@@ -439,6 +474,7 @@ export const tableCompareCheck = defineCheck({
       key: z.string().min(1),
       /** Columns to compare (default: all columns of the expected rows). */
       columns: z.array(z.string().min(1)).optional(),
+      virtual: z.boolean().default(false),
       allPages: z.boolean().default(false),
       next: target.optional(),
       maxPages: z.coerce.number().int().positive().max(200).default(50),
@@ -460,6 +496,79 @@ export const tableCompareCheck = defineCheck({
       details: { ...diff },
       final: p.allPages,
     };
+  },
+});
+
+const placeParams = z.object({
+  target,
+  /** Session (user/role) the element is in; default: the step's own. */
+  session: z.string().min(1).optional(),
+  /** Named tab the element is in; default: the active tab. */
+  tab: z.string().min(1).optional(),
+});
+
+/**
+ * Two places compared in one step: `[Giá] ở tab Khách` = `[Giá] ở tab Admin` —
+ * text, numbers (with tolerance) or whole tables [V-03].
+ */
+export const sameCheck = defineCheck({
+  name: 'same',
+  params: z
+    .object({
+      left: placeParams,
+      right: placeParams,
+      as: z.enum(['text', 'number', 'table']).default('text'),
+      tolerance: z.unknown().optional(),
+      tolerancePercent: z.unknown().optional(),
+      /** Table: column that identifies a row. */
+      key: z.string().min(1).optional(),
+      columns: z.array(z.string().min(1)).optional(),
+      ...TextMatchOptions,
+    })
+    .refine((p) => p.as !== 'table' || p.key !== undefined, 'key is required to compare tables'),
+  async check(p, ctx) {
+    const locale = ctx.run.env?.locale ?? 'vi';
+    const places = [
+      { ...(p.left.session ? { session: p.left.session } : {}), tab: p.left.tab },
+      { ...(p.right.session ? { session: p.right.session } : {}), tab: p.right.tab },
+    ];
+    const details = { places: places.map((x) => ({ ...x })) };
+    if (p.as === 'table') {
+      const [l, r] = await Promise.all([
+        readRows(ctx, { target: p.left.target, once: true, at: places[0] }),
+        readRows(ctx, { target: p.right.target, once: true, at: places[1] }),
+      ]);
+      const key = p.key as string;
+      const diff = diffTables(l.rows, r.rows, key, p.columns, locale);
+      const clean = isClean(diff) && diff.duplicates.length === 0;
+      return {
+        pass: clean,
+        actual: clean ? `${l.rows.length} rows` : describeDiff(diff),
+        expected: `${r.rows.length} rows by ${key}`,
+        details: { ...diff, ...details },
+      };
+    }
+    const a = await elementText(ctx, p.left.target, places[0]);
+    const b = await elementText(ctx, p.right.target, places[1]);
+    if (p.as === 'number') {
+      const x = extractNumber(a, locale);
+      const y = extractNumber(b, locale);
+      if (x === undefined || y === undefined)
+        return { pass: false, actual: a, expected: b, details };
+      const tol = {
+        absolute: p.tolerance === undefined ? undefined : extractNumber(p.tolerance, locale),
+        percent:
+          p.tolerancePercent === undefined ? undefined : extractNumber(p.tolerancePercent, locale),
+      };
+      const gap = Number((x - y).toFixed(10));
+      return {
+        pass: compareNumber(x, 'eq', y, undefined, tol),
+        actual: gap === 0 ? x : `${x} (chênh ${gap > 0 ? '+' : ''}${gap})`,
+        expected: y,
+        details,
+      };
+    }
+    return { pass: compareText(a, 'equals', b, p), actual: a, expected: b, details };
   },
 });
 
@@ -701,6 +810,7 @@ export const CHECKS: readonly CheckDef[] = [
   sortedCheck,
   rowTotalCheck,
   expectedCheck,
+  sameCheck,
 ] as CheckDef[];
 
 export const CHECKS_BY_NAME: ReadonlyMap<string, CheckDef> = new Map(

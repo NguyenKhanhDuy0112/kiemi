@@ -5,6 +5,9 @@
 
 import { type ImportRow, type Person, seedPeople } from './data-pages';
 
+/** Promotion shown on `promo.html`. */
+export const DEFAULT_PROMO = { price: 99_000, base: 150_000, endsOn: '2030-06-30' };
+
 export type Role = 'nhanvien' | 'quanly';
 
 export interface User {
@@ -101,9 +104,12 @@ export class DemoStore {
   /** Rows accepted by the import page [P-09]. */
   imported: ImportRow[] = [];
   readonly people: Person[] = seedPeople();
+  /** Summer promotion: price while it runs, normal price after `endsOn` (local date) [Y-01, V-02]. */
+  promo = { ...DEFAULT_PROMO };
 
   reset(): void {
     this.imported = [];
+    this.promo = { ...DEFAULT_PROMO };
     this.requests = [];
     this.products = seedProducts();
     this.seq = 0;

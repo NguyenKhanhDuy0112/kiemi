@@ -29,6 +29,8 @@ export interface E2E {
       debugger?: RunDebugger;
     },
   ): Promise<RunResult>;
+  /** Extra browsers started by `openIn` with another browser [V-02]. */
+  launched: Browser[];
   close(): Promise<void>;
 }
 
@@ -38,7 +40,10 @@ export async function startE2E(syncDelayMs = 0): Promise<E2E> {
   const [browser, site] = await Promise.all([launchTestBrowser(), startDemoSite({ syncDelayMs })]);
   const registry = createDefaultRegistry();
   let n = 0;
+  /** Browsers started for "open in another browser" [V-02]. */
+  const launched: Browser[] = [];
   return {
+    launched,
     browser,
     site,
     async run(steps, extra = {}) {
@@ -73,6 +78,11 @@ export async function startE2E(syncDelayMs = 0): Promise<E2E> {
         {
           registry,
           browser,
+          launchBrowser: async () => {
+            const other = await launchTestBrowser();
+            launched.push(other);
+            return other;
+          },
           ...(dbg ? { debugger: dbg } : {}),
           ...(events ? { onEvent: (e) => events.push(e) } : {}),
         },

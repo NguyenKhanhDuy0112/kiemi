@@ -5,6 +5,7 @@ import {
   EnvSchema,
   EnvTypeSchema,
   guessEnvType,
+  HttpAuthSchema,
   ProxySchema,
   type Secrets,
   SshSettingsSchema,
@@ -36,6 +37,8 @@ export const EnvironmentInputSchema = z.object({
   protected: z.boolean().optional(),
   /** Number/money format of the environment [P-10]. */
   locale: z.enum(['vi', 'en']).nullish(),
+  /** HTTP Basic / NTLM login [W-01]. */
+  httpAuth: HttpAuthSchema.nullish(),
   /**
    * Shortcuts for the DEFAULT product's cell (v1.0 callers: samples, bundles):
    * written into `environment_products`, not into the environment row [O-02].
@@ -118,6 +121,7 @@ export class EnvironmentService {
         color: p.data.color ?? null,
         protected: p.data.protected ?? type === 'production',
         locale: p.data.locale ?? null,
+        httpAuth: p.data.httpAuth ?? null,
         sortOrder: this.list(p.data.projectId).length,
       });
       const { baseUrl, proxy, ssh } = p.data;
@@ -253,6 +257,7 @@ export class EnvironmentService {
         color: src.color,
         protected: src.protected,
         locale: src.locale,
+        httpAuth: src.httpAuth,
       });
       this.setVariables(copy.id, this.variables(environmentId));
       this.setSecretNames(copy.id, this.secretNames(environmentId));
@@ -436,6 +441,7 @@ export class EnvironmentService {
       ...(row.color ? { color: row.color } : {}),
       protected: row.protected,
       ...(row.locale ? { locale: row.locale } : {}),
+      ...(row.httpAuth ? { httpAuth: row.httpAuth } : {}),
       ...(main?.url ? { baseUrl: main.url } : {}),
       apps,
       ...(first ? { defaultProduct: first.key } : {}),

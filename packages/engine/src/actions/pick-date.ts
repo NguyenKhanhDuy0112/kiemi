@@ -31,3 +31,56 @@ export const pickDateAction = defineAction({
     await locator.press('Tab', { timeout: left(ctx) }).catch(() => undefined);
   },
 });
+
+/**
+ * Pick a date range [W-04]: one box that takes `from – to` (date-range pickers), or
+ * two boxes with `targetEnd`. Types the dates, confirms with Enter, then clicks
+ * `apply` when the picker has an "Apply" button.
+ */
+export const pickDateRangeAction = defineAction({
+  type: 'pickDateRange',
+  params: z.object({
+    target,
+    /** Second box, when the range has one box per date. */
+    targetEnd: target.optional(),
+    from: text,
+    to: text,
+    format: z.string().default('dd/MM/yyyy'),
+    /** Between the dates in a single box. */
+    separator: z.string().default(' - '),
+    /** "Apply" button of the picker. */
+    apply: target.optional(),
+  }),
+  ui: { label: 'actions.pickDateRange', icon: 'calendar-range', group: 'input' },
+  async execute(p, ctx) {
+    const start = parseDate(p.from);
+    const end = parseDate(p.to);
+    if (!start || !end) {
+      throw new EngineError('INVALID_PARAMS', `"${start ? p.to : p.from}" is not a date`, {
+        value: start ? p.to : p.from,
+      });
+    }
+    if (start.getTime() > end.getTime()) {
+      throw new EngineError('INVALID_PARAMS', 'The start date is after the end date', {
+        from: p.from,
+        to: p.to,
+      });
+    }
+    const a = format(start, p.format);
+    const b = format(end, p.format);
+    const { locator } = await ctx.resolve(p.target);
+    if (p.targetEnd) {
+      await locator.fill(a, { timeout: left(ctx) });
+      const second = await ctx.resolve(p.targetEnd);
+      await second.locator.fill(b, { timeout: left(ctx) });
+      await second.locator.press('Enter', { timeout: left(ctx) });
+    } else {
+      await locator.fill(`${a}${p.separator}${b}`, { timeout: left(ctx) });
+      await locator.press('Enter', { timeout: left(ctx) });
+    }
+    if (p.apply) {
+      const button = await ctx.resolve(p.apply);
+      await button.locator.click({ timeout: left(ctx) });
+    }
+  },
+});

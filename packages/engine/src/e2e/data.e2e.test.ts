@@ -1,3 +1,6 @@
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { EngineEvent } from '../events';
 import { type E2E, startE2E, step, summary } from './helpers';
@@ -404,6 +407,357 @@ describe('generate files to upload [P-09]', () => {
       '3 passed',
       '4 passed',
       '5 failed FILE_NOT_FOUND',
+    ]);
+  });
+});
+
+describe('compare two places in one step [V-03]', () => {
+  const page = (body: string) => `data:text/html;charset=utf-8,${encodeURIComponent(body)}`;
+  const table = (rows: string[][]) =>
+    `<table id="t"><tr><th>Mã</th><th>Giá</th></tr>${rows
+      .map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`)
+      .join('')}</table>`;
+  const left = (css: string) => ({ target: { css }, tab: 'main' });
+  const right = (css: string) => ({ target: { css }, tab: 'admin' });
+
+  it('compares text, numbers with tolerance and tables across two tabs', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'kiemi-v03-'));
+    const r = await e.run(
+      [
+        step('goto', {
+          url: page(
+            `<p id="p">1.250.000 ₫</p>${table([
+              ['A', '10'],
+              ['B', '20'],
+            ])}`,
+          ),
+        }),
+        step('newTab', {
+          url: page(
+            `<p id="p">1250000</p>${table([
+              ['B', '20'],
+              ['A', '11'],
+            ])}`,
+          ),
+          name: 'admin',
+        }),
+        step('switchTab', { by: 'index', value: 1 }),
+        step('assertSame', { left: left('#p'), right: right('#p'), as: 'number' }),
+        step(
+          'assertSame',
+          { left: left('#p'), right: right('#p') },
+          { mode: 'soft', timeoutMs: 800 },
+        ),
+        step(
+          'assertSame',
+          {
+            left: left('#t'),
+            right: right('#t'),
+            as: 'table',
+            key: 'Mã',
+          },
+          { mode: 'soft', timeoutMs: 800 },
+        ),
+      ],
+      { request: { options: { artifacts: { dir, screenshots: 'onFailure' } } } },
+    );
+    expect(summary(r)).toEqual([
+      '1 passed',
+      '2 passed',
+      '3 passed',
+      '4 passed',
+      '5 failed ASSERTION_FAILED',
+      '6 failed ASSERTION_FAILED',
+    ]);
+    // Both tabs are shown when they differ.
+    expect(r.steps[4]?.artifacts.map((a) => a.path)).toEqual([
+      'step-5-failed-1.png',
+      'step-5-failed-2.png',
+    ]);
+    expect(JSON.stringify(r.steps[5]?.error)).toContain('mismatched');
+  });
+});
+
+describe('fake time [Y-01]', () => {
+  const page = (body: string) => `data:text/html;charset=utf-8,${encodeURIComponent(body)}`;
+  const shows = page(
+    '<p id="d"></p><script>d.textContent=new Date().toISOString().slice(0,16)</script>',
+  );
+  const read = (name: string) => step('extract', { target: { css: '#d' }, into: name });
+
+  it('sets, freezes, advances and resumes the browser clock', async () => {
+    const r = await e.run([
+      step('clock', { op: 'set', time: '15/03/2030 08:00' }),
+      step('goto', { url: shows }),
+      read('t1'),
+      step('assertVariable', { name: 't1', op: 'startsWith', value: '2030-03-1' }),
+      step('clock', { op: 'advance', amount: 2, unit: 'days' }),
+      step('goto', { url: shows }),
+      read('t2'),
+      step('assertVariable', { name: 't2', op: 'startsWith', value: '2030-03-17' }),
+      step('clock', { op: 'freeze', time: '01/01/2031 12:00' }),
+      step('goto', { url: shows }),
+      read('t3'),
+      step('assertVariable', { name: 't3', op: 'startsWith', value: '2031-01-01' }),
+      step('clock', { op: 'set', time: 'không phải ngày' }, { mode: 'soft' }),
+    ]);
+    expect(summary(r)).toEqual([
+      '1 passed',
+      '2 passed',
+      '3 passed',
+      '4 passed',
+      '5 passed',
+      '6 passed',
+      '7 passed',
+      '8 passed',
+      '9 passed',
+      '10 passed',
+      '11 passed',
+      '12 passed',
+      '13 failed INVALID_PARAMS',
+    ]);
+  });
+});
+
+describe('virtual-scroll grid [W-03]', () => {
+  const grid = { css: '#grid' };
+  const open = [
+    step('goto', { url: '/grid.html' }),
+    step('waitUntil', {
+      condition: { assert: 'visible', target: { css: '#viewport [aria-rowindex="2"]' } },
+      timeoutSec: 5,
+    }),
+  ];
+
+  it('reads every row of a grid that only draws what is in view', async () => {
+    const r = await e.run(
+      [
+        ...open,
+        // Without `virtual` only the rows in the window are in the page.
+        step('extractTable', { target: grid, into: 'few' }),
+        step('assertNumber', { actual: '{{few.length}}', op: 'lt', value: 50 }),
+        step('extractTable', { target: grid, into: 'all', virtual: true }),
+        step('assertNumber', { actual: '{{all.length}}', op: 'eq', value: 1000 }),
+        step('assertNumber', { actual: '{{all[0]["Số lượng"]}}', op: 'eq', value: 0 }),
+        step('assertNumber', { actual: '{{all[999]["Số lượng"]}}', op: 'eq', value: 43 }),
+        step('assertNumber', { actual: '{{all[776]["Số lượng"]}}', op: 'eq', value: 32 }),
+        step('assertAllRows', {
+          target: grid,
+          virtual: true,
+          column: 'Số lượng',
+          op: 'lt',
+          value: 50,
+        }),
+        step('assertSorted', {
+          target: grid,
+          virtual: true,
+          column: 'Mã',
+          direction: 'asc',
+          kind: 'text',
+        }),
+        step('assertTable', {
+          target: grid,
+          virtual: true,
+          where: { column: 'Mã', value: 'SP0777' },
+          column: 'Đơn giá',
+          value: '7.000',
+        }),
+        step(
+          'assertTable',
+          {
+            target: grid,
+            virtual: true,
+            where: { column: 'Mã', value: 'SP0777' },
+            column: 'Đơn giá',
+            value: '9.999',
+          },
+          { mode: 'soft', timeoutMs: 15_000 },
+        ),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 30_000 } } },
+    );
+    expect(summary(r)).toEqual([
+      '1 passed',
+      '2 passed',
+      '3 passed',
+      '4 passed',
+      '5 passed',
+      '6 passed',
+      '7 passed',
+      '8 passed',
+      '9 passed',
+      '10 passed',
+      '11 passed',
+      '12 passed',
+      '13 failed ASSERTION_FAILED',
+    ]);
+  });
+});
+
+describe('grid rows and header filters [W-03]', () => {
+  const grid = { css: '#grid' };
+  const open = [
+    step('goto', { url: '/grid.html' }),
+    step('waitUntil', {
+      condition: { assert: 'visible', target: { css: '#viewport [aria-rowindex="2"]' } },
+      timeoutSec: 5,
+    }),
+  ];
+  const where = (value: string) => ({ column: 'Mã', value });
+
+  it('ticks, opens, edits rows far below the first screen and filters by header', async () => {
+    const r = await e.run(
+      [
+        ...open,
+        step('gridRow', { target: grid, where: where('SP0777'), do: 'select' }),
+        step('assertText', { target: { css: '#selected-count' }, value: '1' }),
+        step('gridRow', { target: grid, where: where('SP0777'), do: 'unselect' }),
+        step('assertText', { target: { css: '#selected-count' }, value: '0' }),
+        step('gridRow', { target: grid, where: where('SP0900'), do: 'expand' }),
+        step('assertText', { target: { css: '#grid' }, op: 'contains', value: 'Chi tiết SP0900' }),
+        step('gridRow', {
+          target: grid,
+          where: where('SP0500'),
+          do: 'edit',
+          column: 'Số lượng',
+          value: '99',
+        }),
+        step('assertTable', {
+          target: grid,
+          virtual: true,
+          where: where('SP0500'),
+          column: 'Số lượng',
+          value: '99',
+        }),
+        step('gridFilter', { target: grid, column: 'Mã', value: 'SP0123' }),
+        step('assertText', { target: { css: '#shown-count' }, value: '1' }),
+        step('gridFilter', { target: grid, column: 'Mã', value: '' }),
+        step('gridFilter', { target: grid, column: 'Tên', value: 'kéo' }),
+        step('assertText', { target: { css: '#shown-count' }, value: '125' }),
+        step(
+          'gridRow',
+          { target: grid, where: where('SP9999'), do: 'select' },
+          { mode: 'soft', timeoutMs: 20_000 },
+        ),
+        step('gridFilter', { target: grid, column: 'Giá không có', value: 'x' }, { mode: 'soft' }),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 30_000 } } },
+    );
+    const sm = summary(r);
+    expect(sm.slice(0, 15)).toEqual(Array.from({ length: 15 }, (_, i) => `${i + 1} passed`));
+    expect(sm.slice(15)).toEqual(['16 failed ELEMENT_NOT_FOUND', '17 failed INVALID_PARAMS']);
+  });
+});
+
+describe('complex controls [W-04]', () => {
+  const page = (body: string) => `data:text/html;charset=utf-8,${encodeURIComponent(body)}`;
+  const controls = page(`
+    <div id="city" tabindex="0" role="combobox" aria-label="Thành phố">Chọn…</div>
+    <div id="box" hidden><input id="q" aria-label="Tìm"><ul id="list"></ul></div>
+    <script>
+      const cities = ['Hà Nội', 'Hải Phòng', 'Đà Nẵng', 'Hà Nội 2'];
+      const draw = (f) => list.innerHTML = cities.filter(c => c.toLowerCase().includes(f.toLowerCase())).map(c => '<li role="option">' + c + '</li>').join('');
+      city.onclick = () => { box.hidden = false; draw(''); q.focus(); };
+      q.oninput = () => draw(q.value);
+      list.onclick = (e) => { city.textContent = e.target.textContent; box.hidden = true; };
+    </script>
+    <input id="phone" aria-label="Điện thoại" placeholder="0000 000 000">
+    <script>
+      phone.addEventListener('keydown', (e) => {
+        if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault();
+      });
+      phone.addEventListener('input', () => {
+        const d = phone.value.replace(/\\D/g, '').slice(0, 10);
+        phone.value = d.replace(/^(\\d{4})(\\d{0,3})(\\d{0,3}).*/, (_, a, b, c) => [a, b, c].filter(Boolean).join(' '));
+      });
+    </script>
+    <div id="editor" contenteditable="true" aria-label="Nội dung" style="border:1px solid #999;min-height:40px"></div>
+    <input id="range" aria-label="Khoảng ngày">
+    <button id="apply" onclick="applied.textContent = 'ok:' + range.value">Áp dụng</button><p id="applied"></p>
+  `);
+
+  it('chooses in a searchable list, types masked and rich text, and picks a date range', async () => {
+    const r = await e.run([
+      step('goto', { url: controls }),
+      step('pickOption', { target: { css: '#city' }, search: 'hà', option: 'Hà Nội' }),
+      step('assertText', { target: { css: '#city' }, value: 'Hà Nội' }),
+      step('pickOption', { target: { css: '#city' }, option: 'Đà Nẵng' }),
+      step('assertText', { target: { css: '#city' }, value: 'Đà Nẵng' }),
+      step(
+        'pickOption',
+        { target: { css: '#city' }, option: 'Huế' },
+        { mode: 'soft', timeoutMs: 1500 },
+      ),
+      step('fill', { target: { css: '#phone' }, value: '0912345678', typing: 'keys' }),
+      step('assertValue', { target: { css: '#phone' }, value: '0912 345 678' }),
+      step('fill', { target: { css: '#editor' }, value: 'Xin chào các bạn' }),
+      step('assertText', { target: { css: '#editor' }, value: 'Xin chào các bạn' }),
+      step('fill', { target: { css: '#editor' }, value: '!', clear: false, typing: 'keys' }),
+      step('assertText', { target: { css: '#editor' }, value: 'Xin chào các bạn!' }),
+      step('pickDateRange', {
+        target: { css: '#range' },
+        from: '05/03/2030',
+        to: '09/03/2030',
+        apply: { css: '#apply' },
+      }),
+      step('assertText', { target: { css: '#applied' }, value: 'ok:05/03/2030 - 09/03/2030' }),
+      step(
+        'pickDateRange',
+        { target: { css: '#range' }, from: '09/03/2030', to: '05/03/2030' },
+        { mode: 'soft' },
+      ),
+    ]);
+    const sm = summary(r);
+    expect(sm.slice(0, 5)).toEqual(Array.from({ length: 5 }, (_, i) => `${i + 1} passed`));
+    expect(sm[5]).toBe('6 failed ELEMENT_NOT_FOUND');
+    expect(sm.slice(6, 14)).toEqual(Array.from({ length: 8 }, (_, i) => `${i + 7} passed`));
+    expect(sm[14]).toBe('15 failed INVALID_PARAMS');
+  });
+});
+
+describe('upload through hidden inputs and drag-and-drop [W-06]', () => {
+  const page = (body: string) => `data:text/html;charset=utf-8,${encodeURIComponent(body)}`;
+  const shows = `<p id="out"></p><script>
+    const show = (files) => { out.textContent = [...files].map(x => x.name + ':' + x.size + ':' + x.type).join(','); };
+  </script>`;
+  const hidden = page(`${shows}
+    <label id="pick" style="padding:8px;border:1px solid #999">Kéo hoặc bấm để chọn
+      <input type="file" id="f" hidden></label>
+    <button id="btn" onclick="g.click()">Tải lên…</button><input type="file" id="g" hidden>
+    <div id="zone" style="width:200px;height:80px;border:2px dashed #999">Thả file vào đây</div>
+    <script>
+      f.onchange = () => show(f.files); g.onchange = () => show(g.files);
+      zone.addEventListener('dragover', (e) => e.preventDefault());
+      zone.addEventListener('drop', (e) => { e.preventDefault(); show(e.dataTransfer.files); });
+    </script>`);
+
+  async function withFile<T>(run: (path: string) => Promise<T>): Promise<T> {
+    const dir = await mkdtemp(join(tmpdir(), 'kiemi-w06-'));
+    const path = join(dir, 'bao-cao.csv');
+    await writeFile(path, 'a,b\n1,2\n');
+    return run(path);
+  }
+
+  it('sets files on an input hidden inside a label, via a file dialog and by dropping them', async () => {
+    const r = await withFile((path) =>
+      e.run([
+        step('goto', { url: hidden }),
+        step('upload', { target: { css: '#pick' }, files: path }),
+        step('assertText', { target: { css: '#out' }, value: 'bao-cao.csv:8:text/csv' }),
+        step('upload', { target: { css: '#btn' }, files: path }),
+        step('assertText', { target: { css: '#out' }, value: 'bao-cao.csv:8:text/csv' }),
+        step('goto', { url: hidden }),
+        step('upload', { target: { css: '#zone' }, files: path, via: 'drop' }),
+        step('assertText', { target: { css: '#out' }, value: 'bao-cao.csv:8:text/csv' }),
+        step('goto', { url: hidden }),
+        step('upload', { target: { css: '#zone' }, files: path }), // auto: no dialog opens → drop
+        step('assertText', { target: { css: '#out' }, value: 'bao-cao.csv:8:text/csv' }),
+        step('upload', { target: { css: '#zone' }, files: path, via: 'input' }, { mode: 'soft' }),
+      ]),
+    );
+    expect(summary(r)).toEqual([
+      ...Array.from({ length: 11 }, (_, i) => `${i + 1} passed`),
+      '12 failed ELEMENT_NOT_FOUND',
     ]);
   });
 });

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lưới sản phẩm — Kiemi Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+      #grid { height: 320px; overflow: auto; border: 1px solid #cbd5e1; position: relative; font-size: 14px; }
+      .g-row { display: grid; grid-template-columns: 40px 90px 1fr 80px 110px 100px; height: 32px; align-items: center; border-bottom: 1px solid #e2e8f0; }
+      .g-row > div { padding: 0 8px; overflow: hidden; white-space: nowrap; }
+      .g-head { position: sticky; top: 0; background: #f1f5f9; font-weight: 600; z-index: 2; }
+      .g-filter { position: sticky; top: 32px; background: #fff; z-index: 2; }
+      .g-filter input { width: 100%; box-sizing: border-box; height: 24px; }
+      .g-detail { background: #f8fafc; color: #475569; grid-template-columns: 40px 1fr; }
+      .g-row.selected { background: #e0f2fe; }
+      .g-edit { width: 100%; box-sizing: border-box; height: 24px; }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Lưới sản phẩm</h1>
+      <p class="muted">
+        1.000 dòng, chỉ vẽ phần đang nhìn thấy (cuộn ảo). Bấm đúp ô Số lượng / Đơn giá để sửa, tick để chọn dòng,
+        “▸” để mở dòng chi tiết, ô dưới tiêu đề để lọc.
+      </p>
+      <p>Đã chọn: <strong id="selected-count">0</strong> · Hiển thị: <strong id="shown-count">0</strong> dòng</p>
+      <div id="grid" role="grid" aria-label="Lưới sản phẩm" aria-rowcount="1001" tabindex="0">
+        <div role="row" class="g-row g-head">
+          <div role="columnheader"></div>
+          <div role="columnheader">Mã</div>
+          <div role="columnheader">Tên</div>
+          <div role="columnheader">Số lượng</div>
+          <div role="columnheader">Đơn giá</div>
+          <div role="columnheader">Trạng thái</div>
+        </div>
+        <div role="row" class="g-row g-filter">
+          <div></div>
+          <div><input data-filter="code" aria-label="Lọc Mã" /></div>
+          <div><input data-filter="name" aria-label="Lọc Tên" /></div>
+          <div></div>
+          <div></div>
+          <div><input data-filter="status" aria-label="Lọc Trạng thái" /></div>
+        </div>
+        <div id="viewport"></div>
+      </div>
+    </main>
+    <script type="module" src="/src/grid.ts"></script>
+  </body>
+</html>

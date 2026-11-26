@@ -168,6 +168,130 @@ describe('tabs, dialogs, iframes, sessions, storage [A-13 → A-18, F-01]', () =
     ]);
   });
 
+  it('names tabs, switches by name 10 times and counts tabs [V-01]', async () => {
+    const steps = [
+      step('goto', { url: '/dialogs.html' }),
+      step('click', { target: { role: 'link', name: 'Mở trong tab mới' } }),
+      step('captureTab', { name: 'popup', urlContains: 'popup.html' }),
+      step('newTab', { url: '/table.html', name: 'bang' }),
+      step('assertTabCount', { count: 3 }),
+    ];
+    for (let i = 0; i < 5; i++) {
+      steps.push(
+        step('switchTab', { by: 'name', value: 'main' }),
+        step('assertTitle', { op: 'contains', value: 'Hộp thoại' }),
+        step('switchTab', { by: 'name', value: 'popup' }),
+        step('assertUrl', { op: 'contains', value: 'popup.html' }),
+      );
+    }
+    steps.push(
+      // A step pinned to a tab switches to it first.
+      step('assertUrl', { op: 'contains', value: 'table.html' }, { tab: 'bang' }),
+      step('closeTab', { name: 'popup' }),
+      step('assertTabCount', { count: 2 }),
+      step('switchTab', { by: 'name', value: 'popup' }, { mode: 'soft', timeoutMs: 1500 }),
+      step('assertTabCount', { count: 5 }, { mode: 'soft', timeoutMs: 800 }),
+    );
+    const r = await e.run(steps);
+    const sm = summary(r);
+    expect(sm.slice(0, 5)).toEqual(['1 passed', '2 passed', '3 passed', '4 passed', '5 passed']);
+    expect(sm.slice(5, 25).every((x) => x.endsWith('passed'))).toBe(true);
+    expect(sm.slice(25)).toEqual([
+      '26 passed',
+      '27 passed',
+      '28 passed',
+      '29 failed TAB_NOT_FOUND',
+      '30 failed ASSERTION_FAILED',
+    ]);
+  });
+
+  it('opens pages in another session and in another browser [V-02]', async () => {
+    const before = e.launched.length;
+    const r = await e.run(
+      [
+        step('goto', { url: '/table.html' }),
+        step('openIn', { session: 'khach', url: '/dialogs.html' }),
+        step('assertTitle', { op: 'contains', value: 'Hộp thoại' }, { session: 'khach' }),
+        step('openIn', { session: 'khach', url: '/popup.html', name: 'phu' }),
+        step('assertTabCount', { count: 2 }, { session: 'khach' }),
+        step('assertTabCount', { count: 1 }), // the first session is untouched
+        step('openIn', { session: 'edge', url: '/form.html', browser: 'chromium' }),
+        step('assertUrl', { op: 'contains', value: 'form.html' }, { session: 'edge' }),
+        step('assertUrl', { op: 'contains', value: 'table.html' }), // default session stays on its page
+        step('openIn', { session: 'edge', url: '/form.html', browser: 'msedge' }, { mode: 'soft' }),
+      ],
+      { sessions: ['default', 'khach', 'edge'] },
+    );
+    expect(summary(r)).toEqual([
+      '1 passed',
+      '2 passed',
+      '3 passed',
+      '4 passed',
+      '5 passed',
+      '6 passed',
+      '7 passed',
+      '8 passed',
+      '9 passed',
+      '10 failed ACTION_FAILED',
+    ]);
+    expect(e.launched.length - before).toBe(1);
+  });
+
+  it('answers HTTP Basic auth from the environment, with the password kept secret [W-01]', async () => {
+    const env = (httpAuth?: { username: string; passwordSecret: string }) => ({
+      id: 'e',
+      name: 'Nội bộ',
+      baseUrl: e.site.url,
+      variables: {},
+      secretNames: ['BASIC_PW'],
+      apps: {},
+      type: 'other' as const,
+      protected: false,
+      ...(httpAuth ? { httpAuth } : {}),
+    });
+    const ok = await e.run(
+      [
+        step('goto', { url: '/secure/basic' }),
+        step('assertText', {
+          target: { css: '#who' },
+          op: 'equals',
+          value: 'Xin chào demo',
+        }),
+      ],
+      {
+        request: {
+          env: env({ username: 'demo', passwordSecret: 'BASIC_PW' }),
+          secrets: { BASIC_PW: 'demo-pass' },
+        },
+      },
+    );
+    expect(summary(ok)).toEqual(['1 passed', '2 passed']);
+    // Wrong password → the browser gets 401 and shows the plain message, not the page.
+    const bad = await e.run(
+      [
+        step('goto', { url: '/secure/basic' }),
+        step(
+          'assertText',
+          { target: { css: '#who' }, op: 'equals', value: 'Xin chào demo' },
+          { timeoutMs: 800 },
+        ),
+      ],
+      {
+        request: {
+          env: env({ username: 'demo', passwordSecret: 'BASIC_PW' }),
+          secrets: { BASIC_PW: 'sai-mat-khau' },
+        },
+      },
+    );
+    expect(summary(bad)[1]).toMatch(/failed/);
+    expect(JSON.stringify(bad)).not.toContain('sai-mat-khau');
+    // A missing secret is reported before the browser opens a page.
+    const missing = await e.run([step('goto', { url: '/secure/basic' })], {
+      request: { env: env({ username: 'demo', passwordSecret: 'BASIC_PW' }), secrets: {} },
+    });
+    expect(missing.status).not.toBe('passed');
+  });
+
   it('finds elements inside nested iframes automatically', async () => {
     const r = await e.run([
       step('goto', { url: '/iframe.html' }),

@@ -28,6 +28,19 @@ const click = (key: string, tab = tab1, frame = 1): RecordedEvent => ({
   frame,
 });
 
+const entry = (name: string, key = `o-${name}`): RecordedTarget => ({
+  key,
+  locator: { strategies: [{ kind: 'role', role: 'option', name }] },
+});
+const pick = (name: string, tab = tab1): RecordedEvent => ({
+  kind: 'click',
+  target: entry(name),
+  button: 'left',
+  modifiers: [],
+  tab,
+  frame: 1,
+});
+
 function collect(events: RecordedEvent[], baseUrl?: string) {
   let n = 0;
   const c = new StepCollector({ newId: () => `s${++n}`, ...(baseUrl ? { baseUrl } : {}) });
@@ -146,7 +159,7 @@ describe('StepCollector [K-01, K-02]', () => {
     expect(brief(steps)).toEqual([
       'fill {"value":"1"}',
       'fill {"value":"2"}',
-      'switchTab {"by":"index","value":"2"}',
+      'captureTab {"name":"tab-2"}',
       'fill {"value":"3"}',
     ]);
   });
@@ -163,15 +176,16 @@ describe('StepCollector [K-01, K-02]', () => {
     expect(steps.map((s) => s.action)).toEqual([
       'goto',
       'click',
-      'switchTab',
+      'captureTab',
       'click',
       'switchTab',
       'click',
       'newTab',
       'click',
     ]);
-    expect(steps[2]?.params).toEqual({ by: 'index', value: '2' });
-    expect(steps[4]?.params).toEqual({ by: 'index', value: '1' });
+    expect(steps[2]?.params).toEqual({ name: 'tab-2' });
+    expect(steps[4]?.params).toEqual({ by: 'name', value: 'main' });
+    expect(steps[6]?.params).toMatchObject({ name: 'tab-3' });
   });
 
   it('stores URLs under the base URL as relative paths and drops repeated loads', () => {
@@ -193,5 +207,36 @@ describe('StepCollector [K-01, K-02]', () => {
       'goto {"url":"http://app.testing/"}',
       'goto {"url":"https://other.test/x"}',
     ]);
+  });
+});
+
+describe('custom dropdowns become one step [W-04]', () => {
+  it('opens + chooses → pickOption', () => {
+    const { steps } = collect([click('city'), pick('Đà Nẵng')]);
+    expect(steps.map((s) => s.action)).toEqual(['pickOption']);
+    expect(steps[0]?.params).toMatchObject({ option: 'Đà Nẵng', target: el('city').locator });
+    expect(steps[0]?.params).not.toHaveProperty('search');
+  });
+
+  it('opens + types to search + chooses → pickOption with search', () => {
+    const { steps, changes } = collect([click('city'), fill('q', 'hà'), pick('Hà Nội')]);
+    expect(steps.map((s) => s.action)).toEqual(['pickOption']);
+    expect(steps[0]?.params).toMatchObject({
+      option: 'Hà Nội',
+      search: 'hà',
+      target: el('city').locator,
+    });
+    expect(changes.map((c) => c.type)).toEqual(['add', 'add', 'remove', 'remove', 'add']);
+  });
+
+  it('autocomplete: the box is clicked, typed in, then a suggestion is chosen', () => {
+    const { steps } = collect([click('who'), fill('who', 'ng'), pick('Nguyễn Văn A')]);
+    expect(steps.map((s) => s.action)).toEqual(['pickOption']);
+    expect(steps[0]?.params).toMatchObject({ search: 'ng', target: el('who').locator });
+  });
+
+  it('keeps a plain click when no list was opened before it', () => {
+    const { steps } = collect([pick('Hà Nội')]);
+    expect(steps.map((s) => s.action)).toEqual(['click']);
   });
 });

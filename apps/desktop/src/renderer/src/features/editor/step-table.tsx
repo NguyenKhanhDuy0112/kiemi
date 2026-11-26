@@ -248,6 +248,7 @@ const StepRow = memo(function StepRow({ row, sharedNames, onChip, onRunFrom }: S
         )}
       </div>
       {multiSession && <Badge variant="secondary">{step.session}</Badge>}
+      {step.tab && <Badge variant="outline">{tx('ui.editor.tabBadge', { name: step.tab })}</Badge>}
       {step.mode === 'soft' && <Badge variant="outline">{tx('ui.editor.soft')}</Badge>}
       {!step.enabled && (
         <Badge variant="outline">

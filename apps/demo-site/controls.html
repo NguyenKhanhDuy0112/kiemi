@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Ô nhập đặc biệt — Kiemi Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+      .dd-box { border: 1px solid #cbd5e1; background: #fff; max-width: 280px; }
+      .dd-box ul { list-style: none; margin: 0; padding: 0; max-height: 160px; overflow: auto; }
+      .dd-box li { padding: 6px 10px; cursor: pointer; }
+      .dd-box li:hover { background: #e0f2fe; }
+      #editor { border: 1px solid #cbd5e1; min-height: 72px; padding: 8px; background: #fff; }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Ô nhập đặc biệt</h1>
+      <p class="muted">
+        Danh sách chọn có ô tìm kiếm, gợi ý khi gõ, ô số điện thoại có mặt nạ, soạn thảo văn bản, khoảng ngày có nút Áp dụng,
+        và vùng tải file (ô ẩn + kéo thả).
+      </p>
+      <div class="field">
+        <span id="city-label">Tỉnh/thành</span>
+        <div id="city" role="combobox" tabindex="0" aria-labelledby="city-label" aria-expanded="false">Chọn…</div>
+        <div id="city-box" class="dd-box" hidden>
+          <input id="city-search" aria-label="Tìm tỉnh/thành" />
+          <ul id="city-list" role="listbox"></ul>
+        </div>
+      </div>
+      <div class="field">
+        <label for="who">Người phụ trách</label>
+        <input id="who" autocomplete="off" />
+        <div id="who-box" class="dd-box" hidden><ul id="who-list" role="listbox"></ul></div>
+      </div>
+      <div class="field">
+        <label for="phone">Điện thoại</label>
+        <input id="phone" placeholder="0000 000 000" />
+      </div>
+      <div class="field">
+        <span id="note-label">Ghi chú</span>
+        <div id="editor" contenteditable="true" role="textbox" aria-labelledby="note-label"></div>
+      </div>
+      <div class="field">
+        <label for="range">Khoảng ngày</label>
+        <input id="range" placeholder="dd/mm/yyyy - dd/mm/yyyy" />
+        <button type="button" class="btn" id="range-apply">Áp dụng</button>
+      </div>
+      <div class="field">
+        <label id="file-pick" for="file" class="btn">Chọn file hoặc kéo thả vào đây</label>
+        <input type="file" id="file" hidden />
+        <div id="dropzone" style="border: 2px dashed #94a3b8; padding: 16px; max-width: 280px">Thả file vào đây</div>
+      </div>
+      <button type="button" class="btn primary" id="submit">Gửi</button>
+      <pre id="result" data-testid="result"></pre>
+    </main>
+    <script type="module" src="/src/controls.ts"></script>
+  </body>
+</html>

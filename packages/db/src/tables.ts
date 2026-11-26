@@ -1,6 +1,7 @@
 import type {
   FormSpec,
   Formulas,
+  HttpAuth,
   Locator,
   MessageCatalog,
   PageDecl,
@@ -213,6 +214,8 @@ export const environments = sqliteTable(
     protected: integer('protected', { mode: 'boolean' }).notNull().default(false),
     /** How numbers/money read and print on this environment; null = `vi` [P-10] (migration 17). */
     locale: text('locale', { enum: ['vi', 'en'] }),
+    /** HTTP Basic / NTLM login of the environment (password = secret name) [W-01] (migration 18). */
+    httpAuth: json<HttpAuth>('http_auth'),
   },
   (t) => [index('environments_project_idx').on(t.projectId)],
 );
