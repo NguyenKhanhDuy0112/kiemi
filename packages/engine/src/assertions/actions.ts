@@ -52,6 +52,7 @@ function assertionFor(check: CheckDef): ActionDefinition {
           last = await check.check(params, ctx);
           lastErr = undefined;
           if (last.pass) return;
+          if (last.final) break;
         } catch (err) {
           if (!isNotFound(err)) throw err;
           lastErr = err;
@@ -71,6 +72,7 @@ function assertionFor(check: CheckDef): ActionDefinition {
           op: describeOp(p),
           expected: stringify(last?.expected),
           actual: stringify(last?.actual),
+          ...(last?.details ? { diff: last.details } : {}),
         },
       );
     },

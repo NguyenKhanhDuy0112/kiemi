@@ -12,6 +12,7 @@ import {
   suitesRouter,
   testCasesRouter,
 } from './routers/data';
+import { formulasRouter } from './routers/formulas';
 import { formsRouter, recorderRouter, savedLoginsRouter } from './routers/recorder';
 import { runsRouter } from './routers/runs';
 import { samplesRouter } from './routers/samples';
@@ -39,6 +40,7 @@ export const rootRouter = router({
   recorder: recorderRouter,
   forms: formsRouter,
   coverage: coverageRouter,
+  formulas: formulasRouter,
   savedLogins: savedLoginsRouter,
   updates: updatesRouter,
   sharedResources: sharedResourcesRouter,

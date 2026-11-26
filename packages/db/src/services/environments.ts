@@ -34,6 +34,8 @@ export const EnvironmentInputSchema = z.object({
   color: EnvColorSchema.nullish(),
   /** [W-10] */
   protected: z.boolean().optional(),
+  /** Number/money format of the environment [P-10]. */
+  locale: z.enum(['vi', 'en']).nullish(),
   /**
    * Shortcuts for the DEFAULT product's cell (v1.0 callers: samples, bundles):
    * written into `environment_products`, not into the environment row [O-02].
@@ -115,6 +117,7 @@ export class EnvironmentService {
         type,
         color: p.data.color ?? null,
         protected: p.data.protected ?? type === 'production',
+        locale: p.data.locale ?? null,
         sortOrder: this.list(p.data.projectId).length,
       });
       const { baseUrl, proxy, ssh } = p.data;
@@ -249,6 +252,7 @@ export class EnvironmentService {
         type: src.type,
         color: src.color,
         protected: src.protected,
+        locale: src.locale,
       });
       this.setVariables(copy.id, this.variables(environmentId));
       this.setSecretNames(copy.id, this.secretNames(environmentId));
@@ -431,6 +435,7 @@ export class EnvironmentService {
       type: row.type,
       ...(row.color ? { color: row.color } : {}),
       protected: row.protected,
+      ...(row.locale ? { locale: row.locale } : {}),
       ...(main?.url ? { baseUrl: main.url } : {}),
       apps,
       ...(first ? { defaultProduct: first.key } : {}),

@@ -3,6 +3,8 @@
  * which is what lets "user A creates → user B sees it" scenarios work across browser contexts.
  */
 
+import { type ImportRow, type Person, seedPeople } from './data-pages';
+
 export type Role = 'nhanvien' | 'quanly';
 
 export interface User {
@@ -96,7 +98,12 @@ export class DemoStore {
     this.now = opts.now ?? Date.now;
   }
 
+  /** Rows accepted by the import page [P-09]. */
+  imported: ImportRow[] = [];
+  readonly people: Person[] = seedPeople();
+
   reset(): void {
+    this.imported = [];
     this.requests = [];
     this.products = seedProducts();
     this.seq = 0;

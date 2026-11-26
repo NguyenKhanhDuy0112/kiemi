@@ -135,15 +135,18 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M11-12** Demo-site: form Đăng ký 5 field có lỗi cố ý; mẫu L-03 #7 "Validate form" [L-03]
 
 ## M12 — Dữ liệu & tính toán
-- [ ] **M12-01** Biến danh sách & object: lưu bảng/danh sách thành list object, truy cập `{{x[0].y}}`, `{{x.length}}`, panel Biến (DSL tăng version) [P-02]
-- [ ] **M12-02** Dataset lồng nhau: nhiều sheet liên kết khóa, step Lặp duyệt danh sách con, UI dạng cây [P-01]
-- [ ] **M12-03** ADR engine công thức (an toàn, không `eval`) + thư viện công thức có tên, debug từng bước [P-03]
-- [ ] **M12-04** So sánh số có sai lệch + định dạng số/tiền/ngày VN theo môi trường [P-04, P-10]
-- [ ] **M12-05** Kỳ vọng 2 nguồn (cột Excel + công thức) + so sánh bảng với danh sách kỳ vọng theo khóa [P-05, P-06]
-- [ ] **M12-06** Kiểm tra bảng: mọi dòng thỏa điều kiện, đã sắp xếp (thứ tự tiếng Việt), duyệt mọi trang + tổng khớp nhãn [Q-01, Q-02, Q-03]
-- [ ] **M12-07** File tải về: tên/loại/dung lượng, đọc Excel/CSV/PDF → biến [Q-04]
-- [ ] **M12-08** Sinh file Excel/CSV từ dataset + file mẫu để upload [P-09]
-- [ ] **M12-09** Demo-site: Shop (giỏ hàng, mã giảm, VAT, ship), Bảng lương (xuất Excel, PDF), Danh sách 500 dòng, Import/Export có dòng lỗi; mẫu L-03 #1, #2, #4, #5 [L-03]
+- [x] **M12-01** Biến danh sách & object: lưu bảng/danh sách thành list object, truy cập `{{x[0].y}}`, `{{x.length}}`, panel Biến (DSL tăng version) [P-02]
+- [x] **M12-02a** Dataset lồng nhau — lõi: `Dataset.children` (bảng con nối bằng khóa), import Excel nhiều sheet, đồng bộ thư mục/bundle, step Lặp `over: children` [P-01]
+- [x] **M12-02b** Dataset lồng nhau — UI: dạng cây trong tab Dữ liệu, chọn cột khóa, nhập nhiều sheet [P-01]
+- [x] **M12-03a** ADR 0019 + engine công thức: so sánh, `SUM/COUNT/MIN/MAX/AVG/SUMIF/COUNTIF/FILTER/IF/AND/OR/ROUND*`, công thức có tên, vết từng bước [P-03]
+- [x] **M12-03b** Công thức dùng chung theo dự án: lưu DB/`project.json`, truyền vào run, màn quản lý + thử (hiện từng bước tính) [P-03]
+- [x] **M12-04** So sánh số có sai lệch + định dạng số/tiền/ngày VN theo môi trường [P-04, P-10]
+- [x] **M12-05** Kỳ vọng 2 nguồn (cột Excel + công thức) + so sánh bảng với danh sách kỳ vọng theo khóa [P-05, P-06]
+- [x] **M12-06** Kiểm tra bảng: mọi dòng thỏa điều kiện, đã sắp xếp (thứ tự tiếng Việt), duyệt mọi trang + tổng khớp nhãn [Q-01, Q-02, Q-03]
+- [x] **M12-07** File tải về: tên/loại/dung lượng, đọc Excel/CSV/PDF → biến [Q-04]
+- [x] **M12-08** Sinh file Excel/CSV từ dataset + file mẫu để upload [P-09]
+- [x] **M12-09a** Demo-site: Shop (giỏ hàng, mã giảm, VAT, ship), Bảng lương (xuất Excel, PDF), Danh sách 500 dòng, Import/Export có dòng lỗi [L-03]
+- [x] **M12-09b** Bộ test mẫu L-03 #1, #2, #4, #5 trong dự án mẫu + kiểm tra app thật + PR [L-03]
 
 ## M13 — Web thực tế & kiểm tra chéo
 - [ ] **M13-01** Tab có tên: mở/bắt tab do thao tác mở, đặt tên, chuyển theo tên, nhãn tab trên step, recorder tự đặt tên [V-01]

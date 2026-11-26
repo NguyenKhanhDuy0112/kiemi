@@ -7,6 +7,7 @@ import { createCaller } from '../api/root';
 import type { RunFeedEvent } from '../run/run-manager';
 import { createTestRunManager } from '../run/testing';
 import { SAMPLE_ENV, SAMPLE_PROJECT, sampleWorkbook, syncSampleEnvironment } from './samples';
+import { DATA_SAMPLE_FOLDER, DATA_SAMPLE_SUITE } from './samples-data';
 
 async function launch(): Promise<Browser> {
   for (const channel of ['chrome', 'msedge', undefined] as const) {
@@ -118,6 +119,37 @@ describe('sample tests [L-01, S-08]', () => {
     expect(run.cases.length).toBeGreaterThan(10);
     const bad = run.cases.filter((c) => c.status !== 'passed');
     expect(bad.map((c) => c.testName)).toEqual([]);
+    expect(run.status).toBe('passed');
+  }, 300_000);
+
+  it('has the data & calculation samples and they all pass [L-03 #1, #2, #4, #5]', async () => {
+    const { services, caller } = setup();
+    const { projectId } = await caller.samples.install();
+    expect(Object.keys(services.projects.formulas(projectId))).toEqual(['TongTien']);
+    const suite = services.suites.list(projectId).find((s) => s.name === DATA_SAMPLE_SUITE);
+    const folder = services.folders.list(projectId).find((f) => f.name === DATA_SAMPLE_FOLDER);
+    expect(services.testCases.list(projectId, folder?.id).map((t) => t.name)).toEqual([
+      'Mẫu 1. Giỏ hàng & khuyến mãi',
+      'Mẫu 2. Bảng lương và xuất Excel',
+      'Mẫu 3. Tìm kiếm, lọc, sắp xếp, phân trang',
+      'Mẫu 4. Nhập Excel và dòng lỗi',
+    ]);
+    const { runId } = await caller.runs.start({
+      target: { kind: 'suite', suiteId: suite?.id ?? '' },
+      options: { headless: true },
+    });
+    await collect(await caller.runs.events({ runId }));
+    const run = await caller.runs.get({ runId });
+    const failed = run.cases
+      .filter((c) => c.status !== 'passed')
+      .map((c) => ({
+        test: c.testName,
+        steps: services.runs
+          .listSteps(c.id)
+          .filter((x) => x.status !== 'passed')
+          .map((x) => `${x.stepNo} ${x.status} ${JSON.stringify(x.error)}`),
+      }));
+    expect(failed).toEqual([]);
     expect(run.status).toBe('passed');
   }, 300_000);
 

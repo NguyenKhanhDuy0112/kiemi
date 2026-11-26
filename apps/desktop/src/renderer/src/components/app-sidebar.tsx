@@ -41,6 +41,7 @@ import {
   Plus,
   Search,
   Settings,
+  Sigma,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -51,6 +52,7 @@ const NAV: { view: View; icon: typeof FileText }[] = [
   { view: 'environments', icon: Globe },
   { view: 'forms', icon: ClipboardList },
   { view: 'coverage', icon: Gauge },
+  { view: 'formulas', icon: Sigma },
   { view: 'elements', icon: Crosshair },
   { view: 'settings', icon: Settings },
 ];

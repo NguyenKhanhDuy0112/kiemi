@@ -1,4 +1,12 @@
-import type { Dataset, Diagnostic, Env, Secrets, SharedStep, TestCase } from '@kiemi/schema';
+import type {
+  DataRow,
+  Dataset,
+  Diagnostic,
+  Env,
+  Secrets,
+  SharedStep,
+  TestCase,
+} from '@kiemi/schema';
 import type { BrowserContext, Page } from 'playwright-core';
 import type { SessionPages } from '../browser/sessions';
 
@@ -78,6 +86,8 @@ export interface RunServices {
   readonly env: Env | undefined;
   readonly secrets: Secrets;
   readonly dataset: Dataset | undefined;
+  /** The dataset row of this run (`{{row.x}}`) [E-03]. */
+  readonly row: DataRow | undefined;
   readonly sharedSteps: ReadonlyMap<string, SharedStep>;
   readonly pages: SessionPages;
   readonly dialogs: DialogController;

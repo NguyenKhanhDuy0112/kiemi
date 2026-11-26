@@ -143,6 +143,8 @@ export const EnvSchema = z.object({
   name: z.string().min(1),
   type: EnvTypeSchema.default('other'),
   color: EnvColorSchema.optional(),
+  /** How ambiguous numbers read: `1.250` = 1250 in `vi` (default), 1.25 in `en`; also number/money formats [P-10]. */
+  locale: z.enum(['vi', 'en']).optional(),
   /** Steps that may write data (cleanup, API POST/PUT/PATCH/DELETE) are refused [W-10]. */
   protected: z.boolean().default(false),
   /** v1.0 single URL; now the main product's cell URL (`{{env.baseUrl}}` = `{{app}}`). */

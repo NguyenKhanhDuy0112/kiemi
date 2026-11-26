@@ -1,4 +1,5 @@
 import {
+  DatasetChildSchema,
   LocatorSchema,
   ProxySchema,
   parseTestCase,
@@ -69,6 +70,7 @@ const ManifestSchema = z.object({
         name: z.string().min(1),
         columns: z.array(z.string()),
         rows: z.array(z.record(z.string(), z.string())),
+        children: z.array(DatasetChildSchema).optional(),
         source: z.object({
           kind: z.enum(['manual', 'excel', 'csv']),
           fileName: z.string().optional(),
@@ -267,7 +269,14 @@ export function exportBundle(
     datasets: services.datasets
       .list(projectId)
       .filter((d) => !datasetIds || datasetIds.has(d.id))
-      .map((d) => ({ id: d.id, name: d.name, columns: d.columns, rows: d.rows, source: d.source })),
+      .map((d) => ({
+        id: d.id,
+        name: d.name,
+        columns: d.columns,
+        rows: d.rows,
+        ...(d.children?.length ? { children: d.children } : {}),
+        source: d.source,
+      })),
     suites: suites.map((s) => ({
       id: s.id,
       name: s.name,
@@ -416,6 +425,7 @@ export function importBundle(
         name: d.name,
         columns: d.columns,
         rows: d.rows,
+        ...(d.children ? { children: d.children } : {}),
       });
       ids.set(d.id, row.id);
     }

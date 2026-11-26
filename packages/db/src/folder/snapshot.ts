@@ -18,6 +18,7 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       formSpecs: p.formSpecs ?? [],
       messageCatalog: p.messageCatalog ?? {},
       pages: p.pages ?? [],
+      formulas: p.formulas ?? {},
     },
     products: services.products.list(projectId).map((x) => ({
       id: x.id,
@@ -46,6 +47,7 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       type: e.type,
       color: e.color,
       protected: e.protected,
+      locale: e.locale ?? null,
       cells: services.environments.cells(e.id).map((c) => ({
         productId: c.productId,
         url: c.url,
@@ -76,6 +78,7 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       name: d.name,
       columns: d.columns,
       rows: d.rows,
+      children: d.children ?? [],
       source: d.source,
       envRows: d.envRows ?? {},
     })),
@@ -160,7 +163,8 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
       !same(project.popupRules ?? [], s.project.popupRules ?? []) ||
       !same(project.formSpecs ?? [], s.project.formSpecs ?? []) ||
       !same(project.messageCatalog ?? {}, s.project.messageCatalog ?? {}) ||
-      !same(project.pages ?? [], s.project.pages ?? [])
+      !same(project.pages ?? [], s.project.pages ?? []) ||
+      !same(project.formulas ?? {}, s.project.formulas ?? {})
     )
       services.projects.repo.update(projectId, {
         name: s.project.name,
@@ -170,6 +174,7 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
         formSpecs: s.project.formSpecs ?? [],
         messageCatalog: s.project.messageCatalog ?? {},
         pages: s.project.pages ?? [],
+        formulas: s.project.formulas ?? {},
       });
 
     /** Generic reconcile of one table. `values` = columns from the file. */
@@ -282,6 +287,7 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
           type: e.type,
           color: e.color ?? null,
           protected: e.protected,
+          locale: e.locale ?? null,
           sortOrder: e.sortOrder,
           secretNames: [...new Set(e.secretNames)].sort(),
         },
@@ -351,6 +357,7 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
           name: d.name,
           columns: d.columns,
           rows: d.rows,
+          children: d.children?.length ? d.children : null,
           source: d.source,
           envRows: Object.keys(d.envRows ?? {}).length ? d.envRows : null,
         },

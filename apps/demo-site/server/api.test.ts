@@ -94,6 +94,33 @@ describe('demo API', () => {
     expect(await wf.text()).toContain('__VIEWSTATE');
   });
 
+  it('serves the staff list, payroll exports and the import endpoint [M12-09]', async () => {
+    const people = await (
+      await fetch(`${base}/api/people?dept=${encodeURIComponent('Kế toán')}&pageSize=20`)
+    ).json();
+    expect(people).toMatchObject({ total: 100, totalPages: 5 });
+    expect((await (await fetch(`${base}/api/payroll`)).json()).rows).toHaveLength(5);
+    const xlsx = await fetch(`${base}/api/payroll/export.xlsx`);
+    expect(xlsx.headers.get('content-disposition')).toContain('bang-luong');
+    expect((await xlsx.arrayBuffer()).byteLength).toBeGreaterThan(1000);
+    const pdf = await fetch(`${base}/api/payroll/export.pdf`);
+    expect(pdf.headers.get('content-type')).toBe('application/pdf');
+    const csv = 'Mã,Họ tên,Email,Lương\nA1,An,an@x.vn,1000000\nA2,Bình,sai,1000000\n';
+    const res = await fetch(`${base}/api/import`, {
+      method: 'POST',
+      headers: { 'x-file-name': 'a.csv' },
+      body: csv,
+    });
+    expect(await res.json()).toEqual({
+      total: 2,
+      imported: 1,
+      errors: [{ row: 3, message: 'Email không hợp lệ' }],
+    });
+    expect((await (await fetch(`${base}/api/import`)).json()).imported).toHaveLength(1);
+    await fetch(`${base}/api/reset`, { method: 'POST' });
+    expect((await (await fetch(`${base}/api/import`)).json()).imported).toHaveLength(0);
+  });
+
   it('leaves non-API paths to Vite', async () => {
     expect(await (await fetch(`${base}/form.html`)).text()).toBe('not handled');
   });

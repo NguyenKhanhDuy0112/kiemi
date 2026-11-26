@@ -131,6 +131,7 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
       ...(s.project.popupRules.length ? { popupRules: s.project.popupRules } : {}),
       ...(s.project.formSpecs.length ? { formSpecs: s.project.formSpecs } : {}),
       ...(s.project.pages.length ? { pages: s.project.pages } : {}),
+      ...(Object.keys(s.project.formulas).length ? { formulas: sortKeys(s.project.formulas) } : {}),
       ...(Object.keys(s.project.messageCatalog).length
         ? { messageCatalog: sortKeys(s.project.messageCatalog) }
         : {}),
@@ -185,6 +186,7 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
           type: e.type,
           ...(e.color ? { color: e.color } : {}),
           protected: e.protected,
+          ...(e.locale ? { locale: e.locale } : {}),
           cells: [...e.cells]
             .sort(
               byKey(
@@ -251,6 +253,7 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
     name: x.name,
     columns: x.columns,
     rows: x.rows,
+    ...(x.children?.length ? { children: x.children } : {}),
     source: x.source,
     ...(Object.keys(x.envRows).length ? { envRows: sortKeys(x.envRows) } : {}),
   }));
@@ -430,6 +433,7 @@ export function filesToSnapshot(files: FileMap): {
       formSpecs: project.formSpecs,
       messageCatalog: project.messageCatalog,
       pages: project.pages,
+      formulas: project.formulas,
     },
     products,
     folders: dedupedFolders,

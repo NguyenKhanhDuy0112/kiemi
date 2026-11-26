@@ -60,6 +60,10 @@ export async function initPage(opts: { requireLogin?: boolean } = {}): Promise<M
     <a href="/form.html">Tạo đơn</a>
     <a href="/requests.html">Danh sách đơn</a>
     <a href="/table.html">Sản phẩm</a>
+    <a href="/shop.html">Cửa hàng</a>
+    <a href="/payroll.html">Bảng lương</a>
+    <a href="/list.html">Nhân sự</a>
+    <a href="/import.html">Nhập Excel</a>
     <span class="spacer"></span>
     ${
       me

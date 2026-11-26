@@ -1,9 +1,12 @@
 import { createHash } from 'node:crypto';
 import {
+  DatasetChildSchema,
   EnvColorSchema,
   EnvTypeSchema,
   type FormSpec,
   FormSpecsSchema,
+  type Formulas,
+  FormulasSchema,
   LocatorSchema,
   type MessageCatalog,
   MessageCatalogSchema,
@@ -67,6 +70,8 @@ export const ProjectFileSchema = z.object({
   messageCatalog: MessageCatalogSchema.default({}),
   /** Pages that should be tested [CV-02]. */
   pages: PageDeclsSchema.default([]),
+  /** Named formulas [P-03]. */
+  formulas: FormulasSchema.default({}),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -96,6 +101,7 @@ export const EnvironmentEntrySchema = z.object({
   type: EnvTypeSchema.default('other'),
   color: EnvColorSchema.nullish(),
   protected: z.boolean().default(false),
+  locale: z.enum(['vi', 'en']).nullish(),
   /** Read only (files written before M9-05) → the first product's cell. */
   baseUrl: z.string().nullish(),
   proxy: ProxySchema.nullish(),
@@ -127,6 +133,7 @@ export const DatasetFileSchema = z.object({
   name: z.string().trim().min(1),
   columns: z.array(z.string().min(1)),
   rows: z.array(z.record(z.string(), z.string())).default([]),
+  children: z.array(DatasetChildSchema).optional(),
   source: z
     .object({
       kind: z.enum(['manual', 'excel', 'csv']),
@@ -175,6 +182,7 @@ export interface ProjectSnapshot {
     formSpecs: FormSpec[];
     messageCatalog: MessageCatalog;
     pages: PageDecl[];
+    formulas: Formulas;
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];

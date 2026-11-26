@@ -18,7 +18,9 @@ import {
 } from '@kiemi/db';
 import { explainVariables } from '@kiemi/engine';
 import {
+  DatasetChildSchema,
   FormSpecsSchema,
+  FormulasSchema,
   LocatorSchema,
   MessageCatalogSchema,
   PageDeclsSchema,
@@ -59,6 +61,10 @@ export const projectsRouter = router({
     .mutation(({ ctx, input }) =>
       ctx.services.projects.setMessageCatalog(input.id, input.messages),
     ),
+  /** Named formulas of the project [P-03]. */
+  setFormulas: publicProcedure
+    .input(z.object({ id, formulas: FormulasSchema }))
+    .mutation(({ ctx, input }) => ctx.services.projects.setFormulas(input.id, input.formulas)),
   get: publicProcedure
     .input(z.object({ id }))
     .query(({ ctx, input }) => ctx.services.projects.get(input.id)),
@@ -434,6 +440,7 @@ export const datasetsRouter = router({
           name: z.string().optional(),
           columns: z.array(z.string()).optional(),
           rows: z.array(z.record(z.string(), z.string())).optional(),
+          children: z.array(DatasetChildSchema).nullable().optional(),
         }),
       }),
     )
@@ -454,6 +461,8 @@ export const datasetsRouter = router({
         fileName: z.string(),
         data: base64,
         sheet: z.string().optional(),
+        /** Other sheets become linked child tables [P-01]. */
+        linked: z.boolean().optional(),
       }),
     )
     .mutation(({ ctx, input }) =>
@@ -464,6 +473,7 @@ export const datasetsRouter = router({
             input.fileName,
             bytes(input.data),
             input.sheet,
+            input.linked,
           )
         : ctx.services.datasets.importCsv(
             input.projectId,

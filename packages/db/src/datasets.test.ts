@@ -1,3 +1,4 @@
+import { childRowsOf, type DataRow } from '@kiemi/schema';
 import ExcelJS from 'exceljs';
 import { describe, expect, it } from 'vitest';
 import { detectDelimiter, parseCsv, readCsv, writeCsv } from './io/csv';
@@ -99,5 +100,69 @@ describe('dataset service [E-03]', () => {
       columns: ['a', 'b'],
       rows: [{ a: '1', b: '2' }],
     });
+  });
+});
+
+describe('linked sheets [P-01]', () => {
+  async function twoSheets(): Promise<Uint8Array> {
+    const wb = new ExcelJS.Workbook();
+    const bo = wb.addWorksheet('Bo');
+    bo.addRow(['maBo', 'ten']);
+    bo.addRow(['B1', 'Bộ một']);
+    bo.addRow(['B2', 'Bộ hai']);
+    const sp = wb.addWorksheet('SanPham');
+    sp.addRow(['maSp', 'maBo', 'soLuong']);
+    sp.addRow(['S1', 'B1', '1']);
+    sp.addRow(['S2', 'B1', '2']);
+    sp.addRow(['S3', 'B2', '5']);
+    return new Uint8Array(await wb.xlsx.writeBuffer());
+  }
+
+  it('turns the other sheets into child tables linked by the shared column', async () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const ds = await s.datasets.importExcel(
+      projectId,
+      'Bộ',
+      'b.xlsx',
+      await twoSheets(),
+      undefined,
+      true,
+    );
+    expect(ds.children).toMatchObject([
+      { name: 'SanPham', key: 'maBo', parentKey: 'maBo', columns: ['maSp', 'maBo', 'soLuong'] },
+    ]);
+    const run = s.datasets.forRun(ds.id);
+    expect(childRowsOf(run, run.rows[0] as DataRow, 'SanPham')?.map((r) => r.maSp)).toEqual([
+      'S1',
+      'S2',
+    ]);
+    expect(childRowsOf(run, run.rows[1] as DataRow, 'SanPham')?.map((r) => r.maSp)).toEqual(['S3']);
+    expect(childRowsOf(run, run.rows[1] as DataRow, 'Khac')).toBeUndefined();
+  });
+
+  it('without linking only the first sheet is read; a sheet with no shared column is refused', async () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const plain = await s.datasets.importExcel(projectId, 'P', 'b.xlsx', await twoSheets());
+    expect(plain.children).toBeNull();
+    const wb = new ExcelJS.Workbook();
+    wb.addWorksheet('A').addRow(['x']);
+    wb.addWorksheet('B').addRow(['y']);
+    const data = new Uint8Array(await wb.xlsx.writeBuffer());
+    await expect(
+      s.datasets.importExcel(projectId, 'Q', 'c.xlsx', data, undefined, true),
+    ).rejects.toThrow(/shares no column/);
+  });
+
+  it('rejects a link to a column that does not exist', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    expect(() =>
+      s.datasets.create({
+        projectId,
+        name: 'X',
+        columns: ['a'],
+        rows: [],
+        children: [{ name: 'C', key: 'k', parentKey: 'zzz', columns: ['k'], rows: [] }],
+      }),
+    ).toThrow(/Invalid dataset/);
   });
 });

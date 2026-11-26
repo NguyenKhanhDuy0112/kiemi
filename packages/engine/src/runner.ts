@@ -2,6 +2,8 @@ import { mkdir } from 'node:fs/promises';
 import { basename, join, relative } from 'node:path';
 import {
   type ArtifactRef,
+  childRowsOf,
+  type DataRow,
   type Dataset,
   type Diagnostic,
   type Env,
@@ -58,6 +60,8 @@ export interface RunRequest {
   sharedSteps?: SharedStep[];
   /** Popups to close wherever they show up [W-09]. */
   popupRules?: PopupRule[];
+  /** Named formulas of the project, callable in `{{ }}` [P-03]. */
+  formulas?: Record<string, { params: string[]; expression: string }>;
   /** Suite-level variables [E-02]. */
   suiteVariables?: Record<string, string>;
   /** Inherited variables of the workspace, project and the test's product [O-04]. */
@@ -123,6 +127,17 @@ interface Parent {
 type Outcome = { result: StepResult; stop: boolean; redo?: boolean };
 
 /** Runs a test case's steps sequentially, then its cleanup steps, streaming events. */
+/** Child rows of the current data row by table name, for `{{children.X}}` [P-01]. */
+function childrenOf(
+  dataset: Dataset | undefined,
+  row: DataRow | undefined,
+): Record<string, DataRow[]> | undefined {
+  if (!dataset?.children?.length || !row) return undefined;
+  return Object.fromEntries(
+    dataset.children.map((c) => [c.name, childRowsOf(dataset, row, c.name) ?? []]),
+  );
+}
+
 export async function runTestCase(request: RunRequest, options: RunOptions): Promise<RunResult> {
   return new Run(request, options).execute();
 }
@@ -161,11 +176,13 @@ class Run {
         suite: request.suiteVariables,
         test: request.testCase.variables,
         row,
+        children: childrenOf(request.dataset, row),
         secrets: request.secrets,
         product: request.testCase.product,
         workspace: request.variables?.workspace,
         project: request.variables?.project,
         productVariables: request.variables?.product,
+        formulas: request.formulas,
       },
       this.#now,
     );
@@ -369,6 +386,7 @@ class Run {
       env: req.env,
       secrets: req.secrets ?? {},
       dataset: req.dataset,
+      row: req.rowIndex === undefined ? undefined : req.dataset?.rows[req.rowIndex],
       sharedSteps: shared,
       pages: this.#pages,
       dialogs: this.#dialogs,

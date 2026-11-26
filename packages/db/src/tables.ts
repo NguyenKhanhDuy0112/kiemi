@@ -1,5 +1,6 @@
 import type {
   FormSpec,
+  Formulas,
   Locator,
   MessageCatalog,
   PageDecl,
@@ -62,6 +63,8 @@ export const projects = sqliteTable(
     messageCatalog: json<MessageCatalog>('message_catalog'),
     /** Pages of the project that should be tested [CV-02] (migration 14). */
     pages: json<PageDecl[]>('pages'),
+    /** Named formulas of the project [P-03] (migration 16). */
+    formulas: json<Formulas>('formulas'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );
@@ -208,6 +211,8 @@ export const environments = sqliteTable(
     color: text('color'),
     /** Refuses steps that write data [W-10]; on by default for Production. */
     protected: integer('protected', { mode: 'boolean' }).notNull().default(false),
+    /** How numbers/money read and print on this environment; null = `vi` [P-10] (migration 17). */
+    locale: text('locale', { enum: ['vi', 'en'] }),
   },
   (t) => [index('environments_project_idx').on(t.projectId)],
 );
@@ -264,6 +269,14 @@ export interface DatasetSourceInfo {
   sheet?: string;
 }
 
+export interface DatasetChildRow {
+  name: string;
+  key: string;
+  parentKey: string;
+  columns: string[];
+  rows: Record<string, string>[];
+}
+
 export const datasets = sqliteTable(
   'datasets',
   {
@@ -275,6 +288,8 @@ export const datasets = sqliteTable(
     source: json<DatasetSourceInfo>('source').notNull(),
     /** Rows used instead on some environments, by environment id [O-05] (migration 9). */
     envRows: json<Record<string, Record<string, string>[]>>('env_rows'),
+    /** Linked child tables, e.g. one sheet each [P-01] (migration 15). */
+    children: json<DatasetChildRow[]>('children'),
   },
   (t) => [index('datasets_project_idx').on(t.projectId)],
 );

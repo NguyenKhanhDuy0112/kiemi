@@ -2,6 +2,7 @@ import { differenceInCalendarDays, startOfDay } from 'date-fns';
 import { z } from 'zod';
 import { parseDate } from '../vars/dates';
 import { stringify, toNumber } from '../vars/evaluate';
+import type { Locale } from '../vars/values';
 
 /** Text comparisons [B-03]. */
 export const TEXT_OPS = [
@@ -75,20 +76,40 @@ export const NumberOpSchema = z.enum(NUMBER_OPS);
 export type NumberOp = z.infer<typeof NumberOpSchema>;
 
 /** First number in a text such as "Tổng: 1.250.000 đ" → 1250000. */
-export function extractNumber(v: unknown): number | undefined {
-  const direct = toNumber(v);
+export function extractNumber(v: unknown, locale: Locale = 'vi'): number | undefined {
+  const direct = toNumber(v, locale);
   if (direct !== undefined) return direct;
   const m = stringify(v).match(/[-+]?\d[\d.,\s ]*\d|[-+]?\d/);
-  return m ? toNumber(m[0].replace(/[\s ]/g, '')) : undefined;
+  return m ? toNumber(m[0].replace(/[\s ]/g, ''), locale) : undefined;
 }
 
-export function compareNumber(actual: number, op: NumberOp, a: number, b?: number): boolean {
+/** Allowed gap for `eq` / `ne`: absolute and/or a percentage of the expected value [P-04]. */
+export interface Tolerance {
+  absolute?: number | undefined;
+  percent?: number | undefined;
+}
+
+/** The larger of the absolute and the percentage allowance. */
+export function allowance(expected: number, t: Tolerance | undefined): number {
+  const abs = t?.absolute === undefined ? 0 : Math.abs(t.absolute);
+  const pct = t?.percent === undefined ? 0 : (Math.abs(expected) * Math.abs(t.percent)) / 100;
+  return Math.max(abs, pct);
+}
+
+export function compareNumber(
+  actual: number,
+  op: NumberOp,
+  a: number,
+  b?: number,
+  tolerance?: Tolerance,
+): boolean {
+  const slack = allowance(a, tolerance);
   const eps = 1e-9;
   switch (op) {
     case 'eq':
-      return Math.abs(actual - a) < eps;
+      return Math.abs(actual - a) <= eps + slack;
     case 'ne':
-      return Math.abs(actual - a) >= eps;
+      return Math.abs(actual - a) > eps + slack;
     case 'gt':
       return actual > a;
     case 'gte':

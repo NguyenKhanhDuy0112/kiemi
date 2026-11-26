@@ -1,7 +1,9 @@
+import { childRowsOf } from '@kiemi/schema';
 import { z } from 'zod';
 import { defineAction } from '../define-action';
 import { EngineError } from '../errors';
 import { target } from './_common';
+import { readTable } from './_table';
 
 const MAX_ITERATIONS = 1000;
 
@@ -14,12 +16,15 @@ export const loopAction = defineAction({
   type: 'loop',
   params: z
     .object({
-      over: z.enum(['times', 'data', 'tableRows']).default('times'),
+      over: z.enum(['times', 'data', 'tableRows', 'children']).default('times'),
+      /** Name of the linked child table (`over: children`) [P-01]. */
+      child: z.string().min(1).optional(),
       times: z.coerce.number().int().nonnegative().max(MAX_ITERATIONS).optional(),
       target: target.optional(),
       steps: z.array(z.record(z.string(), z.unknown())).min(1),
     })
     .refine((p) => p.over !== 'times' || p.times !== undefined, 'times is required')
+    .refine((p) => p.over !== 'children' || p.child !== undefined, 'child (table name) is required')
     .refine(
       (p) => p.over !== 'tableRows' || p.target !== undefined,
       'target (the table) is required',
@@ -31,28 +36,23 @@ export const loopAction = defineAction({
     let items: Record<string, unknown>[];
     if (p.over === 'times') {
       items = Array.from({ length: p.times ?? 0 }, () => ({}));
+    } else if (p.over === 'children') {
+      const row = ctx.run.row;
+      const dataset = ctx.run.dataset;
+      const rows = dataset && row ? childRowsOf(dataset, row, p.child as string) : undefined;
+      if (!rows) {
+        throw new EngineError(
+          'INVALID_PARAMS',
+          `No linked table "${p.child}" for the current data row`,
+          { child: p.child },
+        );
+      }
+      items = rows;
     } else if (p.over === 'data') {
       items = [...(ctx.run.dataset?.rows ?? [])];
     } else {
       const { locator } = await ctx.resolve(p.target as NonNullable<typeof p.target>);
-      items = await locator.evaluate((el) => {
-        const text = (e: Element) => ((e as HTMLElement).innerText ?? e.textContent ?? '').trim();
-        const rows = [...el.querySelectorAll('tr, [role="row"]')];
-        const isHeader = (r: Element) =>
-          r.querySelector('td, [role="cell"], [role="gridcell"]') === null;
-        const header = rows.find(isHeader);
-        const names = header ? [...header.children].map(text) : [];
-        return rows
-          .filter((r) => !isHeader(r))
-          .map((r) => {
-            const cells = [...r.children].map(text);
-            const item: Record<string, unknown> = { text: text(r), cells };
-            names.forEach((n, i) => {
-              if (n && !(n in item)) item[n] = cells[i] ?? '';
-            });
-            return item;
-          });
-      });
+      items = await readTable(locator);
     }
     if (items.length > MAX_ITERATIONS) {
       throw new EngineError(
