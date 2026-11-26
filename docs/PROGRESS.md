@@ -11,7 +11,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
-- M11-01a xong (task M11-01 tách a/b vì > 400 dòng): `packages/schema/src/form-spec.ts` (`FormSpec` → `FieldSpec[]`: kiểu, required, min/max, pattern, allowedChars, unique, options, `visibleWhen/requiredWhen`, `compare`, `file`, `ruleRefs` cho M11-03, `locator` cho M11-02/06). Lưu ở cột `projects.form_specs` (migration 12) giống `popupRules`: `ProjectService.setFormSpecs/formSpecs`, `project.json` (`formSpecs`), tRPC `projects.setFormSpecs`. Khuôn UI: `features/environments/popup-rules.tsx`.
+- M11-01 xong (tách a/b). Schema `packages/schema/src/form-spec.ts` (`FormSpec` → `FieldSpec[]`: kiểu, required, min/max, pattern, allowedChars, unique, options, `visibleWhen/requiredWhen`, `compare`, `file`, `ruleRefs` cho M11-03, `locator` cho M11-02/06). Lưu ở `projects.form_specs` (migration 12) như `popupRules`: `ProjectService.setFormSpecs/formSpecs`, `project.json`, tRPC `projects.setFormSpecs`. UI: view `forms` (sidebar "Biểu mẫu") = `features/forms/` (`forms-screen.tsx`, `field-row.tsx`, `form-edit.ts` thuần có test). Test chặn chuỗi cứng kể cả `placeholder="…"` → đưa vào i18n; `<label>` bọc Input/Checkbox bị Biome a11y chặn (dùng `<div>` + aria-label).
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 
