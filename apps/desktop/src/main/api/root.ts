@@ -14,6 +14,7 @@ import {
 import { recorderRouter, savedLoginsRouter } from './routers/recorder';
 import { runsRouter } from './routers/runs';
 import { samplesRouter } from './routers/samples';
+import { searchRouter } from './routers/search';
 import { sharedResourcesRouter } from './routers/shared-resources';
 import { systemRouter } from './routers/system';
 import { updatesRouter } from './routers/updates';
@@ -38,6 +39,7 @@ export const rootRouter = router({
   savedLogins: savedLoginsRouter,
   updates: updatesRouter,
   sharedResources: sharedResourcesRouter,
+  search: searchRouter,
 });
 
 export type AppRouter = typeof rootRouter;

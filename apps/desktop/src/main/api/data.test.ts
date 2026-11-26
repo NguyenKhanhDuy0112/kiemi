@@ -93,3 +93,25 @@ describe('data routers [M2-02 → M2-05]', () => {
     expect(JSON.parse(one.content)).toMatchObject({ schemaVersion: 2, name: 'T' });
   });
 });
+
+describe('workspace search index [O-08]', () => {
+  it('lists tests, elements and shared steps of every project plus the library', async () => {
+    const { c, projectId } = caller();
+    const other = await c.projects.create({ name: 'Cổng B' });
+    await c.testCases.create({ projectId, name: 'Đăng nhập A' });
+    await c.testCases.create({ projectId: other.id, name: 'Đăng nhập B' });
+    await c.sharedResources.create({
+      kind: 'shared_step',
+      scope: 'workspace',
+      name: 'Chung',
+      data: { params: [], steps: [{ id: 's', action: 'goto', params: { url: '/' } }] },
+    });
+    const idx = await c.search.index();
+    expect(idx.projects).toHaveLength(2);
+    expect(idx.tests.map((t) => [t.name, t.projectName]).sort()).toEqual([
+      ['Đăng nhập A', expect.any(String)],
+      ['Đăng nhập B', 'Cổng B'],
+    ]);
+    expect(idx.sharedSteps).toMatchObject([{ name: 'Chung', projectId: null }]);
+  });
+});

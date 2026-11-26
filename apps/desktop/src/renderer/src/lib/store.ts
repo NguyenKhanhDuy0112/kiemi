@@ -1,4 +1,11 @@
 import { create } from 'zustand';
+import {
+  loadPrefs,
+  type ProjectPrefs,
+  savePrefs,
+  togglePinned,
+  touchRecent,
+} from './recent-projects';
 
 export type View = 'tests' | 'history' | 'environments' | 'elements' | 'settings';
 export type ThemeChoice = 'light' | 'dark' | 'system';
@@ -13,6 +20,8 @@ interface AppState {
   /** Right detail panel (U-01). */
   detailOpen: boolean;
   paletteOpen: boolean;
+  /** Recent and pinned projects [O-08]. */
+  projectPrefs: ProjectPrefs;
   /** Recording to start as soon as this test is open in the editor (onboarding, S-08). */
   pendingRecord: { testId: string; url: string } | null;
   themeChoice: ThemeChoice;
@@ -24,6 +33,7 @@ interface AppState {
   openRun(id: string | null): void;
   toggleDetail(): void;
   setPaletteOpen(open: boolean): void;
+  togglePinProject(id: string): void;
   setPendingRecord(p: { testId: string; url: string } | null): void;
   setThemeChoice(choice: ThemeChoice): void;
 }
@@ -43,11 +53,21 @@ export const useAppStore = create<AppState>((set, get) => ({
   openRunId: null,
   detailOpen: true,
   paletteOpen: false,
+  projectPrefs: loadPrefs(),
   pendingRecord: null,
   themeChoice: 'system',
   theme: resolve('system'),
   setView: (view) => set({ view, openRunId: null }),
-  setProject: (projectId) => set({ projectId, openTestId: null, openRunId: null }),
+  setProject: (projectId) => {
+    const projectPrefs = touchRecent(get().projectPrefs, projectId);
+    savePrefs(projectPrefs);
+    set({ projectId, openTestId: null, openRunId: null, projectPrefs });
+  },
+  togglePinProject: (id) => {
+    const projectPrefs = togglePinned(get().projectPrefs, id);
+    savePrefs(projectPrefs);
+    set({ projectPrefs });
+  },
   openTest: (openTestId) => set({ openTestId, view: 'tests', openRunId: null }),
   openRun: (openRunId) => set({ openRunId }),
   toggleDetail: () => set({ detailOpen: !get().detailOpen }),

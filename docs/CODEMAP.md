@@ -13,6 +13,7 @@
 - `projects/` → `folder-manager.ts` (đồng bộ thư mục dự án, watcher), `locks.ts` (khóa mềm)
 - `results/` → `kiemi-artifact://`, trace server · `samples/` → dự án mẫu · `update/`, `crash/`
 ## apps/desktop/src/renderer/src (React)
+- `lib/recent-projects.ts` → ghim/gần đây dự án (O-08) · `components/command-palette.tsx` → Ctrl/⌘K toàn workspace
 - `App.tsx` → khung U-01 (sidebar, thanh tiêu đề, màn hình lazy) · `lib/` → `store.ts` (điều hướng), `trpc.ts`, `tx.ts`, `errors.ts`, `environment.ts`
 - `features/tests/` → cây Dự án → Sản phẩm → Thư mục → Test, suite-dialog
 - `features/editor/` → bảng bước, `schema-form.tsx` (form tự sinh), `editor-tabs.tsx` (Dữ liệu/Biến/Phiên), `effective-variables.tsx`, `environment-rows.tsx`

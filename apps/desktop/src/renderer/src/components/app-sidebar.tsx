@@ -21,6 +21,7 @@ import {
 import { ProjectFolderDialogs } from '@renderer/features/projects/folder-dialogs';
 import { openProjectFolder, useProjectFolder } from '@renderer/features/projects/project-folder';
 import { errorMessage } from '@renderer/lib/errors';
+import { orderProjects } from '@renderer/lib/recent-projects';
 import { useAppStore, type View } from '@renderer/lib/store';
 import { trpc, trpcClient } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
@@ -33,6 +34,8 @@ import {
   FolderSearch,
   Globe,
   History,
+  Pin,
+  PinOff,
   Plus,
   Search,
   Settings,
@@ -57,6 +60,8 @@ export function AppSidebar() {
   const projectId = useAppStore((s) => s.projectId);
   const setProject = useAppStore((s) => s.setProject);
   const setPaletteOpen = useAppStore((s) => s.setPaletteOpen);
+  const prefs = useAppStore((s) => s.projectPrefs);
+  const togglePin = useAppStore((s) => s.togglePinProject);
   const projects = useQuery(trpc.projects.list.queryOptions());
   const [dialog, setDialog] = useState<NameDialogState | null>(null);
   const current = projects.data?.find((p) => p.id === projectId);
@@ -83,9 +88,28 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-60">
-                {(projects.data ?? []).map((p) => (
+                {orderProjects(projects.data ?? [], prefs).map((p) => (
                   <DropdownMenuItem key={p.id} onSelect={() => setProject(p.id)}>
-                    {p.name}
+                    <span className="flex-1 truncate">{p.name}</span>
+                    <button
+                      type="button"
+                      className="rounded p-1 hover:bg-accent"
+                      aria-label={tx(
+                        prefs.pinned.includes(p.id) ? 'ui.nav.unpinProject' : 'ui.nav.pinProject',
+                      )}
+                      aria-pressed={prefs.pinned.includes(p.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        togglePin(p.id);
+                      }}
+                    >
+                      {prefs.pinned.includes(p.id) ? (
+                        <PinOff className="size-3.5" />
+                      ) : (
+                        <Pin className="size-3.5 opacity-50" />
+                      )}
+                    </button>
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
