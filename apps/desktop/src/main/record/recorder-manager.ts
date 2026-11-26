@@ -1,7 +1,8 @@
 import type { Services } from '@kiemi/db';
-import { mainAppUrl, type RunRequest, type SavedLogin } from '@kiemi/engine';
+import { mainAppUrl, type RunRequest, type SavedLogin, type ScannedForm } from '@kiemi/engine';
 import type { HighlightResult, StepChange, Suggestion } from '@kiemi/recorder';
 import {
+  CURRENT_SCHEMA_VERSION,
   DEFAULT_SESSION,
   type Env,
   type Locator,
@@ -10,6 +11,7 @@ import {
   type Secrets,
   type Step,
   type TestCase,
+  TestCaseSchema,
 } from '@kiemi/schema';
 import { translations } from '@kiemi/shared';
 import { v7 as uuidv7 } from 'uuid';
@@ -21,7 +23,11 @@ import { type OpenTunnel, prepareNetwork, type TunnelLike, usedProducts } from '
 const NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 export const StartRecordingInputSchema = z.object({
-  testCaseId: z.string().min(1),
+  /** Test the browser opens for; leave out to open a page of a product (`projectId`) [R-02]. */
+  testCaseId: z.string().min(1).optional(),
+  projectId: z.string().min(1).optional(),
+  /** Product whose `{{app}}` URL is the base, with `projectId` and no test. */
+  productKey: z.string().min(1).optional(),
   /** `inspect` = only Pick / Highlight, no steps [C-06]. */
   mode: z.enum(['record', 'inspect']).default('record'),
   /** `null` = no environment; omitted = the project's first one. */
@@ -121,9 +127,19 @@ export class RecorderManager {
   start(raw: StartRecordingInput): RecordingInfo {
     const input = StartRecordingInputSchema.parse(raw);
     const s = this.#d.services;
-    const row = s.testCases.get(input.testCaseId);
-    const tc: TestCase = s.testCases.forRun(row.id);
-    const projectId = row.projectId;
+    const row = input.testCaseId ? s.testCases.get(input.testCaseId) : undefined;
+    if (!row && !input.projectId) throw new Error('A recording needs a test case or a project');
+    // Without a test (scanning a form), an empty one stands for the product.
+    const tc: TestCase = row
+      ? s.testCases.forRun(row.id)
+      : TestCaseSchema.parse({
+          schemaVersion: CURRENT_SCHEMA_VERSION,
+          id: uuidv7(),
+          name: 'scan',
+          ...(input.productKey ? { product: input.productKey } : {}),
+          steps: [],
+        });
+    const projectId = row?.projectId ?? input.projectId ?? '';
     if (this.#active && !this.#active.finished) this.stop(this.#active.id);
 
     const environmentId =
@@ -199,7 +215,7 @@ export class RecorderManager {
 
     const active: Active = {
       id,
-      testCaseId: row.id,
+      testCaseId: row?.id ?? '',
       projectId,
       mode: input.mode,
       session,
@@ -256,6 +272,18 @@ export class RecorderManager {
       a.waiting.set(requestId, (v) => resolve(v as HighlightResult)),
     );
     this.#send(a, { kind: 'highlight', requestId, locator });
+    return done;
+  }
+
+  /** Reads the forms of the page open in the browser [R-02]. */
+  scanForms(recordingId: string): Promise<ScannedForm[]> {
+    const a = this.#get(recordingId);
+    if (!a) return Promise.resolve([]);
+    const requestId = uuidv7();
+    const done = new Promise<ScannedForm[]>((resolve) =>
+      a.waiting.set(requestId, (v) => resolve(v as ScannedForm[])),
+    );
+    this.#send(a, { kind: 'scanForms', requestId });
     return done;
   }
 
@@ -402,6 +430,10 @@ export class RecorderManager {
         return;
       case 'pickResult':
         a.waiting.get(m.requestId)?.(m.locator);
+        a.waiting.delete(m.requestId);
+        return;
+      case 'scanResult':
+        a.waiting.get(m.requestId)?.(m.forms);
         a.waiting.delete(m.requestId);
         return;
       case 'highlightResult':

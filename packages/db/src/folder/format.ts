@@ -2,7 +2,13 @@ import { createHash } from 'node:crypto';
 import {
   EnvColorSchema,
   EnvTypeSchema,
+  type FormSpec,
+  FormSpecsSchema,
   LocatorSchema,
+  type MessageCatalog,
+  MessageCatalogSchema,
+  type PageDecl,
+  PageDeclsSchema,
   type PopupRule,
   PopupRulesSchema,
   ProductSchema,
@@ -55,6 +61,12 @@ export const ProjectFileSchema = z.object({
   variables: z.record(VariableNameSchema, z.string()).default({}),
   /** Popups closed in every test [W-09]. */
   popupRules: PopupRulesSchema.default([]),
+  /** Field specs of the project's forms [R-01]. */
+  formSpecs: FormSpecsSchema.default([]),
+  /** Error messages the project changed [R-10]. */
+  messageCatalog: MessageCatalogSchema.default({}),
+  /** Pages that should be tested [CV-02]. */
+  pages: PageDeclsSchema.default([]),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -160,6 +172,9 @@ export interface ProjectSnapshot {
     description: string | null;
     variables: Record<string, string>;
     popupRules: PopupRule[];
+    formSpecs: FormSpec[];
+    messageCatalog: MessageCatalog;
+    pages: PageDecl[];
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];

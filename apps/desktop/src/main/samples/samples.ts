@@ -1,11 +1,15 @@
 import type { Services } from '@kiemi/db';
 import {
   CURRENT_SCHEMA_VERSION,
+  type FormSpec,
+  FormSpecSchema,
   type StepInput as FullStepInput,
+  generateFormCases,
   TestCaseSchema,
 } from '@kiemi/schema';
 import ExcelJS from 'exceljs';
 import { v7 as uuidv7 } from 'uuid';
+import { generateFormTests } from '../forms/generate-tests';
 
 /** Name of the project holding the sample tests (one per workspace) [L-01]. */
 export const SAMPLE_PROJECT = 'Dự án mẫu';
@@ -100,6 +104,65 @@ const FORM_ELEMENTS: ElementKey[] = [
   'el_lyDo',
   'el_btnGui',
 ];
+
+const byCss = (value: string) => ({ strategies: [{ kind: 'css' as const, value }] });
+
+/** Field specification of the sample site's registration page (SPEC R.1) [L-03 #7]. */
+export function registerFormSpec(): FormSpec {
+  return FormSpecSchema.parse({
+    id: 'dang-ky-mau',
+    name: 'Validate form Đăng ký',
+    path: '/register.html',
+    submit: { strategies: [{ kind: 'role', role: 'button', name: 'Đăng ký' }] },
+    successMessage: 'Đăng ký thành công',
+    fields: [
+      {
+        key: 'fullname',
+        label: 'Họ tên',
+        locator: byCss('#fullname'),
+        required: true,
+        minLength: 2,
+        maxLength: 50,
+        readBack: byCss('#saved-fullname'),
+      },
+      {
+        key: 'email',
+        label: 'Email',
+        type: 'email',
+        locator: byCss('#email'),
+        required: true,
+        maxLength: 100,
+        unique: true,
+        readBack: byCss('#saved-email'),
+      },
+      {
+        key: 'phone',
+        label: 'Số điện thoại',
+        type: 'phone',
+        locator: byCss('#phone'),
+        ruleRefs: ['vn-phone'],
+        readBack: byCss('#saved-phone'),
+      },
+      {
+        key: 'dob',
+        label: 'Ngày sinh',
+        locator: byCss('#dob'),
+        required: true,
+        example: '15/06/1990',
+        badData: false,
+      },
+      {
+        key: 'password',
+        label: 'Mật khẩu',
+        type: 'password',
+        locator: byCss('#password'),
+        required: true,
+        ruleRefs: ['strong-password'],
+        maxLength: 32,
+      },
+    ],
+  });
+}
 
 /**
  * Creates (once) the sample project: environment pointing at the bundled sample site,
@@ -267,6 +330,29 @@ export async function installSamples(
   services.suites.setItems(
     suite.id,
     rows.map((r) => ({ testCaseId: r.id })),
+  );
+
+  // L-03 #7: "Validate form" — the spec, its pages and the tests generated from it.
+  const form = registerFormSpec();
+  services.projects.setFormSpecs(projectId, [form]);
+  services.projects.setPages(projectId, [
+    { id: 'p-dang-ky', name: 'Đăng ký', path: '/register.html', kind: 'form' },
+  ]);
+  const generated = generateFormTests(services, {
+    projectId,
+    formId: form.id,
+    caseIds: generateFormCases(form)
+      .filter((c) => c.selected)
+      .map((c) => c.id),
+  });
+  const formSuite = services.suites.create({
+    projectId,
+    name: 'Validate form Đăng ký',
+    environmentId: env.id,
+  });
+  services.suites.setItems(
+    formSuite.id,
+    services.testCases.list(projectId, generated.folderId).map((t) => ({ testCaseId: t.id })),
   );
   return { projectId, created: true, firstTestId: rows[0]?.id ?? null };
 }

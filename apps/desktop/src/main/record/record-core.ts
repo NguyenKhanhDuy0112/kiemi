@@ -7,12 +7,14 @@ import {
   type RunOptions,
   type RunRequest,
   runTestCase,
+  type ScannedForm,
   SessionPages,
+  scanForms,
   toRunError,
 } from '@kiemi/engine';
 import { type Recorder, type RecorderOptions, startRecorder } from '@kiemi/recorder';
 import type { RunResult } from '@kiemi/schema';
-import type { BrowserContext } from 'playwright-core';
+import type { BrowserContext, Page } from 'playwright-core';
 import type { RecordCommand, RecordStart, WorkerToHost } from '../run/protocol';
 
 /** How long a login saved from the toolbar can be reused (same default as the step) [F-02]. */
@@ -35,6 +37,7 @@ export function createRecordSession(post: (msg: WorkerToHost) => void, deps: Rec
   const run = deps.run ?? runTestCase;
   const start = deps.start ?? startRecorder;
   let recorder: Recorder | undefined;
+  let livePage: (() => Promise<Page>) | undefined;
   let finish: (() => void) | undefined;
   const stopped = new Promise<void>((resolve) => {
     finish = resolve;
@@ -62,6 +65,18 @@ export function createRecordSession(post: (msg: WorkerToHost) => void, deps: Rec
         .highlight(c.locator)
         .catch(() => ({ count: 0 }))
         .then((result) => post({ type: 'highlightResult', requestId: c.requestId, result }));
+    } else if (c.kind === 'scanForms') {
+      const requestId = c.requestId;
+      void (async () => {
+        let forms: ScannedForm[] = [];
+        try {
+          const page = await livePage?.();
+          if (page) forms = await scanForms(page);
+        } catch {
+          // The page may be closed or navigating: report no forms.
+        }
+        post({ type: 'scanResult', requestId, forms });
+      })();
     } else {
       r.resolveSuggestion(c.id, c.accept);
     }
@@ -115,7 +130,9 @@ export function createRecordSession(post: (msg: WorkerToHost) => void, deps: Rec
             login: { state, expiresAt: new Date(Date.now() + TOOLBAR_LOGIN_TTL_MS).toISOString() },
           }),
       });
-      const page = await pages.page(msg.session);
+      const sessionPages = pages;
+      livePage = () => sessionPages.page(msg.session);
+      const page = await sessionPages.page(msg.session);
       if (msg.url) await page.goto(msg.url).catch(() => undefined);
       await page.bringToFront().catch(() => undefined);
       post(prefix ? { type: 'recordReady', prefix } : { type: 'recordReady' });

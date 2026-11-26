@@ -120,18 +120,19 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M10-11** Demo-site: popup ngẫu nhiên + trang lỗi theo từng loại; e2e luồng sửa khi fail
 
 ## M11 — Validate form, thiết kế test & đo độ phủ
-- [ ] **M11-01** Bảng đặc tả field (kiểu + quy tắc, phụ thuộc, so sánh giữa field, file) + lưu trữ `FieldSpec`/`FieldRule` [R-01]
-- [ ] **M11-02** Tự suy ra đặc tả từ HTML form (+ OpenAPI/JSON Schema nếu có), QC duyệt [R-02]
-- [ ] **M11-03** Thư viện quy tắc VN & catalog thông báo dùng chung (Email, SĐT VN, CCCD, MST, …) [R-10]
-- [ ] **M11-04** Sinh test theo kỹ thuật chuẩn (phân vùng, biên, bảng quyết định, pairwise; 1 hợp lệ + mỗi case sai 1 field), chuyển biến thể M-03 cũ sang mô hình mới [R-03, M-03]
-- [ ] **M11-05** Bộ dữ liệu xấu chuẩn, bật/tắt theo field, nhãn giải thích tiếng Việt [R-04]
-- [ ] **M11-06** Kiểm tra thông báo lỗi theo field (vị trí, nội dung theo catalog, focus, không xóa dữ liệu, không gửi form) + round-trip lưu rồi đọc lại [R-05, R-07]
-- [ ] **M11-07** Ma trận kết quả Field × Quy tắc (xem ảnh/chi tiết, xuất Excel) [R-09]
-- [ ] **M11-08** Import đặc tả field từ Excel (file mẫu) [R-14]
-- [ ] **M11-09** Nhãn kỹ thuật thiết kế + đặc tính ISO 25010 cho test/case (tự gắn với case sinh tự động) [CV-01]
-- [ ] **M11-10** Độ phủ trang (khai báo danh sách trang) + độ phủ theo checklist `QC-COVERAGE.md` [CV-02, CV-04]
-- [ ] **M11-11** Lint chất lượng test (có nút sửa nhanh/giải thích) + nhắc sinh thêm case sau khi ghi [CV-07, CV-08]
-- [ ] **M11-12** Demo-site: form Đăng ký 5 field có lỗi cố ý; mẫu L-03 #7 "Validate form" [L-03]
+- [x] **M11-01a** Schema `FormSpec`/`FieldSpec` (kiểu + quy tắc, phụ thuộc, so sánh giữa field, file) + lưu trong dự án (cột `form_specs`, `project.json`, tRPC `projects.setFormSpecs`) [R-01] [S]
+- [x] **M11-01b** UI bảng đặc tả field (khai báo form 5 field không cần code) [R-01] [M]
+- [x] **M11-02** Tự suy ra đặc tả từ HTML form (+ OpenAPI/JSON Schema nếu có), QC duyệt [R-02]
+- [x] **M11-03** Thư viện quy tắc VN & catalog thông báo dùng chung (Email, SĐT VN, CCCD, MST, …) [R-10]
+- [x] **M11-04** Sinh test theo kỹ thuật chuẩn (phân vùng, biên, bảng quyết định, pairwise; 1 hợp lệ + mỗi case sai 1 field), chuyển biến thể M-03 cũ sang mô hình mới [R-03, M-03]
+- [x] **M11-05** Bộ dữ liệu xấu chuẩn, bật/tắt theo field, nhãn giải thích tiếng Việt [R-04]
+- [x] **M11-06** Kiểm tra thông báo lỗi theo field (vị trí, nội dung theo catalog, focus, không xóa dữ liệu, không gửi form) + round-trip lưu rồi đọc lại [R-05, R-07]
+- [x] **M11-07** Ma trận kết quả Field × Quy tắc (xem ảnh/chi tiết, xuất Excel) [R-09]
+- [x] **M11-08** Import đặc tả field từ Excel (file mẫu) [R-14]
+- [x] **M11-09** Nhãn kỹ thuật thiết kế + đặc tính ISO 25010 cho test/case (tự gắn với case sinh tự động) [CV-01]
+- [x] **M11-10** Độ phủ trang (khai báo danh sách trang) + độ phủ theo checklist `QC-COVERAGE.md` [CV-02, CV-04]
+- [x] **M11-11** Lint chất lượng test (có nút sửa nhanh/giải thích) + nhắc sinh thêm case sau khi ghi [CV-07, CV-08]
+- [x] **M11-12** Demo-site: form Đăng ký 5 field có lỗi cố ý; mẫu L-03 #7 "Validate form" [L-03]
 
 ## M12 — Dữ liệu & tính toán
 - [ ] **M12-01** Biến danh sách & object: lưu bảng/danh sách thành list object, truy cập `{{x[0].y}}`, `{{x.length}}`, panel Biến (DSL tăng version) [P-02]

@@ -22,6 +22,7 @@ export default defineConfig({
         dialogs: page('dialogs.html'),
         popup: page('popup.html'),
         fixes: page('fixes.html'),
+        register: page('register.html'),
       },
     },
   },

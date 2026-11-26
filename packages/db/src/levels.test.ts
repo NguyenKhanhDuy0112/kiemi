@@ -111,4 +111,58 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     expect(s.testCases.get(b).content.elements.el_save?.strategies).toEqual(next.strategies);
     expect(s.testCases.get(a).content.elements.el_save?.strategies).toEqual(strategies);
   });
+
+  it('form specs of a project are validated and travel through the project folder [R-01]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const form = {
+      id: 'reg',
+      name: 'Đăng ký',
+      fields: [
+        { key: 'email', label: 'Email', type: 'email', required: true },
+        { key: 'pw', label: 'Mật khẩu', type: 'password', minLength: 8 },
+      ],
+    };
+    s.projects.setFormSpecs(projectId, [form]);
+    expect(s.projects.formSpecs(projectId)[0]?.fields[1]).toMatchObject({
+      key: 'pw',
+      minLength: 8,
+    });
+    expect(() => s.projects.setFormSpecs(projectId, [{ id: 'x', name: '', fields: [] }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-formspec-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.formSpecs(projectId)).toEqual(s.projects.formSpecs(projectId));
+  });
+
+  it('message catalog of a project travels through the project folder [R-10]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    s.projects.setMessageCatalog(projectId, { required: 'Vui lòng nhập {field}' });
+    expect(() => s.projects.setMessageCatalog(projectId, { required: '' })).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-catalog-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.messageCatalog(projectId)).toEqual({ required: 'Vui lòng nhập {field}' });
+  });
+
+  it('declared pages of a project travel through the project folder [CV-02]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    s.projects.setPages(projectId, [{ id: 'p1', name: 'Đăng ký', path: '/dang-ky', kind: 'form' }]);
+    expect(() => s.projects.setPages(projectId, [{ id: 'p', name: '', path: '/' }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-pages-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.pages(projectId)).toEqual(s.projects.pages(projectId));
+  });
 });

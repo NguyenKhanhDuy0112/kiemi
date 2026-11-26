@@ -4,6 +4,7 @@ import type {
   LaunchSettingsInput,
   RunRequest,
   SavedLogin,
+  ScannedForm,
   SimilarCandidate,
 } from '@kiemi/engine';
 import type { HighlightResult, StepChange, Suggestion } from '@kiemi/recorder';
@@ -53,6 +54,7 @@ export type RecordCommand =
   | { kind: 'stop' }
   | { kind: 'pick'; requestId: string }
   | { kind: 'highlight'; requestId: string; locator: Locator }
+  | { kind: 'scanForms'; requestId: string }
   | { kind: 'suggestion'; id: string; accept: boolean };
 
 /**
@@ -126,5 +128,6 @@ export type WorkerToHost =
   | { type: 'similarResult'; requestId: string; candidates: SimilarCandidate[] }
   | { type: 'pickResult'; requestId: string; locator: Locator | null }
   | { type: 'highlightResult'; requestId: string; result: HighlightResult }
+  | { type: 'scanResult'; requestId: string; forms: ScannedForm[] }
   /** Recording ended; the browser is closed. */
   | { type: 'recordDone'; steps: Step[] };

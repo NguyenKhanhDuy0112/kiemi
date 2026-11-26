@@ -129,6 +129,11 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
         ? { variables: sortKeys(s.project.variables) }
         : {}),
       ...(s.project.popupRules.length ? { popupRules: s.project.popupRules } : {}),
+      ...(s.project.formSpecs.length ? { formSpecs: s.project.formSpecs } : {}),
+      ...(s.project.pages.length ? { pages: s.project.pages } : {}),
+      ...(Object.keys(s.project.messageCatalog).length
+        ? { messageCatalog: sortKeys(s.project.messageCatalog) }
+        : {}),
     }),
   );
   files.set(
@@ -422,6 +427,9 @@ export function filesToSnapshot(files: FileMap): {
       description: project.description ?? null,
       variables: project.variables,
       popupRules: project.popupRules,
+      formSpecs: project.formSpecs,
+      messageCatalog: project.messageCatalog,
+      pages: project.pages,
     },
     products,
     folders: dedupedFolders,

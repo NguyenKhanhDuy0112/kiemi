@@ -145,8 +145,10 @@ describe('fixing a failed step with the browser kept open', () => {
 
   it('wrong value: the check reports expected / actual and takes the real value [FX-07]', async () => {
     const dbg = new DebugController({ pauseOnFail: true });
+    // A wrong check retries until the step timeout (30 s on CI): keep it short.
     const done = e.run([open('wrongvalue'), clickSave(), expectSaved('Đã lưu 3 bản ghi')], {
       debugger: dbg,
+      request: { options: { defaultStepTimeoutMs: 3000 } },
     });
     const failed = await untilFailed(dbg, done);
     expect(failed.step.stepId).toBe('check');

@@ -31,6 +31,14 @@ const EnvironmentsScreen = lazy(() =>
     default: m.EnvironmentsScreen,
   })),
 );
+const CoverageScreen = lazy(() =>
+  import('@renderer/features/test-coverage/coverage-screen').then((m) => ({
+    default: m.CoverageScreen,
+  })),
+);
+const FormsScreen = lazy(() =>
+  import('@renderer/features/forms/forms-screen').then((m) => ({ default: m.FormsScreen })),
+);
 const HistoryScreen = lazy(() =>
   import('@renderer/features/history/history-screen').then((m) => ({ default: m.HistoryScreen })),
 );
@@ -121,6 +129,8 @@ export function App() {
               <main key={view} className="screen-enter flex min-h-0 flex-1 flex-col">
                 {view === 'tests' && <TestsScreen />}
                 {view === 'environments' && <EnvironmentsScreen />}
+                {view === 'forms' && <FormsScreen />}
+                {view === 'coverage' && <CoverageScreen />}
                 {view === 'elements' && <ElementsScreen />}
                 {view === 'settings' && <SettingsScreen />}
                 {view === 'history' && <HistoryScreen />}

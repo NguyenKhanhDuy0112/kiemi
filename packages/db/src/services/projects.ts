@@ -1,4 +1,14 @@
-import { type PopupRule, PopupRulesSchema, VariableNameSchema } from '@kiemi/schema';
+import {
+  type FormSpec,
+  FormSpecsSchema,
+  type MessageCatalog,
+  MessageCatalogSchema,
+  type PageDecl,
+  PageDeclsSchema,
+  type PopupRule,
+  PopupRulesSchema,
+  VariableNameSchema,
+} from '@kiemi/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { DbError, type Patch, Repo, type RepoContext, validation } from '../repo';
@@ -51,6 +61,33 @@ export class ProjectService {
   }
   popupRules(id: string): PopupRule[] {
     return this.repo.get(id).popupRules ?? [];
+  }
+  /** Field specs of the project's forms [R-01]. */
+  setFormSpecs(id: string, forms: unknown) {
+    const p = FormSpecsSchema.safeParse(forms);
+    if (!p.success) throw validation('formSpec', p.error.issues);
+    return this.repo.update(id, { formSpecs: p.data });
+  }
+  formSpecs(id: string): FormSpec[] {
+    return this.repo.get(id).formSpecs ?? [];
+  }
+  /** Error messages the project words differently from the defaults [R-10]. */
+  setMessageCatalog(id: string, messages: unknown) {
+    const p = MessageCatalogSchema.safeParse(messages);
+    if (!p.success) throw validation('messageCatalog', p.error.issues);
+    return this.repo.update(id, { messageCatalog: p.data });
+  }
+  messageCatalog(id: string): MessageCatalog {
+    return this.repo.get(id).messageCatalog ?? {};
+  }
+  /** Pages that should be tested [CV-02]. */
+  setPages(id: string, pages: unknown) {
+    const p = PageDeclsSchema.safeParse(pages);
+    if (!p.success) throw validation('pages', p.error.issues);
+    return this.repo.update(id, { pages: p.data });
+  }
+  pages(id: string): PageDecl[] {
+    return this.repo.get(id).pages ?? [];
   }
   /** Project-level variables, inherited by every test of the project [O-04]. */
   setVariables(id: string, values: Record<string, string>) {
