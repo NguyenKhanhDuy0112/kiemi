@@ -539,6 +539,8 @@ export function generateFormCases(form: FormSpec): FormCase[] {
         repeat: true,
         values: base,
         why: 'Gửi form hợp lệ hai lần: lần hai phải bị từ chối vì trùng.',
+        // The generated test sends once; sending twice needs the user's own steps.
+        selected: false,
       });
     }
 

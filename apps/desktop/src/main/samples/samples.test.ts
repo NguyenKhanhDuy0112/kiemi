@@ -32,7 +32,8 @@ afterAll(async () => {
 function setup() {
   const { services, defaultProjectId } = createMemoryServices();
   const runs = createTestRunManager(services, {
-    worker: { launch: async () => ({ browser }) },
+    // A run closes its browser: each run gets its own.
+    worker: { launch: async () => ({ browser: await launch() }) },
   });
   const caller = createCaller({
     appVersion: '1',
@@ -67,7 +68,8 @@ describe('sample tests [L-01, S-08]', () => {
     expect(again).toMatchObject({ projectId: first.projectId, created: false });
     expect(services.projects.list().filter((p) => p.name === SAMPLE_PROJECT)).toHaveLength(1);
 
-    const tests = services.testCases.list(first.projectId);
+    const folder = services.folders.list(first.projectId).find((f) => f.name === 'Test mẫu');
+    const tests = services.testCases.list(first.projectId, folder?.id);
     expect(tests.map((t) => t.name)).toEqual([
       '1. Đăng nhập',
       '2. Điền form và kiểm tra thông báo',
@@ -79,7 +81,7 @@ describe('sample tests [L-01, S-08]', () => {
     expect(dataset?.source).toMatchObject({ kind: 'excel', fileName: 'don-nghi-mau.xlsx' });
     expect(dataset?.rows).toHaveLength(3);
 
-    const [suite] = services.suites.list(first.projectId);
+    const suite = services.suites.list(first.projectId).find((s) => s.name === 'Tất cả test mẫu');
     const { runId } = await caller.runs.start({
       target: { kind: 'suite', suiteId: suite?.id ?? '' },
       options: { headless: true },
@@ -100,6 +102,24 @@ describe('sample tests [L-01, S-08]', () => {
     expect(run.cases).toHaveLength(6);
     expect(run.status).toBe('passed');
   }, 120_000);
+
+  it('has a "Validate form" sample whose generated tests all pass on the sample site [L-03 #7]', async () => {
+    const { services, caller } = setup();
+    const { projectId } = await caller.samples.install();
+    expect(services.projects.formSpecs(projectId)[0]?.fields).toHaveLength(5);
+    const suite = services.suites.list(projectId).find((s) => s.name === 'Validate form Đăng ký');
+    expect(suite).toBeDefined();
+    const { runId } = await caller.runs.start({
+      target: { kind: 'suite', suiteId: suite?.id ?? '' },
+      options: { headless: true },
+    });
+    await collect(await caller.runs.events({ runId }));
+    const run = await caller.runs.get({ runId });
+    expect(run.cases.length).toBeGreaterThan(10);
+    const bad = run.cases.filter((c) => c.status !== 'passed');
+    expect(bad.map((c) => c.testName)).toEqual([]);
+    expect(run.status).toBe('passed');
+  }, 300_000);
 
   it('follows the sample site to its new address', async () => {
     const { services, caller } = setup();

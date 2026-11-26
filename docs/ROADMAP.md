@@ -132,7 +132,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M11-09** Nhãn kỹ thuật thiết kế + đặc tính ISO 25010 cho test/case (tự gắn với case sinh tự động) [CV-01]
 - [x] **M11-10** Độ phủ trang (khai báo danh sách trang) + độ phủ theo checklist `QC-COVERAGE.md` [CV-02, CV-04]
 - [x] **M11-11** Lint chất lượng test (có nút sửa nhanh/giải thích) + nhắc sinh thêm case sau khi ghi [CV-07, CV-08]
-- [ ] **M11-12** Demo-site: form Đăng ký 5 field có lỗi cố ý; mẫu L-03 #7 "Validate form" [L-03]
+- [x] **M11-12** Demo-site: form Đăng ký 5 field có lỗi cố ý; mẫu L-03 #7 "Validate form" [L-03]
 
 ## M12 — Dữ liệu & tính toán
 - [ ] **M12-01** Biến danh sách & object: lưu bảng/danh sách thành list object, truy cập `{{x[0].y}}`, `{{x.length}}`, panel Biến (DSL tăng version) [P-02]
