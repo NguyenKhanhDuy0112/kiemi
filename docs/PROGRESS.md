@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M12** đang làm trên nhánh `milestone/m12-data-compute`: M12-01 → M12-06 xong → M12-07. M11 đã merge.
+**M12** đang làm trên nhánh `milestone/m12-data-compute`: M12-01 → M12-07 xong → M12-08. M11 đã merge.
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
@@ -31,6 +31,7 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 - M12-04 xong: `assertNumber` thêm `tolerance` (tuyệt đối) / `tolerancePercent` (lấy mức lớn hơn; lỗi hiện `1000 (chênh -100)` vs `1100 ± 55`); `Env.locale` ('vi' mặc định | 'en'; cột `environments.locale` migration 17, thư mục dự án, ô chọn ở màn Môi trường) quyết định cách đọc `1.250`; `toNumber(v, locale)`, hàm `parseNumber/formatNumber/formatMoney` (`vars/values.ts`). Chưa làm: ngày theo locale (`dd/MM` vs `MM/dd`) — vẫn mặc định dd/MM/yyyy.
 - M12-05 xong: `assertTableCompare` (`expected` list/JSON, `key`, `columns`, `allPages`+`next`; diff `missing/extra/mismatched/duplicates` ở `error.details.diff`, UI tô đỏ ô lệch `features/run/table-diff*.tsx`) và `assertExpected` (`data` + `formula`, warn log "Kỳ vọng trong Excel khác công thức", so với giá trị Excel). `{{children.<Bảng>}}` = dòng con của dòng dữ liệu hiện tại. Logic thuần: `assertions/table-diff.ts`. `readRows(ctx, …)` (`actions/_table.ts`) dùng chung đọc bảng/duyệt trang; `CheckResult.final` = không thử lại; duyệt mọi trang bắt đầu từ trang HIỆN TẠI (phải đang ở trang 1).
 - M12-06 xong: `assertAllRows` (cột + phép so chữ/số), `assertSorted` (asc/desc; auto|number|date|text; chữ theo `Intl.Collator('vi')`: a<ă<â, d<đ), `assertRowTotal` (số dòng = nhãn "Tổng N" hoặc giá trị). Logic thuần `assertions/table-rules.ts`; đều dùng `readRows` + `final` (duyệt mọi trang). Lỗi liệt kê số dòng vi phạm/sai thứ tự. Trang demo 500 dòng làm ở M12-09.
+- M12-07 xong: ADR 0020; action `download` (`actions/download.ts`; bấm → chờ `download` → kiểm tên/loại/dung lượng → biến `{name, ext, size, path, rows|text, sheets, sheet, cell}`); bộ đọc `engine/src/files/read.ts` (exceljs + CSV tự viết + `unpdf` cho PDF; engine KHÔNG import db). Thêm dep `exceljs`, `unpdf` vào engine. e2e `e2e/download.e2e.test.ts` dùng trang `data:` với `<a download>`; PDF thử là PDF tối giản viết tay. Cạm bẫy: `assertText` cần `target` — so chuỗi từ biến dùng `assertExpected`.
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 

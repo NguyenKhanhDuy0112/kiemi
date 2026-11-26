@@ -7,6 +7,7 @@ import { clearAction } from './clear';
 import { clearDataAction } from './clear-data';
 import { clickAction } from './click';
 import { dialogAction } from './dialog';
+import { downloadAction } from './download';
 import { extractAction } from './extract';
 import { extractTableAction } from './extract-table';
 import { fillAction } from './fill';
@@ -54,6 +55,7 @@ export const builtinActions: ActionDefinition[] = [
   waitAction,
   extractAction,
   extractTableAction,
+  downloadAction,
   callAction,
   waitUntilAction,
   ifAction,

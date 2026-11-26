@@ -143,7 +143,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M12-04** So sánh số có sai lệch + định dạng số/tiền/ngày VN theo môi trường [P-04, P-10]
 - [x] **M12-05** Kỳ vọng 2 nguồn (cột Excel + công thức) + so sánh bảng với danh sách kỳ vọng theo khóa [P-05, P-06]
 - [x] **M12-06** Kiểm tra bảng: mọi dòng thỏa điều kiện, đã sắp xếp (thứ tự tiếng Việt), duyệt mọi trang + tổng khớp nhãn [Q-01, Q-02, Q-03]
-- [ ] **M12-07** File tải về: tên/loại/dung lượng, đọc Excel/CSV/PDF → biến [Q-04]
+- [x] **M12-07** File tải về: tên/loại/dung lượng, đọc Excel/CSV/PDF → biến [Q-04]
 - [ ] **M12-08** Sinh file Excel/CSV từ dataset + file mẫu để upload [P-09]
 - [ ] **M12-09** Demo-site: Shop (giỏ hàng, mã giảm, VAT, ship), Bảng lương (xuất Excel, PDF), Danh sách 500 dòng, Import/Export có dòng lỗi; mẫu L-03 #1, #2, #4, #5 [L-03]
 
