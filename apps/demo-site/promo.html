@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Khuyến mãi mùa hè — Kiemi Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Khuyến mãi mùa hè</h1>
+      <p class="muted">
+        Giá khuyến mãi đến hết ngày 30/06/2030, sau đó về giá gốc. Quản lý đăng nhập để sửa giá; khách
+        (chưa đăng nhập) thấy giá mới sau tối đa 1 giây. Dùng bước “Giả lập thời gian” để tua sang ngày hết hạn.
+      </p>
+      <section class="card" aria-label="Sản phẩm khuyến mãi">
+        <h2>Áo thun mùa hè</h2>
+        <p><strong id="price" data-testid="promo-price">…</strong></p>
+        <p id="promo-status" data-testid="promo-status"></p>
+        <p id="countdown" data-testid="countdown"></p>
+      </section>
+      <section id="admin" class="card" aria-label="Quản lý giá" hidden>
+        <h2>Quản lý giá</h2>
+        <div class="field">
+          <label for="new-price">Giá khuyến mãi mới</label>
+          <input id="new-price" type="number" min="1" />
+        </div>
+        <button type="button" class="btn primary" id="save-price">Lưu giá</button>
+        <span id="saved" role="status"></span>
+      </section>
+    </main>
+    <script type="module" src="/src/promo.ts"></script>
+  </body>
+</html>

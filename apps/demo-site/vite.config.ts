@@ -28,6 +28,8 @@ export default defineConfig({
         list: page('list.html'),
         import: page('import.html'),
         grid: page('grid.html'),
+        promo: page('promo.html'),
+        controls: page('controls.html'),
       },
     },
   },

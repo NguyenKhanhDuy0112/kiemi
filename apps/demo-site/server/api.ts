@@ -153,6 +153,25 @@ export async function handleRequest(
     );
     return true;
   }
+  if (path === '/api/promo' && method === 'GET') {
+    send(res, 200, store.promo);
+    return true;
+  }
+  if (path === '/api/promo' && method === 'POST') {
+    if (me?.role !== 'quanly') {
+      send(res, 403, { error: 'Chỉ quản lý được sửa giá' });
+      return true;
+    }
+    const body = JSON.parse((await readBody(req)) || '{}') as { price?: unknown };
+    const price = Number(body.price);
+    if (!Number.isInteger(price) || price <= 0) {
+      send(res, 400, { error: 'Giá không hợp lệ' });
+      return true;
+    }
+    store.promo = { ...store.promo, price };
+    send(res, 200, store.promo);
+    return true;
+  }
   if (path === '/api/people' && method === 'GET') {
     const bugs = (url.searchParams.get('bug') ?? '').split(',');
     const sort = url.searchParams.get('sort') as SortKey | null;

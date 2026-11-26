@@ -90,7 +90,11 @@ export const clockAction = defineAction({
           await clock.setFixedTime(next);
           frozenAt.set(context, next);
         } else {
-          await clock.fastForward(ms);
+          // In day-sized hops: one big jump overflows the fake clock (> ~24 days) and each hop
+          // still fires the timers that came due.
+          for (let rest = ms; rest > 0; rest -= UNIT_MS.days) {
+            await clock.fastForward(Math.min(rest, UNIT_MS.days));
+          }
         }
         ctx.log(`Clock advanced ${amount} ${unit}`);
         return;

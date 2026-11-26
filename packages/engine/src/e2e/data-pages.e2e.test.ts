@@ -1,3 +1,6 @@
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type E2E, startE2E, step, summary } from './helpers';
 
@@ -307,6 +310,100 @@ describe('import with rejected rows [P-09, Q-04]', () => {
       step('upload', { target: { label: 'Chọn file (.xlsx hoặc .csv)' }, files: '{{g.path}}' }),
       step('click', { target: { role: 'button', name: 'Nhập' } }),
       step('assertText', { target: { css: '#result' }, op: 'contains', value: 'Đã nhập 2/2 dòng' }),
+    ]);
+    expect(bad(summary(r))).toEqual([]);
+  });
+});
+
+describe('promotion by date, countdown and two places [Y-01, V-02, V-03]', () => {
+  const price = { css: '#price' };
+
+  it('turns the promotion off when the clock jumps past its last day', async () => {
+    const r = await e.run([
+      step('clock', { op: 'set', time: '01/06/2030 08:00' }),
+      step('goto', { url: '/promo.html' }),
+      step('assertText', { target: price, value: '99.000 ₫' }),
+      step('assertText', { target: { css: '#promo-status' }, value: 'Đang khuyến mãi' }),
+      step('assertText', { target: { css: '#countdown' }, op: 'contains', value: 'Còn 29 ngày' }),
+      step('clock', { op: 'advance', amount: 30, unit: 'days' }),
+      step('assertText', { target: { css: '#promo-status' }, value: 'Khuyến mãi đã kết thúc' }),
+      step('assertText', { target: price, value: '150.000 ₫' }),
+    ]);
+    expect(bad(summary(r))).toEqual([]);
+  });
+
+  it('shows a visitor the price the manager just saved', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/login.html' }),
+        step('fill', { target: { css: '#username' }, value: 'quanly' }),
+        step('fill', { target: { css: '#password' }, value: '123456' }),
+        step('click', { target: { role: 'button', name: 'Đăng nhập' } }),
+        step('goto', { url: '/promo.html' }),
+        step('openIn', { session: 'khach', url: '/promo.html' }),
+        step('assertSame', {
+          left: { target: price, session: 'default' },
+          right: { target: price, session: 'khach' },
+        }),
+        step('fill', { target: { css: '#new-price' }, value: '120000' }),
+        step('click', { target: { role: 'button', name: 'Lưu giá' } }),
+        step('assertText', { target: price, value: '120.000 ₫' }, { session: 'khach' }),
+        step('assertSame', {
+          left: { target: price, session: 'default' },
+          right: { target: price, session: 'khach' },
+        }),
+      ],
+      { sessions: ['default', 'khach'] },
+    );
+    expect(bad(summary(r))).toEqual([]);
+  });
+});
+
+describe('special inputs page [W-04, W-06]', () => {
+  it('fills every kind of box and submits', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'kiemi-controls-'));
+    const file = join(dir, 'ho-so.txt');
+    await writeFile(file, 'xin chao');
+    const r = await e.run([
+      step('goto', { url: '/controls.html' }),
+      step('pickOption', { target: { css: '#city' }, search: 'hà', option: 'Hà Nội' }),
+      step('pickOption', { target: { css: '#who' }, search: 'nguyễn v', option: 'Nguyễn Văn An' }),
+      step('fill', { target: { css: '#phone' }, value: '0912345678', typing: 'keys' }),
+      step('fill', { target: { css: '#editor' }, value: 'Gọi lại sau 5 giờ' }),
+      step('pickDateRange', {
+        target: { css: '#range' },
+        from: '01/07/2030',
+        to: '15/07/2030',
+        apply: { css: '#range-apply' },
+      }),
+      step('upload', { target: { css: '#dropzone' }, files: file, via: 'drop' }),
+      step('click', { target: { role: 'button', name: 'Gửi' } }),
+      step('assertText', { target: { css: '#result' }, op: 'contains', value: '"city": "Hà Nội"' }),
+      step('assertText', {
+        target: { css: '#result' },
+        op: 'contains',
+        value: '"who": "Nguyễn Văn An"',
+      }),
+      step('assertText', {
+        target: { css: '#result' },
+        op: 'contains',
+        value: '"phone": "0912 345 678"',
+      }),
+      step('assertText', {
+        target: { css: '#result' },
+        op: 'contains',
+        value: 'Gọi lại sau 5 giờ',
+      }),
+      step('assertText', {
+        target: { css: '#result' },
+        op: 'contains',
+        value: '01/07/2030 - 15/07/2030',
+      }),
+      step('assertText', {
+        target: { css: '#result' },
+        op: 'contains',
+        value: 'ho-so.txt (8 byte)',
+      }),
     ]);
     expect(bad(summary(r))).toEqual([]);
   });
