@@ -374,6 +374,14 @@ export const enUi = {
     },
   },
   data: {
+    tree: {
+      title: 'Dataset as a tree',
+      linkedBy: 'linked by column',
+      childKey: 'Key column of the child table',
+      parentKey: 'Key column of the main table',
+      orphans: '{{count}} child row(s) match no main row',
+      importLinked: 'Other sheets become child tables (linked by a shared column)',
+    },
     hint: 'Each row is one run. Use values with {{example}}.',
     none: 'No test data',
     saved: 'Saved dataset',

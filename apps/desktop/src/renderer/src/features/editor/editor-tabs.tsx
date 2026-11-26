@@ -18,6 +18,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileUp, Plus, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { DatasetTree } from './dataset-tree-view';
 import { childLists, type EnvMode, nextEnvLimit, sessionUsage } from './doc-model';
 import { useEditorStore } from './editor-store';
 import { EffectiveVariables } from './effective-variables';
@@ -51,6 +52,7 @@ export function DataTab() {
   });
   const importFile = useMutation(trpc.datasets.importFile.mutationOptions());
   const fileRef = useRef<HTMLInputElement>(null);
+  const [linked, setLinked] = useState(false);
   if (!doc) return null;
   const source = doc.dataset;
   const mode = source?.source === 'table' ? 'table' : source?.source === 'saved' ? 'saved' : 'none';
@@ -68,6 +70,7 @@ export function DataTab() {
         name: file.name.replace(/\.[^.]+$/, ''),
         fileName: file.name,
         data: await fileToBase64(file),
+        ...(linked && /\.xlsx$/i.test(file.name) ? { linked: true } : {}),
       });
       await qc.invalidateQueries({ queryKey: trpc.datasets.list.queryKey({ projectId }) });
       set({ source: 'saved', datasetId: ds.id });
@@ -135,7 +138,18 @@ export function DataTab() {
           <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
             <FileUp /> {tx('ui.data.importFile')}
           </Button>
+          <div className="flex items-center gap-2 text-sm">
+            <Checkbox
+              id="data-linked"
+              checked={linked}
+              onCheckedChange={(v) => setLinked(v === true)}
+            />
+            <Label htmlFor="data-linked">{tx('ui.data.tree.importLinked')}</Label>
+          </div>
         </div>
+      )}
+      {mode === 'saved' && source?.source === 'saved' && (
+        <DatasetTree key={`tree-${source.datasetId}`} datasetId={source.datasetId} />
       )}
       {mode === 'saved' && source?.source === 'saved' && (
         <EnvironmentRows key={source.datasetId} datasetId={source.datasetId} />

@@ -16,7 +16,7 @@
 - `lib/recent-projects.ts` → ghim/gần đây dự án (O-08) · `components/command-palette.tsx` → Ctrl/⌘K toàn workspace
 - `App.tsx` → khung U-01 (sidebar, thanh tiêu đề, màn hình lazy) · `lib/` → `store.ts` (điều hướng), `trpc.ts`, `tx.ts`, `errors.ts`, `environment.ts`
 - `features/tests/` → cây Dự án → Sản phẩm → Thư mục → Test, suite-dialog
-- `features/editor/` → bảng bước, `schema-form.tsx` (form tự sinh), `editor-tabs.tsx` (Dữ liệu/Biến/Phiên), `effective-variables.tsx`, `environment-rows.tsx`
+- `features/editor/` → bảng bước, `schema-form.tsx` (form tự sinh), `editor-tabs.tsx` (Dữ liệu/Biến/Phiên), `dataset-tree-view.tsx` (cây dữ liệu lồng), `effective-variables.tsx`, `environment-rows.tsx`
 - `features/environments/` → `environments-screen.tsx` (ma trận Môi trường × Sản phẩm, biến các cấp, bí mật, proxy/SSH), `environment-badge.tsx`
 - `features/run/` → `fix-step-panel.tsx` (sửa step khi run chờ, FX-02/03), `run-screen.tsx`, `run-dialog.tsx` (`useStartRun`), `run-store.ts`, `report.ts`, `confirm-protected.tsx`
 - `features/editor/quality-button.tsx` → cảnh báo chất lượng test (CV-07)

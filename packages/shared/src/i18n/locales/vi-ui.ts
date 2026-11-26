@@ -373,6 +373,14 @@ export const viUi = {
     },
   },
   data: {
+    tree: {
+      title: 'Bộ dữ liệu dạng cây',
+      linkedBy: 'nối theo cột',
+      childKey: 'Cột khóa của bảng con',
+      parentKey: 'Cột khóa của bảng chính',
+      orphans: '{{count}} dòng con không khớp dòng chính nào',
+      importLinked: 'Các sheet khác thành bảng con (nối theo cột chung)',
+    },
     hint: 'Mỗi dòng là một lần chạy. Dùng giá trị bằng {{example}}.',
     none: 'Không dùng dữ liệu',
     saved: 'Bộ dữ liệu đã lưu',
