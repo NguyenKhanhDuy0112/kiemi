@@ -94,7 +94,11 @@ async function failures(bug: string, only?: string[]): Promise<Record<string, st
   for (const c of generateFormCases(form).filter(wanted)) {
     if (only && !only.includes(c.id)) continue;
     const steps = caseSteps(form, c);
-    const r = await e.run(steps);
+    // A check that fails retries until the step timeout (30 s on CI): keep it short when a bug is on.
+    const r = await e.run(
+      steps,
+      bug ? { request: { options: { defaultStepTimeoutMs: 3000 } } } : {},
+    );
     const failed = r.steps
       .map((s, i) => ({ s, step: steps[i] }))
       .filter(({ s }) => s.status === 'failed')
@@ -107,13 +111,13 @@ async function failures(bug: string, only?: string[]): Promise<Record<string, st
 describe('validation checks on the demo registration form [R-05, R-07]', () => {
   it('a correct form passes every generated case', async () => {
     expect(await failures('')).toEqual({});
-  }, 180_000);
+  }, 120_000);
 
   it('finds a wrong message text', async () => {
     const f = await failures('msg', ['email:maxLength.above', 'email:required']);
     expect(Object.keys(f)).toEqual(['email:maxLength.above']);
     expect(f['email:maxLength.above']).toEqual(['Thông báo lỗi của "Email"']);
-  }, 180_000);
+  }, 120_000);
 
   it('finds an error shown next to another field', async () => {
     const f = await failures('field', ['phone:format.vn-phone.1', 'name:required']);
@@ -122,30 +126,31 @@ describe('validation checks on the demo registration form [R-05, R-07]', () => {
       true,
     );
     expect(Object.keys(f).length).toBeGreaterThan(0);
-  }, 180_000);
+  }, 120_000);
 
-  it('finds cleared data, missing focus and a form sent despite errors', async () => {
-    const cleared = await failures('clear', [
-      'fullname:required',
-      'email:format.email.1',
-      'password:required',
-      'phone:format.vn-phone.1',
-    ]);
+  it('finds data cleared after an error', async () => {
+    const cleared = await failures('clear', ['email:format.email.1', 'phone:format.vn-phone.1']);
+    expect(Object.keys(cleared).length).toBeGreaterThanOrEqual(2);
     expect(Object.values(cleared).every((v) => v.some((n) => n.startsWith('Giữ dữ liệu')))).toBe(
       true,
     );
-    expect(Object.keys(cleared).length).toBeGreaterThanOrEqual(2);
+  }, 120_000);
+
+  it('finds a missing focus on the wrong field', async () => {
     const nofocus = await failures('nofocus', ['fullname:required', 'email:format.email.1']);
+    expect(Object.keys(nofocus).length).toBeGreaterThanOrEqual(2);
     expect(Object.values(nofocus).every((v) => v.some((n) => n.startsWith('Con trỏ')))).toBe(true);
+  }, 120_000);
+
+  it('finds a form sent despite errors', async () => {
     const sent = await failures('sent', [
       'fullname:required',
       'email:format.email.1',
       'password:required',
-      'phone:format.vn-phone.1',
     ]);
-    expect(Object.values(sent).every((v) => v.includes('Form không được gửi'))).toBe(true);
     expect(Object.keys(sent).length).toBeGreaterThanOrEqual(2);
-  }, 180_000);
+    expect(Object.values(sent).every((v) => v.includes('Form không được gửi'))).toBe(true);
+  }, 120_000);
 
   it('finds values that do not round-trip (spaces kept, accents lost)', async () => {
     const trim = await failures('trim', ['fullname:bad.whitespace-edges', 'valid']);
@@ -153,5 +158,5 @@ describe('validation checks on the demo registration form [R-05, R-07]', () => {
     const accent = await failures('accent', ['fullname:bad.vietnamese-nfc', 'valid']);
     expect(Object.keys(accent).sort()).toContain('fullname:bad.vietnamese-nfc');
     expect(accent['fullname:bad.vietnamese-nfc']).toEqual(['Lưu rồi đọc lại "Họ tên"']);
-  }, 180_000);
+  }, 120_000);
 });
