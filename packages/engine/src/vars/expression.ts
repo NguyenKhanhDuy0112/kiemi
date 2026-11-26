@@ -20,7 +20,9 @@ export type Node =
   | { t: 'dur'; v: Duration }
   | { t: 'path'; root: string; parts: (string | Node)[] }
   | { t: 'call'; name: string; args: Node[] }
+  | { t: 'member'; base: Node; parts: (string | Node)[] }
   | { t: 'neg'; e: Node }
+  | { t: 'cmp'; op: '=' | '<>' | '<' | '<=' | '>' | '>='; l: Node; r: Node }
   | { t: 'bin'; op: '+' | '-' | '*' | '/' | '%' | '&'; l: Node; r: Node };
 
 type Tok =
@@ -100,7 +102,13 @@ function tokenize(src: string): Tok[] {
       i += m[0].length;
       continue;
     }
-    if ('+-*/%&().,[]×÷'.includes(c)) {
+    const two = src.slice(i, i + 2);
+    if (two === '<>' || two === '!=' || two === '<=' || two === '>=' || two === '==') {
+      out.push({ k: 'op', v: two === '!=' ? '<>' : two === '==' ? '=' : two });
+      i += 2;
+      continue;
+    }
+    if ('+-*/%&().,[]×÷=<>'.includes(c)) {
       out.push({ k: 'op', v: c === '×' ? '*' : c === '÷' ? '/' : c });
       i++;
       continue;
@@ -124,6 +132,25 @@ export function parseExpression(src: string): Node {
     p++;
   };
 
+  /** `.name` and `[expr]` after a variable or a call. */
+  const accessors = (): (string | Node)[] => {
+    const parts: (string | Node)[] = [];
+    for (;;) {
+      if (isOp('.')) {
+        p++;
+        const n = peek();
+        if (n?.k !== 'id' && n?.k !== 'num') throw syntax(src, 'expected a name after "."');
+        p++;
+        parts.push(String(n.v));
+      } else if (isOp('[')) {
+        p++;
+        parts.push(comparison());
+        expect(']');
+      } else break;
+    }
+    return parts;
+  };
+
   const primary = (): Node => {
     const t = peek();
     if (!t) throw syntax(src, 'unexpected end');
@@ -132,7 +159,7 @@ export function parseExpression(src: string): Node {
     if (t.k === 'dur') return { t: 'dur', v: t.v };
     if (t.k === 'str') return { t: 'str', v: t.v };
     if (t.k === 'op' && t.v === '(') {
-      const e = additive();
+      const e = comparison();
       expect(')');
       return e;
     }
@@ -141,30 +168,18 @@ export function parseExpression(src: string): Node {
         p++;
         const args: Node[] = [];
         if (!isOp(')')) {
-          args.push(additive());
+          args.push(comparison());
           while (isOp(',')) {
             p++;
-            args.push(additive());
+            args.push(comparison());
           }
         }
         expect(')');
-        return { t: 'call', name: t.v, args };
+        const call: Node = { t: 'call', name: t.v, args };
+        const after = accessors();
+        return after.length ? { t: 'member', base: call, parts: after } : call;
       }
-      const parts: (string | Node)[] = [];
-      for (;;) {
-        if (isOp('.')) {
-          p++;
-          const n = peek();
-          if (n?.k !== 'id' && n?.k !== 'num') throw syntax(src, 'expected a name after "."');
-          p++;
-          parts.push(String(n.v));
-        } else if (isOp('[')) {
-          p++;
-          parts.push(additive());
-          expect(']');
-        } else break;
-      }
-      return { t: 'path', root: t.v, parts };
+      return { t: 'path', root: t.v, parts: accessors() };
     }
     throw syntax(src, `unexpected "${String((t as Tok).v)}"`);
   };
@@ -196,8 +211,47 @@ export function parseExpression(src: string): Node {
     return l;
   }
 
+  function comparison(): Node {
+    const l = additive();
+    const t = toks[p];
+    if (t?.k === 'op' && ['=', '<>', '<', '<=', '>', '>='].includes(t.v)) {
+      p++;
+      return { t: 'cmp', op: t.v as Extract<Node, { t: 'cmp' }>['op'], l, r: additive() };
+    }
+    return l;
+  }
+
   if (toks.length === 0) throw syntax(src, 'empty expression');
-  const node = additive();
+  const node = comparison();
   if (p < toks.length) throw syntax(src, 'unexpected text after the expression');
   return node;
+}
+
+/** Readable text of a node, for the step-by-step trace [P-03]. */
+export function nodeText(n: Node): string {
+  switch (n.t) {
+    case 'num':
+      return String(n.v);
+    case 'str':
+      return JSON.stringify(n.v);
+    case 'dur':
+      return `${n.v.amount}${n.v.unit}`;
+    case 'neg':
+      return `-${nodeText(n.e)}`;
+    case 'cmp':
+    case 'bin':
+      return `${nodeText(n.l)} ${n.op} ${nodeText(n.r)}`;
+    case 'call':
+      return `${n.name}(${n.args.map(nodeText).join(', ')})`;
+    case 'member':
+      return n.parts.reduce<string>(
+        (acc, p) => (typeof p === 'string' ? `${acc}.${p}` : `${acc}[${nodeText(p)}]`),
+        nodeText(n.base),
+      );
+    case 'path':
+      return n.parts.reduce<string>(
+        (acc, p) => (typeof p === 'string' ? `${acc}.${p}` : `${acc}[${nodeText(p)}]`),
+        n.root,
+      );
+  }
 }

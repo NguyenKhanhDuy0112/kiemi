@@ -1,7 +1,13 @@
 import type { DataRow, Env, Secrets } from '@kiemi/schema';
 import { EngineError } from '../errors';
 import { AppValue, appNamespace, mainAppUrl, mainProductKey } from './app';
-import { type EvalEnv, evaluateExpression, stringify } from './evaluate';
+import {
+  type EvalEnv,
+  evaluateExpression,
+  type NamedFormula,
+  stringify,
+  type TraceStep,
+} from './evaluate';
 
 export interface VariableScopes {
   env?: Env | undefined;
@@ -18,6 +24,8 @@ export interface VariableScopes {
   workspace?: Record<string, string> | undefined;
   project?: Record<string, string> | undefined;
   productVariables?: Record<string, string> | undefined;
+  /** Named formulas usable as `{{Ten(a, b)}}` [P-03]. */
+  formulas?: Readonly<Record<string, NamedFormula>> | undefined;
 }
 
 /** Where a bare `{{name}}` comes from, most specific first [O-04]. */
@@ -153,6 +161,16 @@ export class VariableStore {
     return evaluateExpression(expression, this.#env());
   }
 
+  /** Evaluates an expression and returns every intermediate result (debug view) [P-03]. */
+  explain(expression: string): { value: unknown; steps: TraceStep[] } {
+    const steps: TraceStep[] = [];
+    const value = evaluateExpression(expression, {
+      ...this.#env(),
+      trace: (s) => steps.push(s),
+    });
+    return { value, steps };
+  }
+
   #walk(value: unknown, raw: readonly string[], top: boolean): unknown {
     if (typeof value === 'string') return value.includes('{{') ? this.#renderValue(value) : value;
     if (Array.isArray(value)) return value.map((v) => this.#walk(v, [], false));
@@ -188,7 +206,7 @@ export class VariableStore {
   }
 
   #env(): EvalEnv {
-    return { lookup: (n) => this.#lookup(n), now: this.#now() };
+    return { lookup: (n) => this.#lookup(n), now: this.#now(), formulas: this.#scopes.formulas };
   }
 
   /** Values from env/suite/test/data may themselves contain templates. */

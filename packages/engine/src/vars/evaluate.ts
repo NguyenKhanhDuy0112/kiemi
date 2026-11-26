@@ -1,55 +1,42 @@
 import { EngineError } from '../errors';
 import { AppValue } from './app';
 import { addDuration, formatDate, parseDate } from './dates';
-import { type Duration, type Node, parseExpression } from './expression';
+import { type Duration, type Node, nodeText, parseExpression } from './expression';
 import { FAKE, GENERATORS, randomInt, randomString } from './generators';
+import { SHEET_FUNCTIONS, truthy } from './sheet';
+import { compareValues, stringify, toNumber } from './values';
+
+export { stringify, toNumber };
 
 /** Resolves the first segment of a path (`row`, `env`, `maDon`…); `undefined` = unknown. */
 export type Lookup = (name: string) => { found: true; value: unknown } | { found: false };
 
+/** A formula with a name and inputs, defined once and used anywhere [P-03]. */
+export interface NamedFormula {
+  params: readonly string[];
+  expression: string;
+}
+
+/** One intermediate result while evaluating, for the debug view [P-03]. */
+export interface TraceStep {
+  text: string;
+  value: unknown;
+  depth: number;
+}
+
 export interface EvalEnv {
   lookup: Lookup;
   now: Date;
+  /** Named formulas by name (case-insensitive) [P-03]. */
+  formulas?: Readonly<Record<string, NamedFormula>> | undefined;
+  /** Receives every operation result, innermost first. */
+  trace?: ((step: TraceStep) => void) | undefined;
+  /** Nesting of named formulas (guards recursion). */
+  depth?: number;
 }
 
 const isDuration = (v: unknown): v is Duration =>
   typeof v === 'object' && v !== null && (v as { kind?: unknown }).kind === 'duration';
-
-/** Reads `1.000.000`, `1,000.50`, `12,5`, `-3` as numbers [B-05, E-07]. */
-export function toNumber(v: unknown): number | undefined {
-  if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
-  if (typeof v === 'boolean') return v ? 1 : 0;
-  if (typeof v !== 'string') return undefined;
-  let s = v.trim().replace(/[\s ]|đ|₫|vnd|vnđ|%|\$/gi, '');
-  if (!/^[-+]?[\d.,]+$/.test(s) || !/\d/.test(s)) return undefined;
-  const dots = (s.match(/\./g) ?? []).length;
-  const commas = (s.match(/,/g) ?? []).length;
-  if (dots && commas) {
-    // The last separator is the decimal one.
-    const dec = s.lastIndexOf('.') > s.lastIndexOf(',') ? '.' : ',';
-    const thou = dec === '.' ? ',' : '.';
-    s = s.split(thou).join('').replace(dec, '.');
-  } else if (dots > 1 || (dots === 1 && /^\D?\d{1,3}\.\d{3}$/.test(s))) {
-    s = s.replace(/\./g, ''); // 1.000.000 / 1.000 (VN thousands)
-  } else if (commas > 1 || (commas === 1 && /^\D?\d{1,3},\d{3}$/.test(s))) {
-    s = s.replace(/,/g, ''); // 1,000,000
-  } else if (commas === 1) {
-    s = s.replace(',', '.'); // 12,5
-  }
-  const n = Number(s);
-  return Number.isFinite(n) ? n : undefined;
-}
-
-/** Converts a value to the text typed into the page. */
-export function stringify(v: unknown): string {
-  if (v === undefined || v === null) return '';
-  if (v instanceof AppValue) return v.url();
-  if (v instanceof Date) return formatDate(v);
-  if (typeof v === 'number') return String(Number(v.toFixed(10)));
-  if (typeof v === 'string') return v;
-  if (typeof v === 'boolean') return v ? 'true' : 'false';
-  return JSON.stringify(v);
-}
 
 function fail(
   code: 'UNKNOWN_VARIABLE' | 'INVALID_EXPRESSION',
@@ -70,15 +57,9 @@ function num(v: unknown, op: string): number {
 }
 
 const FUNCTIONS: Record<string, (args: unknown[], env: EvalEnv) => unknown> = {
-  round: ([x, d]) => {
-    const f = 10 ** (d === undefined ? 0 : num(d, 'round'));
-    return Math.round(num(x, 'round') * f) / f;
-  },
   floor: ([x]) => Math.floor(num(x, 'floor')),
   ceil: ([x]) => Math.ceil(num(x, 'ceil')),
   abs: ([x]) => Math.abs(num(x, 'abs')),
-  min: (a) => Math.min(...a.map((x) => num(x, 'min'))),
-  max: (a) => Math.max(...a.map((x) => num(x, 'max'))),
   number: ([x]) => num(x, 'number'),
   random: ([a, b]) =>
     a === undefined
@@ -107,7 +88,63 @@ const FUNCTIONS: Record<string, (args: unknown[], env: EvalEnv) => unknown> = {
   },
 };
 
+const MAX_FORMULA_DEPTH = 8;
+
+const FUNCTION_TABLE = new Map<string, (args: unknown[], env: EvalEnv) => unknown>(
+  Object.entries({ ...FUNCTIONS, ...SHEET_FUNCTIONS }).map(([k, v]) => [k.toLowerCase(), v]),
+);
+
+/** Evaluates one node; with `env.trace` every operation reports its result [P-03]. */
 export function evaluate(node: Node, env: EvalEnv): unknown {
+  const value = evalNode(node, env);
+  if (
+    env.trace &&
+    (node.t === 'bin' || node.t === 'call' || node.t === 'neg' || node.t === 'cmp')
+  ) {
+    env.trace({ text: nodeText(node), value, depth: env.depth ?? 0 });
+  }
+  return value;
+}
+
+function callFormula(f: NamedFormula, name: string, args: unknown[], env: EvalEnv): unknown {
+  const depth = (env.depth ?? 0) + 1;
+  if (depth > MAX_FORMULA_DEPTH)
+    throw fail('INVALID_EXPRESSION', `Formula "${name}" calls itself too deeply`, {
+      formula: name,
+    });
+  if (args.length !== f.params.length)
+    throw fail(
+      'INVALID_EXPRESSION',
+      `Formula "${name}" takes ${f.params.length} input(s) (${f.params.join(', ')}), got ${args.length}`,
+      { formula: name },
+    );
+  const bound = new Map(f.params.map((p, i) => [p, args[i]]));
+  const inner: EvalEnv = {
+    ...env,
+    depth,
+    lookup: (n) => (bound.has(n) ? { found: true, value: bound.get(n) } : env.lookup(n)),
+  };
+  return evaluateExpression(f.expression, inner);
+}
+
+function walk(start: unknown, root: string, parts: (string | Node)[], env: EvalEnv): unknown {
+  let value = start;
+  let name = root;
+  for (const part of parts) {
+    const key = typeof part === 'string' ? part : stringify(evaluate(part, env));
+    name += `.${key}`;
+    if (value !== null && typeof value === 'object' && Object.hasOwn(value, key)) {
+      value = (value as Record<string, unknown>)[key];
+    } else if (value instanceof AppValue && name === `app.${key}`) {
+      throw new EngineError('UNKNOWN_PRODUCT', `Unknown product "${key}"`, { product: key });
+    } else {
+      throw fail('UNKNOWN_VARIABLE', `Unknown variable "${name}"`, { name });
+    }
+  }
+  return value;
+}
+
+function evalNode(node: Node, env: EvalEnv): unknown {
   switch (node.t) {
     case 'num':
     case 'str':
@@ -115,8 +152,27 @@ export function evaluate(node: Node, env: EvalEnv): unknown {
       return node.v;
     case 'neg':
       return -num(evaluate(node.e, env), '-');
+    case 'cmp':
+      return compareValues(evaluate(node.l, env), node.op, evaluate(node.r, env));
     case 'call': {
-      const fn = FUNCTIONS[node.name];
+      const lname = node.name.toLowerCase();
+      const formula = Object.entries(env.formulas ?? {}).find(([k]) => k.toLowerCase() === lname);
+      if (formula)
+        return callFormula(
+          formula[1],
+          formula[0],
+          node.args.map((a) => evaluate(a, env)),
+          env,
+        );
+      if (lname === 'if') {
+        // Lazy: only the chosen branch runs (no division by zero in the other).
+        const [c, yes, no] = node.args;
+        if (!c || !yes)
+          throw fail('INVALID_EXPRESSION', 'IF needs a condition and a value', { function: 'IF' });
+        if (truthy(evaluate(c, env))) return evaluate(yes, env);
+        return no ? evaluate(no, env) : '';
+      }
+      const fn = FUNCTION_TABLE.get(lname);
       if (!fn) {
         throw fail('INVALID_EXPRESSION', `Unknown function "${node.name}"`, {
           function: node.name,
@@ -144,20 +200,10 @@ export function evaluate(node: Node, env: EvalEnv): unknown {
         else if (Object.hasOwn(GENERATORS, node.root)) value = GENERATORS[node.root]?.(env.now);
         else throw fail('UNKNOWN_VARIABLE', `Unknown variable "${node.root}"`, { name: node.root });
       }
-      let name = node.root;
-      for (const part of parts) {
-        const key = typeof part === 'string' ? part : stringify(evaluate(part, env));
-        name += `.${key}`;
-        if (value !== null && typeof value === 'object' && Object.hasOwn(value, key)) {
-          value = (value as Record<string, unknown>)[key];
-        } else if (value instanceof AppValue && name === `app.${key}`) {
-          throw new EngineError('UNKNOWN_PRODUCT', `Unknown product "${key}"`, { product: key });
-        } else {
-          throw fail('UNKNOWN_VARIABLE', `Unknown variable "${name}"`, { name });
-        }
-      }
-      return value;
+      return walk(value, node.root, parts, env);
     }
+    case 'member':
+      return walk(evaluate(node.base, env), nodeText(node.base), node.parts, env);
     case 'bin': {
       const l = evaluate(node.l, env);
       const r = evaluate(node.r, env);
