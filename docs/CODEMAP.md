@@ -28,6 +28,7 @@
 - Phân quyền (Q-09): `schema/src/permission-matrix.ts` (ma trận + `permissionSteps`), `db/src/io/permission-excel.ts`, `main/permissions/generate-tests.ts`, router `routers/permissions.ts`; demo-site cổng nội bộ `server/portal.ts` + `portal.html`/`portal-fn.html`
 - `features/permissions/` → màn Phân quyền (Q-09): `permissions-screen.tsx`, `matrix-edit.ts`
 - Thông báo (X-03): `schema/src/notify.ts` (nội dung + request từng dịch vụ), `db/src/services/notify-channels.ts` (bảng mã hóa), `main/notify/send.ts` (gửi + `notifyRun`, hook `RunManagerDeps.onFinished`), UI `features/notify/` trong Cài đặt
+- CLI (X-04, ADR 0022): `apps/desktop/src/cli/` — `args.ts`, `run.ts` (`execute`: thư mục dự án → DB tạm → `RunManager`), `junit.ts`, `schedule.ts`, `index.ts` (entry)
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)
