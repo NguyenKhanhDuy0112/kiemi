@@ -75,6 +75,34 @@ function setup() {
     goto: async (u: string) => calls.started.push(u),
     bringToFront: async () => {},
     isClosed: () => false,
+    evaluate: async () => [
+      {
+        name: 'register',
+        controls: [
+          {
+            tag: 'input',
+            type: 'email',
+            id: 'email',
+            name: 'email',
+            label: 'Email',
+            labelStar: true,
+            placeholder: '',
+            required: false,
+            readOnly: false,
+            minLength: null,
+            maxLength: 100,
+            min: null,
+            max: null,
+            pattern: null,
+            accept: null,
+            value: '',
+            options: [],
+            css: '#email',
+          },
+        ],
+      },
+      { name: 'empty', controls: [] },
+    ],
   };
   const fakeContext = { pages: () => [fakePage], newPage: async () => fakePage, on: () => {} };
   const fakeBrowser = {
@@ -182,6 +210,27 @@ describe('RecorderManager [M5]', () => {
       { type: 'status', state: 'stopped' },
     ]);
     expect(await caller.recorder.current()).toBeNull();
+  });
+
+  it('opens a product page without a test and reads its forms as field specs [R-02]', async () => {
+    const { recorder, caller, projectId, calls, envId } = setup();
+    const info = await caller.recorder.startScan({
+      projectId,
+      environmentId: envId,
+      url: '/dang-ky',
+    });
+    expect(info).toMatchObject({ mode: 'inspect', testCaseId: '' });
+    await until(recorder, info.recordingId, (e) => e.type === 'status' && e.state === 'recording');
+    const forms = await caller.recorder.scanForms({ recordingId: info.recordingId });
+    expect(calls.started).toEqual(['http://app.test/dang-ky']);
+    expect(forms).toHaveLength(1);
+    expect(forms[0]?.fields[0]).toMatchObject({
+      key: 'email',
+      type: 'email',
+      required: true,
+      maxLength: 100,
+    });
+    await caller.recorder.stop({ recordingId: info.recordingId });
   });
 
   it('records from step X in its session, after running the steps up to X [K-04]', async () => {

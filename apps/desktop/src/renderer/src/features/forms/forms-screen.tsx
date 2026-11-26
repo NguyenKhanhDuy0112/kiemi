@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { FieldRow } from './field-row';
 import { cleanField, firstFormProblem, newField, newForm } from './form-edit';
+import { InferPanel } from './infer-panel';
 
 /**
  * "Biểu mẫu": the field specification of each form of the project — type and
@@ -38,6 +39,12 @@ export function FormsScreen() {
     const f = newForm(`form-${Date.now().toString(36)}`, tx('ui.forms.newName'));
     setForms((fs) => [...fs, f]);
     setCurrent(f.id);
+  };
+
+  /** Forms read from a page / schema join the list for the QC to review, then Save. */
+  const addInferred = (list: FormSpec[]) => {
+    setForms((fs) => [...fs, ...list]);
+    setCurrent(list[0]?.id ?? null);
   };
 
   const save = async () => {
@@ -68,6 +75,7 @@ export function FormsScreen() {
         </h1>
         <p className="text-sm text-muted-foreground">{tx('ui.forms.hint')}</p>
       </header>
+      <InferPanel projectId={projectId} onAdd={addInferred} />
       <div className="flex flex-wrap items-center gap-2">
         {forms.map((f) => (
           <Button

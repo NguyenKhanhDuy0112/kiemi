@@ -7,11 +7,12 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M11** đang làm trên nhánh `milestone/m11-validate-form`: tiếp **M11-02** (suy đặc tả từ HTML form). M10 đã merge (PR #2).
+**M11** đang làm trên nhánh `milestone/m11-validate-form`: tiếp **M11-03** (thư viện quy tắc VN + catalog thông báo). M10 đã merge (PR #2).
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
 - M11-01 xong (tách a/b). Schema `packages/schema/src/form-spec.ts` (`FormSpec` → `FieldSpec[]`: kiểu, required, min/max, pattern, allowedChars, unique, options, `visibleWhen/requiredWhen`, `compare`, `file`, `ruleRefs` cho M11-03, `locator` cho M11-02/06). Lưu ở `projects.form_specs` (migration 12) như `popupRules`: `ProjectService.setFormSpecs/formSpecs`, `project.json`, tRPC `projects.setFormSpecs`. UI: view `forms` (sidebar "Biểu mẫu") = `features/forms/` (`forms-screen.tsx`, `field-row.tsx`, `form-edit.ts` thuần có test). Test chặn chuỗi cứng kể cả `placeholder="…"` → đưa vào i18n; `<label>` bọc Input/Checkbox bị Biome a11y chặn (dùng `<div>` + aria-label).
+- M11-02 xong: engine `packages/engine/src/forms/` (`scan.ts` `scanForms(page)` đọc input + label + thuộc tính HTML, radio gộp nhóm; `infer.ts` `inferForm` → FormSpec, locator label→placeholder→css, mật khẩu xác nhận tự `compare`; `json-schema.ts` `formSpecsFromSchema` cho JSON Schema/OpenAPI). Main: `RecorderManager.start` nhận `projectId`(+`productKey`) thay `testCaseId` (test rỗng thay thế), lệnh `scanForms` → `scanResult`; tRPC `recorder.startScan|scanForms`, `forms.fromSchema`. UI `features/forms/infer-panel.tsx`. e2e `e2e/form-scan.e2e.test.ts` dùng `page.setContent` (trang demo thật ở M11-12).
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 

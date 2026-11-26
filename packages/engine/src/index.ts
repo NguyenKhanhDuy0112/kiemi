@@ -6,6 +6,7 @@ export * from './define-action';
 export * from './errors';
 export * from './events';
 export * from './flow/condition';
+export * from './forms';
 export * from './locator';
 export * from './run/debug';
 export * from './run/env-limit';

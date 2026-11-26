@@ -11,7 +11,7 @@ import {
   suitesRouter,
   testCasesRouter,
 } from './routers/data';
-import { recorderRouter, savedLoginsRouter } from './routers/recorder';
+import { formsRouter, recorderRouter, savedLoginsRouter } from './routers/recorder';
 import { runsRouter } from './routers/runs';
 import { samplesRouter } from './routers/samples';
 import { searchRouter } from './routers/search';
@@ -36,6 +36,7 @@ export const rootRouter = router({
   io: ioRouter,
   runs: runsRouter,
   recorder: recorderRouter,
+  forms: formsRouter,
   savedLogins: savedLoginsRouter,
   updates: updatesRouter,
   sharedResources: sharedResourcesRouter,
