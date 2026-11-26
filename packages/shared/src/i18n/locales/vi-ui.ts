@@ -1441,6 +1441,10 @@ export const viUi = {
       sentence: 'Chọn ngày từ {{from}} đến {{to}} ở {{target}}',
     },
     assertVariable: { label: 'Kiểm tra biến', sentence: 'Kiểm tra biến {{name}} {{op}} {{value}}' },
+    queryDb: {
+      label: 'Hỏi cơ sở dữ liệu',
+      sentence: 'Đọc CSDL {{connection}}: {{sql}}',
+    },
     unknown: { label: 'Thao tác khác', sentence: 'Thao tác {{action}}' },
   },
   params: {
@@ -1482,6 +1486,12 @@ export const viUi = {
     attribute: 'Thuộc tính',
     regex: 'Chỉ lấy phần khớp (biểu thức)',
     into: 'Tên biến',
+    connection: 'Kết nối cơ sở dữ liệu',
+    sql: 'Câu SQL (dùng ? cho giá trị)',
+    write: 'Cho phép ghi dữ liệu',
+    confirmWrite: 'Tôi xác nhận câu này được phép ghi',
+    expectRows: 'Số dòng phải trả về',
+    maxRows: 'Số dòng tối đa',
     allPages: 'Duyệt mọi trang',
     fileName: 'Tên file (không đuôi)',
     count: 'Số dòng',

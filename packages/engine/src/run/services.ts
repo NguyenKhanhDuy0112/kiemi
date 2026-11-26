@@ -9,6 +9,7 @@ import type {
 } from '@kiemi/schema';
 import type { BrowserContext, Page } from 'playwright-core';
 import type { SessionPages } from '../browser/sessions';
+import type { DbClient } from '../db/client';
 
 export type DialogResponse = { action: 'accept'; text?: string } | { action: 'dismiss' };
 
@@ -97,6 +98,8 @@ export interface RunServices {
   /** Resolves a URL against the env's baseUrl [A-01]. */
   url(value: string): string;
   readonly savedLogins: SavedLoginStore;
+  /** Database access given by the host; absent = `queryDb` cannot run [X-05]. */
+  readonly db: DbClient | undefined;
   /** Clock of the run (injectable in tests). */
   now(): Date;
 }

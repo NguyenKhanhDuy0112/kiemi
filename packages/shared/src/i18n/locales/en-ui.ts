@@ -1445,6 +1445,10 @@ export const enUi = {
       label: 'Check variable',
       sentence: 'Check variable {{name}} {{op}} {{value}}',
     },
+    queryDb: {
+      label: 'Query database',
+      sentence: 'Read database {{connection}}: {{sql}}',
+    },
     unknown: { label: 'Other action', sentence: 'Action {{action}}' },
   },
   params: {
@@ -1486,6 +1490,12 @@ export const enUi = {
     attribute: 'Attribute',
     regex: 'Keep only the matching part (pattern)',
     into: 'Variable name',
+    connection: 'Database connection',
+    sql: 'SQL statement (use ? for values)',
+    write: 'Allow writing data',
+    confirmWrite: 'I confirm this statement may write',
+    expectRows: 'Rows that must come back',
+    maxRows: 'Most rows',
     allPages: 'Go through every page',
     fileName: 'File name (no extension)',
     count: 'Number of rows',

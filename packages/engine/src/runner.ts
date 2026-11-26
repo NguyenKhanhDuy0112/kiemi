@@ -28,6 +28,7 @@ import {
   SessionPages,
   type ViewportSettings,
 } from './browser';
+import type { DbClient } from './db/client';
 import type { ActionContext, ActionRegistry, Place } from './define-action';
 import { EngineError, StepFailure, toRunError } from './errors';
 import type { EngineEvent, EngineEventListener, LogLevel, StepPhase } from './events';
@@ -119,6 +120,8 @@ export interface RunOptions {
    * closes them) instead of closing them — e.g. to record from step X [K-04].
    */
   keepSessions?: (pages: SessionPages) => void;
+  /** Database driver for `queryDb` [X-05]. */
+  db?: DbClient;
 }
 
 /** Places (session/tab) a failed comparison looked at, from its error details [V-03]. */
@@ -414,6 +417,7 @@ class Run {
         if (/^[a-z][a-z0-9+.-]*:/i.test(value) || !baseUrl) return value;
         return new URL(value, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`).toString();
       },
+      db: this.#opts.db,
       savedLogins: {
         get: (name) => logins.get(name),
         save: (name, login) => {

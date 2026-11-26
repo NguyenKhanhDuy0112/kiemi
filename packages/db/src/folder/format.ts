@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
   DatasetChildSchema,
+  DbConnectionsSchema,
   EnvColorSchema,
   EnvTypeSchema,
   type FormSpec,
@@ -116,6 +117,7 @@ export const EnvironmentEntrySchema = z.object({
   protected: z.boolean().default(false),
   locale: z.enum(['vi', 'en']).nullish(),
   httpAuth: HttpAuthSchema.nullish(),
+  dbConnections: DbConnectionsSchema.nullish(),
   /** Read only (files written before M9-05) → the first product's cell. */
   baseUrl: z.string().nullish(),
   proxy: ProxySchema.nullish(),

@@ -193,6 +193,7 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
           protected: e.protected,
           ...(e.locale ? { locale: e.locale } : {}),
           ...(e.httpAuth ? { httpAuth: e.httpAuth } : {}),
+          ...(e.dbConnections?.length ? { dbConnections: e.dbConnections } : {}),
           cells: [...e.cells]
             .sort(
               byKey(

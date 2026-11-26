@@ -2,6 +2,8 @@ export * from './actions';
 export * from './assertions/checks';
 export * from './assertions/compare';
 export * from './browser';
+export * from './db/client';
+export * from './db/sql-safety';
 export * from './define-action';
 export * from './errors';
 export * from './events';

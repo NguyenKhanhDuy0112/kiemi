@@ -1,4 +1,5 @@
 import type {
+  DbConnection,
   FormSpec,
   Formulas,
   HttpAuth,
@@ -226,6 +227,8 @@ export const environments = sqliteTable(
     locale: text('locale', { enum: ['vi', 'en'] }),
     /** HTTP Basic / NTLM login of the environment (password = secret name) [W-01] (migration 18). */
     httpAuth: json<HttpAuth>('http_auth'),
+    /** Databases tests can query on this environment [X-05] (migration 23). */
+    dbConnections: json<DbConnection[]>('db_connections'),
   },
   (t) => [index('environments_project_idx').on(t.projectId)],
 );

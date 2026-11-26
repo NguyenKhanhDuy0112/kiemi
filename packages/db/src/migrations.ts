@@ -450,4 +450,9 @@ CREATE INDEX "shared_resources_workspace_idx" ON "shared_resources" ("workspace_
 );
 CREATE INDEX "notify_channels_project_idx" ON "notify_channels" ("project_id");`,
   },
+  {
+    id: 23,
+    name: 'environment-db-connections',
+    sql: `ALTER TABLE "environments" ADD COLUMN "db_connections" TEXT;`,
+  },
 ];

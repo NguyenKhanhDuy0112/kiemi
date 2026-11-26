@@ -1,5 +1,6 @@
 import {
   type AppCell,
+  DbConnectionsSchema,
   type Env,
   EnvColorSchema,
   EnvSchema,
@@ -39,6 +40,8 @@ export const EnvironmentInputSchema = z.object({
   locale: z.enum(['vi', 'en']).nullish(),
   /** HTTP Basic / NTLM login [W-01]. */
   httpAuth: HttpAuthSchema.nullish(),
+  /** Databases a test can query [X-05]. */
+  dbConnections: DbConnectionsSchema.nullish(),
   /**
    * Shortcuts for the DEFAULT product's cell (v1.0 callers: samples, bundles):
    * written into `environment_products`, not into the environment row [O-02].
@@ -122,6 +125,7 @@ export class EnvironmentService {
         protected: p.data.protected ?? type === 'production',
         locale: p.data.locale ?? null,
         httpAuth: p.data.httpAuth ?? null,
+        dbConnections: p.data.dbConnections ?? null,
         sortOrder: this.list(p.data.projectId).length,
       });
       const { baseUrl, proxy, ssh } = p.data;
@@ -258,6 +262,7 @@ export class EnvironmentService {
         protected: src.protected,
         locale: src.locale,
         httpAuth: src.httpAuth,
+        dbConnections: src.dbConnections,
       });
       this.setVariables(copy.id, this.variables(environmentId));
       this.setSecretNames(copy.id, this.secretNames(environmentId));
@@ -442,6 +447,7 @@ export class EnvironmentService {
       protected: row.protected,
       ...(row.locale ? { locale: row.locale } : {}),
       ...(row.httpAuth ? { httpAuth: row.httpAuth } : {}),
+      ...(row.dbConnections?.length ? { dbConnections: row.dbConnections } : {}),
       ...(main?.url ? { baseUrl: main.url } : {}),
       apps,
       ...(first ? { defaultProduct: first.key } : {}),

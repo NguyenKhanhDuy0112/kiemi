@@ -122,6 +122,26 @@ export const vi = {
           'Môi trường “{{environment}}” đang được bảo vệ nên Kiemi không chạy test có bước ghi dữ liệu (bước dọn dẹp, gọi API thêm/sửa/xóa).',
         hint: 'Chạy trên môi trường khác, hoặc bỏ các bước ghi dữ liệu khỏi test này. Chỉ tắt bảo vệ khi chắc chắn.',
       },
+      DB_NOT_AVAILABLE: {
+        message: 'Bước hỏi cơ sở dữ liệu chưa chạy được ở đây.',
+        hint: 'Chạy test từ ứng dụng Kiemi hoặc dòng lệnh kiemi có kèm trình điều khiển cơ sở dữ liệu.',
+      },
+      DB_CONNECTION_UNKNOWN: {
+        message: 'Môi trường chưa có kết nối cơ sở dữ liệu “{{name}}”.',
+        hint: 'Vào Môi trường → Cơ sở dữ liệu, thêm kết nối này (đang có: {{available}}).',
+      },
+      DB_WRITE_BLOCKED: {
+        message: 'Kiemi không chạy câu SQL này vì nó có thể thay đổi dữ liệu.',
+        hint: 'Bước hỏi dữ liệu chỉ được đọc (SELECT, một câu một bước). Muốn ghi dữ liệu thì bật “Cho phép ghi” và xác nhận — và không thể ghi trên môi trường được bảo vệ.',
+      },
+      DB_SECRET_MISSING: {
+        message: 'Chưa có giá trị cho bí mật “{{secret}}” (mật khẩu cơ sở dữ liệu).',
+        hint: 'Vào Môi trường, nhập mật khẩu ở mục Bí mật cho môi trường đang chạy.',
+      },
+      DB_QUERY_FAILED: {
+        message: 'Không hỏi được cơ sở dữ liệu “{{connection}}”: {{reason}}',
+        hint: 'Kiểm tra địa chỉ máy chủ, tên đăng nhập, mật khẩu, tên bảng/cột, và mạng/VPN tới máy chủ.',
+      },
       UNKNOWN_VARIABLE: {
         message: 'Chưa có biến “{{name}}”.',
         hint: 'Kiểm tra tên biến, hoặc thêm bước “Lưu giá trị vào biến” trước bước này.',

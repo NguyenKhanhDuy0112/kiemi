@@ -52,6 +52,7 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       protected: e.protected,
       locale: e.locale ?? null,
       httpAuth: e.httpAuth ?? null,
+      dbConnections: e.dbConnections ?? null,
       cells: services.environments.cells(e.id).map((c) => ({
         productId: c.productId,
         url: c.url,
@@ -299,6 +300,7 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
           protected: e.protected,
           locale: e.locale ?? null,
           httpAuth: e.httpAuth ?? null,
+          dbConnections: e.dbConnections ?? null,
           sortOrder: e.sortOrder,
           secretNames: [...new Set(e.secretNames)].sort(),
         },

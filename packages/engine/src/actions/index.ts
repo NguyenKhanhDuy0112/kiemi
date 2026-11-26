@@ -22,6 +22,7 @@ import { navigateAction } from './navigate';
 import { pickDateAction, pickDateRangeAction } from './pick-date';
 import { pickOptionAction } from './pick-option';
 import { pressAction } from './press';
+import { queryDbAction } from './query-db';
 import { saveSessionAction, useSessionAction } from './saved-login';
 import { scrollAction } from './scroll';
 import { selectAction } from './select';
@@ -68,6 +69,7 @@ export const builtinActions: ActionDefinition[] = [
   saveSessionAction,
   useSessionAction,
   clearDataAction,
+  queryDbAction,
   clockAction,
   gridRowAction,
   gridFilterAction,

@@ -36,6 +36,13 @@ export const ENGINE_ERROR_CODES = [
   'UNKNOWN_SHARED_STEP',
   /** A step may write data and the environment is protected (Production) [W-10]. */
   'PROTECTED_ENVIRONMENT',
+  /** `queryDb` has no database driver here (host did not provide one) [X-05]. */
+  'DB_NOT_AVAILABLE',
+  'DB_CONNECTION_UNKNOWN',
+  /** The statement would change data without the step saying so [X-05, W-10]. */
+  'DB_WRITE_BLOCKED',
+  'DB_SECRET_MISSING',
+  'DB_QUERY_FAILED',
   /** The test is limited to other environments (`environments.only/except`) [O-06]. */
   'ENV_SKIPPED',
   'ACTION_FAILED',
