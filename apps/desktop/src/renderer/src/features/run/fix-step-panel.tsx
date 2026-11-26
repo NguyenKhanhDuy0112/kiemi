@@ -18,12 +18,21 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Circle, ListPlus, RotateCcw, Save, Square } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { defaultParams, findStep, insertStep, newStepId, updateStep } from '../editor/doc-model';
+import {
+  defaultParams,
+  findStep,
+  flatten,
+  insertStep,
+  newStepId,
+  updateStep,
+} from '../editor/doc-model';
 import { type PickSource, PickSourceContext } from '../editor/pick-context';
 import { StepForm } from '../editor/props-panel';
 import { expectationUpdate, mismatchOf } from './bug-report';
 import { copyBugReport } from './copy-bug';
+import { FixLog } from './fix-log';
 import { classifyFailure, type QuickFixActions, QuickFixes } from './quick-fixes';
+import { useRunFixes } from './run-fixes';
 import { useRunStore } from './run-store';
 
 /**
@@ -216,6 +225,22 @@ export function FixStepPanel({
         });
         if (tests.length) toast.success(tx('ui.run.scopeApplied', { count: tests.length }));
       }
+      if (base !== doc) {
+        const no = flatten(base).find((r) => r.step.id === stepId)?.no ?? '';
+        const kind = sendAdded.length
+          ? 'logInserted'
+          : base.elements !== doc.elements
+            ? 'logElement'
+            : 'logStep';
+        useRunFixes.getState().push(runId, {
+          id: `${Date.now()}`,
+          at: Date.now(),
+          label: tx(`ui.run.${kind}`, { step: no }),
+          testCaseId,
+          before: doc,
+          after: base,
+        });
+      }
       setAdded([]);
       if (retry) await decide(runId, 'retry');
       else toast.success(tx('ui.run.fixApplied'));
@@ -385,6 +410,7 @@ export function FixStepPanel({
           </ul>
         </fieldset>
       )}
+      <FixLog runId={runId} className="border-t px-4 py-3" />
       <div className="sticky bottom-0 flex gap-2 border-t bg-background p-3">
         {failed && (
           <Button size="sm" disabled={busy} onClick={() => void apply(true)}>

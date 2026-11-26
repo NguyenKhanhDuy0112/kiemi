@@ -115,8 +115,8 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M10-06** Sửa nhanh theo loại lỗi (không tìm thấy → chọn lại/phần tử tương tự theo fingerprint/chờ lâu hơn; sai giá trị; bị popup che → W-09; hết thời gian; lỗi mạng) [FX-06] [M]
 - [x] **M10-07** Cập nhật kỳ vọng bằng giá trị thực tế + câu hỏi "Thay đổi đúng / Đây là bug"; nút "Copy báo cáo bug" (Markdown) [FX-07, X-02] [S]
 - [x] **M10-08** Phạm vi sửa: chỉ test này / mọi nơi dùng phần tử / step dùng chung, hiện danh sách test bị ảnh hưởng [FX-08] [S]
-- [ ] **M10-09** "Sửa và chạy lại" từ màn Kết quả (cùng dòng dữ liệu, cùng môi trường) → vào trạng thái tạm dừng [FX-09] [S]
-- [ ] **M10-10** Nhật ký sửa + Hoàn tác trong phiên sửa lỗi; đề nghị "Chạy lại từ đầu để xác nhận" [FX-11] [S]
+- [x] **M10-09** "Sửa và chạy lại" từ màn Kết quả (cùng dòng dữ liệu, cùng môi trường) → vào trạng thái tạm dừng [FX-09] [S]
+- [x] **M10-10** Nhật ký sửa + Hoàn tác trong phiên sửa lỗi; đề nghị "Chạy lại từ đầu để xác nhận" [FX-11] [S]
 - [ ] **M10-11** Demo-site: popup ngẫu nhiên + trang lỗi theo từng loại; e2e luồng sửa khi fail
 
 ## M11 — Validate form, thiết kế test & đo độ phủ

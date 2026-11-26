@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M10** đang làm trên nhánh `milestone/m10-fix-on-fail`: tiếp M10-09 (xem ROADMAP). M9 đã merge (PR #1).
+**M10** đang làm trên nhánh `milestone/m10-fix-on-fail`: tiếp M10-11 (xem ROADMAP, task cuối: demo-site + e2e + app thật + PR). M9 đã merge (PR #1).
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
@@ -18,6 +18,7 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 - M10-06 xong: sửa nhanh theo loại lỗi. `features/run/quick-fixes.tsx` (`classifyFailure` + nút) gắn trong `fix-step-panel.tsx` (mọi sửa → gửi `edit` + `decide retry`). Engine `locator/similar.ts` `findSimilar` (fingerprint → ≤ 3 ứng viên) qua `liveSimilar` (worker/manager/tRPC `runs.liveSimilar`); `edit` thêm `popupRules` (runner dùng `popupRulesEdit()` trước bản lúc bắt đầu). Loại `assertion` chưa có nút (M10-07: cập nhật kỳ vọng + Copy báo cáo bug).
 - M10-07 xong: `features/run/bug-report.ts` (`expectationUpdate`, `mismatchOf`, `buildBugReport`), `copy-bug.ts` (`copyBugReport` → clipboard). Loại lỗi `assertion` ở `quick-fixes.tsx` có câu hỏi "Thay đổi đúng / Đây là bug"; nút "Copy báo cáo bug" cũng nằm ở mỗi step lỗi trên màn Kết quả. Báo cáo chỉ ghi tên file ảnh (chưa nhúng ảnh).
 - M10-08 xong: phạm vi sửa phần tử. DB `TestCaseService.usersOfElement/replaceElement` (cùng tên + cùng strategies trong dự án), tRPC `elements.usersOf/replaceEverywhere` (cả thư viện `elements`). UI: khối chọn "Chỉ test này / Mọi nơi dùng" + danh sách test ở `fix-step-panel.tsx`; sửa nhanh giờ đổi `doc.elements[ref]` khi step dùng ref. Chưa làm: sửa step nằm trong **step dùng chung** từ màn Chạy (panel không tìm thấy step đó) — để M10 sau/ghi tồn đọng.
+- M10-09/10 xong: nút "Sửa và chạy lại" (`run-screen.tsx` `fixAndRerun`: chạy lại test, cùng `rowIndex` + môi trường, trình duyệt hiện → dừng ở step lỗi). Nhật ký sửa: `run-fixes.ts` (store `useRunFixes` theo runId, `undoLastFix` lưu lại test cũ + gửi `edit` bản cũ cho engine), `fix-diff.ts` (thuần, có test), `fix-log.tsx`; banner "Chạy lại từ đầu để xác nhận" ở màn Kết quả. Hoàn tác chưa gỡ được step đã chèn khi run còn chờ (chỉ khôi phục test + step/phần tử đã sửa).
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 
@@ -105,3 +106,4 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 | 2026-11-26 | M10-06 | xong | Sửa nhanh theo loại lỗi: chọn lại / phần tử tương tự (fingerprint) / chờ lâu hơn / thêm bước chờ / thêm trình xử lý popup; test `similar.e2e.test.ts`, `quick-fixes.test.ts`, `worker-core.test.ts` |
 | 2026-11-26 | M10-07 | xong | Cập nhật kỳ vọng bằng giá trị thực + hỏi "Thay đổi đúng / Đây là bug" + Copy báo cáo bug (Markdown); test `bug-report.test.ts` |
 | 2026-11-26 | M10-08 | xong | Phạm vi sửa phần tử (chỉ test này / mọi nơi) + danh sách test bị ảnh hưởng; test `levels.test.ts` |
+| 2026-11-26 | M10-09, M10-10 | xong | Sửa và chạy lại từ Kết quả; nhật ký sửa + Hoàn tác + đề nghị chạy lại từ đầu; test `fix-diff.test.ts` |

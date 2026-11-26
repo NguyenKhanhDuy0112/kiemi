@@ -27,6 +27,7 @@ import {
   ShieldAlert,
   Square,
   StepForward,
+  Wrench,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -34,9 +35,11 @@ import { childLists } from '../editor/doc-model';
 import { StepSentence } from '../editor/step-sentence';
 import { EnvironmentPill } from '../environments/environment-badge';
 import { copyBugReport } from './copy-bug';
+import { FixLog } from './fix-log';
 import { FixStepPanel } from './fix-step-panel';
 import { buildHtmlReport } from './report';
 import { useStartRun } from './run-dialog';
+import { useRunFixes } from './run-fixes';
 import {
   fromDetail,
   isFinished,
@@ -117,6 +120,7 @@ export function RunScreen({ runId }: { runId: string }) {
   const toggleBreakpoint = useRunStore((s) => s.toggleBreakpoint);
   const decide = useRunStore((s) => s.decide);
   const runTo = useRunStore((s) => s.runTo);
+  const fixCount = useRunFixes((s) => s.byRun[runId]?.length ?? 0);
   const startRun = useStartRun();
   const [selected, setSelected] = useState<string | null>(null);
   /** Step opened in the "Sửa bước" panel while the run waits; default = the waiting step [FX-02]. */
@@ -185,6 +189,20 @@ export function RunScreen({ runId }: { runId: string }) {
           : { kind: 'tag' as const, projectId: detail?.projectId ?? '', tag: target.tag };
     await startRun(t);
   };
+
+  /** Runs the failed test again, same data row and environment, and waits at the failure [FX-09]. */
+  const fixAndRerun = async () => {
+    if (!current) return;
+    await startRun(
+      {
+        kind: 'test',
+        testCaseId: current.testCaseId,
+        ...(current.rowIndex === undefined ? {} : { rowIndex: current.rowIndex }),
+      },
+      { prefs: { environmentId: detail?.environmentId ?? null, headless: false } },
+    );
+  };
+  const canFix = current?.status === 'failed' || current?.status === 'error';
 
   const exportReport = async () => {
     try {
@@ -301,6 +319,11 @@ export function RunScreen({ runId }: { runId: string }) {
               <Button size="sm" variant="outline" onClick={() => void exportReport()}>
                 <Download /> {tx('ui.run.exportReport')}
               </Button>
+              {canFix && (
+                <Button size="sm" variant="outline" onClick={() => void fixAndRerun()}>
+                  <Wrench /> {tx('ui.run.fixAndRerun')}
+                </Button>
+              )}
               <Button size="sm" onClick={() => void rerun()}>
                 <RotateCcw /> {tx('ui.run.rerun')}
               </Button>
@@ -357,6 +380,19 @@ export function RunScreen({ runId }: { runId: string }) {
                     : tx('ui.run.preparing')}
             </>
           )}
+        </div>
+      )}
+
+      {!running && fixCount > 0 && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-3 border-b bg-info-soft px-4 py-2 text-sm"
+        >
+          <span className="flex-1">{tx('ui.run.confirmAfterFix', { count: fixCount })}</span>
+          <Button size="sm" onClick={() => void rerun()}>
+            <RotateCcw /> {tx('ui.run.rerunFromStart')}
+          </Button>
+          <FixLog runId={runId} className="w-full" />
         </div>
       )}
 
