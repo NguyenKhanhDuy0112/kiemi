@@ -490,6 +490,41 @@ describe('RunManager [M4-01, N-05]', () => {
     expect(finalStatus(events)).toBe('passed');
   });
 
+  it('runs a step added before the failed one, then retries it [FX-04]', async () => {
+    const { runs, caller, testId } = setup([{ id: 's1', action: 'fail', params: {} }]);
+    const { runId } = await caller.runs.start({
+      target: { kind: 'test', testCaseId: testId },
+      options: { pauseOnFail: true },
+    });
+    const events: RunFeedEvent[] = [];
+    const feed = (async () => {
+      for await (const e of runs.events(runId)) events.push(e);
+    })();
+    for (let i = 0; i < 100; i++) {
+      if (events.some((e) => e.type === 'debug' && e.error)) break;
+      await new Promise((r) => setTimeout(r, 5));
+    }
+    const step = (id: string, action: string, params: Record<string, unknown>) => ({
+      id,
+      action,
+      params,
+      session: 'default',
+      enabled: true,
+      mode: 'hard' as const,
+    });
+    const control = (command: Parameters<typeof caller.runs.control>[0]['command']) =>
+      caller.runs.control({ runId, command });
+    await control({
+      type: 'edit',
+      insert: { stepId: 's1', where: 'before', steps: [step('s2', 'note', { value: 'popup' })] },
+    });
+    await control({ type: 'edit', step: step('s1', 'note', { value: 'main' }) });
+    await control({ type: 'decide', decision: 'retry' });
+    await feed;
+    expect(seen).toEqual(['popup', 'main']);
+    expect(finalStatus(events)).toBe('passed');
+  });
+
   it('runs from a chosen step', async () => {
     const { runs, testId } = setup([
       { id: 's1', action: 'note', params: { value: 'a' } },

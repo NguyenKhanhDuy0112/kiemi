@@ -40,7 +40,12 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
   const startRec = deps.startRecorder ?? startRecorder;
   /** Pick / Highlight helper on the paused run's page; lives until the run goes on [FX-03]. */
   let live: Recorder | undefined;
+  /** Recorder capturing the tester's actions while the run waits [FX-04]. */
+  let liveRec: Recorder | undefined;
   const stopLive = () => {
+    const rec = liveRec;
+    liveRec = undefined;
+    void rec?.stop().catch(() => undefined);
     const r = live;
     live = undefined;
     void r?.stop().catch(() => undefined);
@@ -158,6 +163,30 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
         case 'edit':
           if (msg.step) debug.editStep(msg.step);
           if (msg.elements) debug.editElements(msg.elements);
+          if (msg.insert) debug.insert(msg.insert.stepId, msg.insert.where, msg.insert.steps);
+          return;
+        case 'liveRecordStart':
+          void (async () => {
+            stopLive();
+            const gate = debug.paused;
+            const sessions = debug.live;
+            if (!gate || !sessions) return;
+            const context = await sessions.context(gate.session);
+            liveRec = await startRec(context, {
+              session: gate.session,
+              strings: msg.strings,
+              capture: true,
+              toolbar: false,
+            });
+          })().catch(() => undefined);
+          return;
+        case 'liveRecordStop':
+          void (async () => {
+            const rec = liveRec;
+            liveRec = undefined;
+            const steps = rec ? await rec.stop().catch(() => rec.steps) : [];
+            post({ type: 'liveRecorded', requestId: msg.requestId, steps });
+          })();
           return;
         case 'livePick':
           void liveRecorder(msg.strings)

@@ -8,6 +8,15 @@ import type {
 import type { HighlightResult, StepChange, Suggestion } from '@kiemi/recorder';
 import type { Env, Locator, RunError, RunResult, Secrets, Step, TestCase } from '@kiemi/schema';
 
+/** Step / elements edited, or steps added, while the run waits [FX-02, FX-03, FX-04]. */
+export interface EditCommand {
+  type: 'edit';
+  step?: Step | undefined;
+  elements?: TestCase['elements'] | undefined;
+  /** Steps to run next to `stepId` in this run only. */
+  insert?: { stepId: string; where: 'before' | 'after'; steps: Step[] } | undefined;
+}
+
 /** Starts a recording (or a Pick-only "inspect" session) [K-01, C-06]. */
 export interface RecordStart {
   type: 'record';
@@ -59,8 +68,11 @@ export type HostToWorker =
   /** Run until this step, then pause before it [FX-05]. */
   | { type: 'runTo'; stepId: string }
   /** Step / elements edited while the run waits [FX-02, FX-03]. */
-  | { type: 'edit'; step?: Step | undefined; elements?: TestCase['elements'] | undefined }
+  | EditCommand
   /** Pick / Highlight on the page of the paused run [FX-03]. */
+  /** Record what the tester does on the paused page; `stop` answers with the steps [FX-04]. */
+  | { type: 'liveRecordStart'; strings: Record<string, string> }
+  | { type: 'liveRecordStop'; requestId: string }
   | { type: 'livePick'; requestId: string; strings: Record<string, string> }
   | {
       type: 'liveHighlight';
@@ -97,6 +109,7 @@ export type WorkerToHost =
   | { type: 'recordStopRequest' }
   /** Saved from the toolbar or by a prefix step — cookies: main stores them, never the UI [F-02]. */
   | { type: 'loginSaved'; name: string; login: SavedLogin }
+  | { type: 'liveRecorded'; requestId: string; steps: Step[] }
   | { type: 'pickResult'; requestId: string; locator: Locator | null }
   | { type: 'highlightResult'; requestId: string; result: HighlightResult }
   /** Recording ended; the browser is closed. */

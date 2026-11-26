@@ -1,13 +1,23 @@
-import type { Locator, TestCase } from '@kiemi/schema';
+import type { Locator, Step, TestCase } from '@kiemi/schema';
 import { Button } from '@renderer/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@renderer/components/ui/dropdown-menu';
+import { groupActions, useActions } from '@renderer/lib/actions';
 import { errorMessage } from '@renderer/lib/errors';
 import { trpc, trpcClient } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
 import { useQueryClient } from '@tanstack/react-query';
-import { RotateCcw, Save } from 'lucide-react';
+import { Circle, ListPlus, RotateCcw, Save, Square } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { findStep, updateStep } from '../editor/doc-model';
+import { defaultParams, findStep, insertStep, newStepId, updateStep } from '../editor/doc-model';
 import { type PickSource, PickSourceContext } from '../editor/pick-context';
 import { StepForm } from '../editor/props-panel';
 import { useRunStore } from './run-store';
@@ -16,6 +26,37 @@ import { useRunStore } from './run-store';
  * "Sửa bước" beside a paused run: same form as the editor, Pick / Highlight on the
  * page the run keeps open, then save the test and retry the step [FX-02, FX-03].
  */
+/** Action picker grouped like the "Thêm bước" menu of the editor. */
+function InsertMenu({ label, onPick }: { label: string; onPick: (type: string) => void }) {
+  const tx = useTx();
+  const { data: actions } = useActions();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="outline">
+          <ListPlus /> {label}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        {groupActions(actions ?? []).map((g) => (
+          <DropdownMenuSub key={g.group}>
+            <DropdownMenuSubTrigger>
+              {tx(`ui.groups.${g.group}`, undefined, g.group)}
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent className="max-h-96 overflow-auto">
+              {g.actions.map((a) => (
+                <DropdownMenuItem key={a.type} onSelect={() => onPick(a.type)}>
+                  {tx(`ui.steps.${a.type}.label`, undefined, a.type)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function FixStepPanel({
   runId,
   testCaseId,
@@ -35,11 +76,22 @@ export function FixStepPanel({
   const tx = useTx();
   const qc = useQueryClient();
   const decide = useRunStore((s) => s.decide);
+  const { data: actions } = useActions();
   const [draft, setDraft] = useState(doc);
   const [busy, setBusy] = useState(false);
+  /** Step being edited: the waiting one, or one just added next to it [FX-04]. */
+  const [focusId, setFocusId] = useState(stepId);
+  /** Steps added in this panel, not yet sent to the run. */
+  const [added, setAdded] = useState<{ id: string; where: 'before' | 'after'; anchor: string }[]>(
+    [],
+  );
   // A different step, or the saved test changed: start from the stored test again.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset on step / version only.
-  useEffect(() => setDraft(doc), [stepId, version]);
+  useEffect(() => {
+    setDraft(doc);
+    setFocusId(stepId);
+    setAdded([]);
+  }, [stepId, version]);
 
   const source = useMemo<PickSource>(
     () => ({
@@ -49,21 +101,77 @@ export function FixStepPanel({
     }),
     [runId],
   );
-  const step = findStep(draft, stepId);
+  const [recording, setRecording] = useState(false);
+  // The run moved on: the engine stopped recording by itself.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset on step / version only.
+  useEffect(() => setRecording(false), [stepId, version]);
+
+  const step = findStep(draft, focusId);
   if (!step) return null;
   const dirty = draft !== doc;
+
+  /** What the tester does on the open page goes before the failed step; it is already done, so only the test gets it [FX-04]. */
+  const toggleRecord = async () => {
+    try {
+      if (!recording) {
+        await trpcClient.runs.liveRecord.mutate({ runId, action: 'start' });
+        setRecording(true);
+        return;
+      }
+      setRecording(false);
+      const { steps } = await trpcClient.runs.liveRecord.mutate({ runId, action: 'stop' });
+      if (steps.length === 0) return;
+      setDraft((d) => {
+        let next = d;
+        for (const s of steps)
+          next = insertStep(next, { ...s, id: newStepId(next) }, { beforeId: stepId });
+        return next;
+      });
+      toast.success(tx('ui.run.recorded', { count: steps.length }));
+    } catch (err) {
+      setRecording(false);
+      toast.error(errorMessage(err, tx));
+    }
+  };
+
+  const addStep = (type: string, where: 'before' | 'after') => {
+    const info = actions?.find((a) => a.type === type);
+    const id = newStepId(draft);
+    const created: Step = {
+      id,
+      action: type,
+      params: info ? defaultParams(info.schema) : {},
+      session: findStep(draft, stepId)?.session ?? 'default',
+      enabled: true,
+      mode: 'hard',
+    };
+    setDraft((d) =>
+      insertStep(d, created, where === 'before' ? { beforeId: stepId } : { afterId: stepId }),
+    );
+    setAdded((a) => [...a, { id, where, anchor: stepId }]);
+    setFocusId(id);
+  };
 
   const apply = async (retry: boolean) => {
     setBusy(true);
     try {
       // The engine takes the edited step even if saving fails (e.g. the test changed meanwhile).
-      await trpcClient.runs.control.mutate({ runId, command: { type: 'edit', step } });
+      const edit = (command: Parameters<typeof trpcClient.runs.control.mutate>[0]['command']) =>
+        trpcClient.runs.control.mutate({ runId, command });
+      for (const a of added) {
+        const s = findStep(draft, a.id);
+        if (s)
+          await edit({ type: 'edit', insert: { stepId: a.anchor, where: a.where, steps: [s] } });
+      }
+      const edited = added.some((a) => a.id === step.id) ? undefined : step;
+      if (edited) await edit({ type: 'edit', step: edited });
       try {
         await trpcClient.testCases.save.mutate({ id: testCaseId, version, content: draft });
         await qc.invalidateQueries({ queryKey: trpc.testCases.get.queryKey({ id: testCaseId }) });
       } catch (err) {
         toast.warning(`${tx('ui.run.fixNotSaved')} ${errorMessage(err, tx)}`);
       }
+      setAdded([]);
       if (retry) await decide(runId, 'retry');
       else toast.success(tx('ui.run.fixApplied'));
     } catch (err) {
@@ -86,6 +194,22 @@ export function FixStepPanel({
           onPatch={(p) => setDraft((d) => updateStep(d, stepId, p))}
         />
       </PickSourceContext.Provider>
+      <div className="flex gap-2 border-t px-4 py-2">
+        {failed && (
+          <Button
+            size="sm"
+            variant={recording ? 'destructive' : 'outline'}
+            onClick={() => void toggleRecord()}
+          >
+            {recording ? <Square /> : <Circle />}{' '}
+            {recording ? tx('ui.run.recordStop') : tx('ui.run.recordHere')}
+          </Button>
+        )}
+        {failed && (
+          <InsertMenu label={tx('ui.run.insertBefore')} onPick={(t) => addStep(t, 'before')} />
+        )}
+        <InsertMenu label={tx('ui.run.insertAfter')} onPick={(t) => addStep(t, 'after')} />
+      </div>
       <div className="sticky bottom-0 flex gap-2 border-t bg-background p-3">
         {failed && (
           <Button size="sm" disabled={busy} onClick={() => void apply(true)}>

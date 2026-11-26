@@ -112,7 +112,8 @@ interface Parent {
   topNo: number;
 }
 
-type Outcome = { result: StepResult; stop: boolean };
+/** `redo`: the step waits for steps inserted before it; run those, then it again [FX-04]. */
+type Outcome = { result: StepResult; stop: boolean; redo?: boolean };
 
 /** Runs a test case's steps sequentially, then its cleanup steps, streaming events. */
 export async function runTestCase(request: RunRequest, options: RunOptions): Promise<RunResult> {
@@ -396,9 +397,18 @@ class Run {
     let stopped = false;
     let firstHard: RunError | undefined;
     for (const [index, step] of list.entries()) {
-      const outcome: Outcome = stopped
-        ? { result: this.#skipped(step), stop: true }
-        : await this.#runOne(step, index, phase, signal, parent);
+      let outcome: Outcome;
+      for (;;) {
+        if (
+          !stopped &&
+          (await this.#runInserted(step, 'before', index, phase, signal, parent, out))
+        )
+          stopped = true;
+        outcome = stopped
+          ? { result: this.#skipped(step), stop: true }
+          : await this.#runOne(step, index, phase, signal, parent);
+        if (!outcome.redo) break;
+      }
       out.push(outcome.result);
       this.#emit({
         type: 'stepEnd',
@@ -412,10 +422,45 @@ class Run {
         stopped = true;
         if (outcome.result.error && !firstHard) firstHard = outcome.result.error;
       }
+      if (!stopped && (await this.#runInserted(step, 'after', index, phase, signal, parent, out)))
+        stopped = true;
       if (!parent && phase === 'steps' && step.id === this.#req.options?.stopAfterStepId)
         stopped = true;
     }
     return firstHard;
+  }
+
+  /**
+   * Steps the tester added next to `host` while the run waited [FX-04]. Numbered
+   * `3+1`, `3+2`… after their neighbour. Returns true when one failed hard.
+   */
+  async #runInserted(
+    host: Step,
+    where: 'before' | 'after',
+    index: number,
+    phase: StepPhase,
+    signal: AbortSignal,
+    parent: Parent | undefined,
+    out: StepResult[],
+  ): Promise<boolean> {
+    const extra = this.#opts.debugger?.takeInserted?.(host.id, where) ?? [];
+    let failed = false;
+    for (const [k, step] of extra.entries()) {
+      if (failed || signal.aborted) break;
+      const no = `${parent ? `${parent.stepNo}.` : ''}${index + 1}${where === 'before' ? '-' : '+'}${k + 1}`;
+      const outcome = await this.#runOne(step, index, phase, signal, parent, no);
+      out.push(outcome.result);
+      this.#emit({
+        type: 'stepEnd',
+        runId: this.#req.runId,
+        phase,
+        index,
+        result: outcome.result,
+        ...(parent ? { parentStepId: parent.step.id } : {}),
+      });
+      if (outcome.stop) failed = true;
+    }
+    return failed;
   }
 
   #skipped(step: Step, error?: RunError): StepResult {
@@ -437,6 +482,8 @@ class Run {
     phase: StepPhase,
     signal: AbortSignal,
     parent: Parent | undefined,
+    /** Number shown for a step inserted during the run. */
+    label?: string,
   ): Promise<Outcome> {
     // Edited while the run waited on an earlier step [FX-02].
     step = this.#opts.debugger?.stepEdit?.(step.id) ?? step;
@@ -452,7 +499,7 @@ class Run {
       return { result: this.#skipped(step), stop: false };
     }
 
-    const stepNo = parent ? `${parent.stepNo}.${index + 1}` : `${index + 1}`;
+    const stepNo = label ?? (parent ? `${parent.stepNo}.${index + 1}` : `${index + 1}`);
     const topNo = parent ? parent.topNo : index + 1;
     if (this.#opts.debugger) {
       await this.#opts.debugger.beforeStep(
@@ -528,6 +575,9 @@ class Run {
       const decision = await dbg.afterFail(gate, error, signal, this.#live());
       await restore?.();
       if (decision === 'retry' && !signal.aborted) {
+        // Steps added before it must run first [FX-04].
+        if (dbg.hasInserted?.(step.id, 'before'))
+          return { result: this.#skipped(step), stop: false, redo: true };
         step = dbg.stepEdit?.(step.id) ?? step;
         continue;
       }

@@ -33,6 +33,9 @@ export interface RunDebugger {
   ): Promise<FailDecision>;
   /** Step edited while the run waited — used instead of the planned one [FX-02]. */
   stepEdit?(stepId: string): Step | undefined;
+  /** Steps added around `stepId` while the run waited; taken once [FX-04]. */
+  takeInserted?(stepId: string, where: 'before' | 'after'): Step[];
+  hasInserted?(stepId: string, where: 'before' | 'after'): boolean;
   /** Elements edited while the run waited (re-picked) [FX-03]. */
   elementsEdit?(): TestCase['elements'] | undefined;
 }
@@ -64,6 +67,7 @@ export class DebugController implements RunDebugger {
   #failed: { step: StepGate; error: RunError } | undefined;
   #live: LiveSessions | undefined;
   readonly #stepEdits = new Map<string, Step>();
+  readonly #inserts = new Map<string, Step[]>();
   #elementEdits: TestCase['elements'] | undefined;
   readonly #listener: DebugListener;
 
@@ -102,6 +106,23 @@ export class DebugController implements RunDebugger {
 
   editElements(elements: TestCase['elements']): void {
     this.#elementEdits = elements;
+  }
+
+  /** Adds steps to run right before / after `stepId` in this run [FX-04]. */
+  insert(stepId: string, where: 'before' | 'after', steps: Step[]): void {
+    const cur = this.#inserts.get(`${where}:${stepId}`) ?? [];
+    this.#inserts.set(`${where}:${stepId}`, [...cur, ...steps]);
+  }
+
+  takeInserted(stepId: string, where: 'before' | 'after'): Step[] {
+    const key = `${where}:${stepId}`;
+    const list = this.#inserts.get(key) ?? [];
+    this.#inserts.delete(key);
+    return list;
+  }
+
+  hasInserted(stepId: string, where: 'before' | 'after'): boolean {
+    return (this.#inserts.get(`${where}:${stepId}`)?.length ?? 0) > 0;
   }
 
   stepEdit(stepId: string): Step | undefined {

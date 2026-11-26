@@ -69,4 +69,45 @@ describe('engine worker: fixing a failed step [FX-02, FX-03]', () => {
     expect(edited).toBe(step);
     expect(stopped).toEqual(['stop']);
   });
+
+  it('records what the tester does on the paused page and hands the steps back [FX-04]', async () => {
+    const posted: WorkerToHost[] = [];
+    const captured: boolean[] = [];
+    const recorded = [{ id: 'r1', action: 'click', params: {} }];
+    const recorder = {
+      steps: recorded,
+      stop: async () => recorded,
+    } as unknown as Recorder;
+    const worker = createEngineWorker((m) => posted.push(m), {
+      launch: async () => ({ browser: { close: async () => undefined } as never }),
+      startRecorder: async (_ctx, o) => {
+        captured.push(o.capture === true);
+        return recorder;
+      },
+      run: async (_req: RunRequest, options: RunOptions) => {
+        await options.debugger?.afterFail?.(
+          { stepId: 's1', stepNo: '1', phase: 'steps', session: 'default' },
+          { code: 'ELEMENT_NOT_FOUND', message: 'x' },
+          new AbortController().signal,
+          { context: async () => ({}) as never },
+        );
+        return { status: 'passed' } as unknown as RunResult;
+      },
+    });
+    const done = worker.handle({
+      type: 'start',
+      requests: [{ runId: 'r' } as RunRequest],
+      launch: { settings: { browser: 'chrome' }, browsersPath: '' } as never,
+      debug: { pauseOnFail: true },
+    });
+    await tick();
+    await worker.handle({ type: 'liveRecordStart', strings: {} });
+    await tick();
+    await worker.handle({ type: 'liveRecordStop', requestId: 'q1' });
+    await tick();
+    expect(captured).toEqual([true]);
+    expect(posted).toContainEqual({ type: 'liveRecorded', requestId: 'q1', steps: recorded });
+    await worker.handle({ type: 'decide', decision: 'stop' });
+    await done;
+  });
 });

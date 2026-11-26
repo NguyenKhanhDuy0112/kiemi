@@ -22,7 +22,7 @@ import type {
 import { translations } from '@kiemi/shared';
 import { v7 as uuidv7 } from 'uuid';
 import { type OpenTunnel, prepareNetwork, type TunnelLike, usedProducts } from '../tunnel/network';
-import type { HostToWorker, WorkerToHost } from './protocol';
+import type { EditCommand, HostToWorker, WorkerToHost } from './protocol';
 import { type StartRunInput, StartRunInputSchema } from './start-input';
 
 export type { StartRunInput } from './start-input';
@@ -388,7 +388,7 @@ export class RunManager {
       | { type: 'breakpoints'; stepIds: string[] }
       | { type: 'decide'; decision: 'retry' | 'skip' | 'continue' | 'stop' }
       | { type: 'runTo'; stepId: string }
-      | { type: 'edit'; step?: Step | undefined; elements?: TestCase['elements'] | undefined },
+      | EditCommand,
   ): boolean {
     const active = this.#runs.get(runId);
     if (!active || active.finished || !active.worker) return false;
@@ -413,6 +413,20 @@ export class RunManager {
       strings,
       locator,
     }));
+  }
+
+  /** Starts recording the tester's actions on the page of the paused run [FX-04]. */
+  liveRecordStart(runId: string): boolean {
+    const active = this.#runs.get(runId);
+    if (!active || active.finished || !active.worker) return false;
+    const lang = this.#d.services.settings.getAll().language;
+    active.worker.send({ type: 'liveRecordStart', strings: { ...translations[lang].recorder } });
+    return true;
+  }
+
+  /** Stops that recording; resolves with the steps recorded [FX-04]. */
+  liveRecordStop(runId: string): Promise<Step[]> {
+    return this.#ask<Step[]>(runId, [], (requestId) => ({ type: 'liveRecordStop', requestId }));
   }
 
   #ask<T>(
@@ -557,6 +571,10 @@ export class RunManager {
           stepNo: msg.stepNo,
           ...(msg.error ? { error: msg.error } : {}),
         });
+        return;
+      case 'liveRecorded':
+        active.waiting.get(msg.requestId)?.resolve(msg.steps);
+        active.waiting.delete(msg.requestId);
         return;
       case 'pickResult':
         active.waiting.get(msg.requestId)?.resolve(msg.locator);

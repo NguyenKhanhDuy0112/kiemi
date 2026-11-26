@@ -180,6 +180,27 @@ describe('debugging a run [H-03]', () => {
       expect(result.status).toBe('passed');
     });
 
+    it('runs steps added before / after the failed step, then retries it [FX-04]', async () => {
+      const { dbg, done } = start(1);
+      await tick();
+      const extra = (id: string): never =>
+        ({
+          id,
+          action: 'note',
+          params: { value: id },
+          session: 'default',
+          enabled: true,
+          mode: 'hard',
+        }) as never;
+      dbg.insert('f', 'before', [extra('popup')]);
+      dbg.insert('f', 'after', [extra('after')]);
+      dbg.decide('retry');
+      const result = await done;
+      expect(calls).toEqual(['a', 'f', 'popup', 'f', 'after', 'c', 'z']);
+      expect(result.status).toBe('passed');
+      expect(result.steps.map((r) => r.stepId)).toEqual(['a', 'popup', 'f', 'after', 'c']);
+    });
+
     it('cancel releases a run paused on a failure', async () => {
       const ac = new AbortController();
       const { done } = start(5, ac.signal);

@@ -41,6 +41,13 @@ export const runsRouter = router({
             type: z.literal('edit'),
             step: z.custom<Step>((v) => StepSchema.safeParse(v).success).optional(),
             elements: z.record(ElementRefSchema, ElementSchema).optional(),
+            insert: z
+              .object({
+                stepId: z.string().min(1),
+                where: z.enum(['before', 'after']),
+                steps: z.array(z.custom<Step>((v) => StepSchema.safeParse(v).success)).max(50),
+              })
+              .optional(),
           }),
           z.object({
             type: z.literal('breakpoints'),
@@ -55,6 +62,15 @@ export const runsRouter = router({
   livePick: publicProcedure
     .input(runId)
     .mutation(async ({ ctx, input }) => ({ locator: await ctx.runs.livePick(input.runId) })),
+
+  /** Record the tester's actions on the page of the paused run, then take the steps [FX-04]. */
+  liveRecord: publicProcedure
+    .input(runId.extend({ action: z.enum(['start', 'stop']) }))
+    .mutation(async ({ ctx, input }) =>
+      input.action === 'start'
+        ? { steps: [] as Step[], ok: ctx.runs.liveRecordStart(input.runId) }
+        : { steps: await ctx.runs.liveRecordStop(input.runId), ok: true },
+    ),
 
   /** Show where a locator points on the page of the paused run [FX-03]. */
   liveHighlight: publicProcedure
