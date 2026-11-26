@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { handleRequest } from './api';
+import { tempDbPath } from './db';
 import { DemoStore } from './store';
 
 export { BASIC_AUTH, handleRequest } from './api';
@@ -82,6 +83,8 @@ export interface DemoSite {
    * with `DEMO_HOST_RULES` (the engine's test browser does).
    */
   readonly apps: { readonly web: string; readonly admin: string };
+  /** SQLite file that mirrors the leave requests [X-05]. */
+  readonly dbPath: string;
   close(): Promise<void>;
 }
 
@@ -91,6 +94,8 @@ export interface DemoSite {
  */
 export async function startDemoSite(options: { syncDelayMs?: number } = {}): Promise<DemoSite> {
   process.env.DEMO_SYNC_DELAY_MS = String(options.syncDelayMs ?? 0);
+  const dbPath = tempDbPath();
+  process.env.DEMO_DB_PATH = dbPath;
   const { createServer: createVite } = await import('vite');
   const root = fileURLToPath(new URL('..', import.meta.url));
   const server = await createVite({
@@ -104,6 +109,7 @@ export async function startDemoSite(options: { syncDelayMs?: number } = {}): Pro
       allowedHosts: Object.values(DEMO_APP_HOSTS),
     },
   });
+  delete process.env.DEMO_DB_PATH; // read once by the plugin when the config loaded
   await server.listen();
   const address = server.httpServer?.address();
   const port = typeof address === 'object' && address ? address.port : 0;
@@ -113,6 +119,7 @@ export async function startDemoSite(options: { syncDelayMs?: number } = {}): Pro
       web: `http://${DEMO_APP_HOSTS.web}:${port}`,
       admin: `http://${DEMO_APP_HOSTS.admin}:${port}`,
     },
+    dbPath,
     close: () => server.close(),
   };
 }

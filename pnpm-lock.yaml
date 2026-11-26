@@ -29,10 +29,16 @@ importers:
 
   apps/demo-site:
     dependencies:
+      better-sqlite3:
+        specifier: 13.1.1
+        version: 13.1.1
       exceljs:
         specifier: 4.4.0
         version: 4.4.0
     devDependencies:
+      '@types/better-sqlite3':
+        specifier: 9.6.0
+        version: 9.6.0
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6

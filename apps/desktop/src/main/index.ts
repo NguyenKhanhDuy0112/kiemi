@@ -65,11 +65,21 @@ let sampleSite: Promise<SampleSite> | undefined;
 
 /** Starts the sample site once and points the sample environment at it. */
 function sampleSiteUrl(services: Services): Promise<string> {
-  sampleSite ??= startSampleSite({ dir: sampleSiteDir, port: SAMPLE_PORT });
+  sampleSite ??= startSampleSite({
+    dir: sampleSiteDir,
+    port: SAMPLE_PORT,
+    dbPath: join(app.getPath('userData'), 'sample-site.db'),
+  });
   return sampleSite.then((site) => {
-    syncSampleEnvironment(services, site.url);
+    syncSampleEnvironment(services, site.url, site.dbPath);
     return site.url;
   });
+}
+
+/** SQLite file of the sample site (started by `sampleSiteUrl`). */
+async function sampleSiteDb(services: Services): Promise<string> {
+  await sampleSiteUrl(services);
+  return (await (sampleSite as Promise<SampleSite>)).dbPath;
 }
 
 /** Updates from GitHub Releases: background download (installed) or notice (portable) [N-12]. */
@@ -184,6 +194,7 @@ function registerIpc(data: { services: Services; defaultProjectId: string }): vo
       runs: runManager,
       recorder: recorderManager,
       sampleSiteUrl: () => sampleSiteUrl(data.services),
+      sampleSiteDb: () => sampleSiteDb(data.services),
       updates: updateService,
       crashReports,
       projectFolders: folders,

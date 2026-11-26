@@ -173,6 +173,7 @@ export function registerFormSpec(): FormSpec {
 export async function installSamples(
   services: Services,
   baseUrl: string,
+  dbPath?: string,
 ): Promise<{ projectId: string; created: boolean; firstTestId: string | null }> {
   const existing = services.projects.list().find((p) => p.name === SAMPLE_PROJECT);
   if (existing) {
@@ -186,7 +187,12 @@ export async function installSamples(
     description: 'Ví dụ có sẵn chạy trên trang mẫu đi kèm ứng dụng.',
   });
   const projectId = project.id;
-  const env = services.environments.create({ projectId, name: SAMPLE_ENV, baseUrl });
+  const env = services.environments.create({
+    projectId,
+    name: SAMPLE_ENV,
+    baseUrl,
+    ...(dbPath ? { dbConnections: [sampleDbConnection(dbPath)] } : {}),
+  });
   services.environments.setVariables(env.id, { nguoiDung: 'nhanvien', quanLy: 'quanly' });
   services.environments.setSecret(env.id, 'matKhau', '123456');
 
@@ -360,15 +366,101 @@ export async function installSamples(
   // L-03 #8: act in one place, check another; promotion by date.
   installWebSamples(services, projectId, env.id);
   installPermissionSample(services, projectId, env.id);
+  // L-03 #6: approval across two people, then look into the database.
+  if (dbPath) {
+    const sessions = ['nhanvien', 'quanly'];
+    const dbFolder = services.folders.create({ projectId, name: DB_SAMPLE_FOLDER });
+    const row = (status: string) => ({
+      action: 'queryDb',
+      params: {
+        connection: SAMPLE_DB,
+        sql: 'SELECT code FROM leave_requests WHERE code = ? AND owner = ? AND status = ?',
+        args: ['{{maDon}}', '{{nguoiDung}}', status],
+        expectRows: 1,
+      },
+    });
+    const approval = doc({
+      name: 'Mẫu 6. Duyệt đơn và đối chiếu cơ sở dữ liệu',
+      description:
+        'Nhân viên gửi đơn → trong CSDL có đúng 1 dòng “chờ duyệt”; quản lý duyệt → dòng đó thành “đã duyệt”. Kiểm tra cả hai nơi: giao diện và bản ghi thật.',
+      tags: ['mẫu', 'cơ sở dữ liệu', 'nhiều phiên'],
+      sessions,
+      uses: [...FORM_ELEMENTS, 'el_maDon', 'el_bangDon'],
+      steps: [
+        loginAs('{{nguoiDung}}', 'nhanvien'),
+        ...leaveFormSteps({ loai: 'Nghỉ ốm', soNgay: '2', lyDo: 'Đi khám bệnh' }).map((s) => ({
+          ...s,
+          session: 'nhanvien',
+        })),
+        {
+          session: 'nhanvien',
+          action: 'extract',
+          params: { target: ref('el_maDon'), into: 'maDon' },
+        },
+        { ...row('cho-duyet'), session: 'nhanvien' },
+        { session: 'quanly', action: 'switchSession', params: {} },
+        loginAs('{{quanLy}}', 'quanly'),
+        {
+          session: 'quanly',
+          action: 'waitUntil',
+          params: {
+            condition: { assert: 'visible', target: { text: '{{maDon}}' } },
+            timeoutSec: 30,
+            intervalSec: 0.5,
+            reloadEverySec: 1,
+          },
+        },
+        {
+          session: 'quanly',
+          action: 'click',
+          params: {
+            target: {
+              strategies: [{ kind: 'role', role: 'button', name: 'Duyệt' }],
+              scope: [{ kind: 'row', text: '{{maDon}}' }],
+            },
+          },
+        },
+        { session: 'quanly', action: 'assertToast', params: { text: 'Đã duyệt đơn {{maDon}}' } },
+        { ...row('da-duyet'), session: 'quanly' },
+      ],
+      cleanup: [{ ...reset, session: 'nhanvien' }],
+    });
+    const dbRows = services.testCases.insertDocument(projectId, dbFolder.id, approval);
+    const dbSuite = services.suites.create({
+      projectId,
+      name: DB_SAMPLE_SUITE,
+      environmentId: env.id,
+    });
+    services.suites.setItems(dbSuite.id, [{ testCaseId: dbRows.id }]);
+  }
   return { projectId, created: true, firstTestId: rows[0]?.id ?? null };
 }
 
-/** Points the sample environment at the sample site's current address. */
-export function syncSampleEnvironment(services: Services, baseUrl: string): void {
+/** Name of the sample database connection and of the folder / suite of the database sample. */
+export const SAMPLE_DB = 'donNghi';
+export const DB_SAMPLE_FOLDER = 'Cơ sở dữ liệu';
+export const DB_SAMPLE_SUITE = 'Mẫu cơ sở dữ liệu';
+const sampleDbConnection = (path: string) => ({
+  name: SAMPLE_DB,
+  kind: 'sqlite' as const,
+  database: path,
+  ssl: false,
+});
+
+/** Points the sample environment at the sample site's current address (and its database file). */
+export function syncSampleEnvironment(services: Services, baseUrl: string, dbPath?: string): void {
   const project = services.projects.list().find((p) => p.name === SAMPLE_PROJECT);
   if (!project) return;
   const row = services.environments.list(project.id).find((e) => e.name === SAMPLE_ENV);
   // The URL lives in the "Web" cell [O-02].
   if (row && services.environments.get(row.id).baseUrl !== baseUrl)
     services.environments.update(row.id, { baseUrl });
+  if (row && dbPath) {
+    const cur = services.environments.get(row.id).dbConnections ?? [];
+    const wanted = sampleDbConnection(dbPath);
+    if (cur.some((c) => c.name === SAMPLE_DB && c.database !== dbPath))
+      services.environments.update(row.id, {
+        dbConnections: cur.map((c) => (c.name === SAMPLE_DB ? wanted : c)),
+      });
+  }
 }

@@ -173,7 +173,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M14-07b** CLI đóng gói cùng app (entry `cli` của electron-vite, chạy bằng `ELECTRON_RUN_AS_NODE`, file khởi chạy .cmd/.sh trong extraResources), hướng dẫn dùng [X-04]
 - [x] **M14-08a** ADR + Query DB — lõi: `Env.dbConnections` (lưu DB + thư mục dự án), action `queryDb` (chỉ đọc mặc định, ghi cần cờ + xác nhận, W-10 chặn trên Production, kết quả → biến danh sách), cổng `DbClient` để engine không phụ thuộc driver [X-05]
 - [x] **M14-08b** Query DB — driver thật (SQLite, Postgres, MySQL, SQL Server) ở `apps/desktop/src/main/db-query/`, nối vào worker + CLI, màn kết nối ở Môi trường + nút thử kết nối [X-05]
-- [ ] **M14-08c** Query DB — demo-site có DB SQLite thật, mẫu L-03 #6 (duyệt nhiều cấp + đối chiếu DB) + e2e [X-05, L-03]
+- [x] **M14-08c** Query DB — demo-site có DB SQLite thật, mẫu L-03 #6 (duyệt nhiều cấp + đối chiếu DB) + e2e [X-05, L-03]
 - [ ] **M14-09** Rà soát `QC-COVERAGE.md` (không còn ❌ ở dòng v1.1), user guide, phát hành v1.1
 
 ## M15 — v1.2 (các mục còn lại)

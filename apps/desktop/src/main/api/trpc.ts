@@ -22,6 +22,8 @@ export interface ApiContext {
   desktop?: DesktopBridge;
   /** Address of the bundled sample site, started on demand [L-01]. */
   sampleSiteUrl?: () => Promise<string>;
+  /** SQLite file of the sample site, for the database sample [X-05]. */
+  sampleSiteDb?: () => Promise<string>;
   /** Opt-in crash reports [N-09] (absent in tests). */
   crashReports?: CrashReporter;
   /** Automatic updates (absent in development and tests) [N-12]. */

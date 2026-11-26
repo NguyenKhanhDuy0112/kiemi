@@ -4,6 +4,7 @@
  */
 
 import { type ImportRow, type Person, seedPeople } from './data-pages';
+import type { DemoDb } from './db';
 
 /** Promotion shown on `promo.html`. */
 export const DEFAULT_PROMO = { price: 99_000, base: 150_000, endsOn: '2030-06-30' };
@@ -71,6 +72,8 @@ export interface StoreOptions {
   /** Delay before a new request becomes visible to managers (simulates async sync). */
   syncDelayMs?: number;
   now?: () => number;
+  /** Mirrors the leave requests into a real SQLite database [X-05]. */
+  db?: DemoDb;
 }
 
 const CATEGORIES = ['Văn phòng phẩm', 'Điện tử', 'Gia dụng', 'Thực phẩm'];
@@ -92,6 +95,7 @@ function seedProducts(): Product[] {
 export class DemoStore {
   readonly syncDelayMs: number;
   private readonly now: () => number;
+  private readonly db: DemoDb | undefined;
   private requests: LeaveRequest[] = [];
   private products: Product[] = seedProducts();
   private seq = 0;
@@ -100,6 +104,12 @@ export class DemoStore {
   constructor(opts: StoreOptions = {}) {
     this.syncDelayMs = opts.syncDelayMs ?? 5000;
     this.now = opts.now ?? Date.now;
+    this.db = opts.db;
+    this.persist();
+  }
+
+  private persist(): void {
+    this.db?.sync(this.requests);
   }
 
   /** Rows accepted by the import page [P-09]. */
@@ -118,6 +128,7 @@ export class DemoStore {
     this.products = seedProducts();
     this.seq = 0;
     this.sessions.clear();
+    this.persist();
   }
 
   // ---------- auth ----------
@@ -182,6 +193,7 @@ export class DemoStore {
       createdAt: this.now(),
     };
     this.requests.push(request);
+    this.persist();
     return { ok: true, request };
   }
 
@@ -202,6 +214,7 @@ export class DemoStore {
     const r = this.listRequests(viewer).find((x) => x.id === id);
     if (!r) return null;
     r.status = status;
+    this.persist();
     return r;
   }
 
@@ -213,6 +226,7 @@ export class DemoStore {
     );
     if (idx < 0) return false;
     this.requests.splice(idx, 1);
+    this.persist();
     return true;
   }
 

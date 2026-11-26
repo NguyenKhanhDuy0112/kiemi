@@ -6,7 +6,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createCaller } from '../api/root';
 import type { RunFeedEvent } from '../run/run-manager';
 import { createTestRunManager } from '../run/testing';
-import { SAMPLE_ENV, SAMPLE_PROJECT, sampleWorkbook, syncSampleEnvironment } from './samples';
+import {
+  DB_SAMPLE_SUITE,
+  SAMPLE_ENV,
+  SAMPLE_PROJECT,
+  sampleWorkbook,
+  syncSampleEnvironment,
+} from './samples';
 import {
   DATA_SAMPLE_FOLDER,
   DATA_SAMPLE_SUITE,
@@ -49,6 +55,7 @@ function setup() {
     defaultProjectId,
     runs,
     sampleSiteUrl: async () => site.url,
+    sampleSiteDb: async () => site.dbPath,
   });
   return { services, caller };
 }
@@ -200,6 +207,35 @@ describe('sample tests [L-01, S-08]', () => {
     await collect(await caller.runs.events({ runId }));
     const run = await caller.runs.get({ runId });
     expect(run.cases.filter((c) => c.status !== 'passed').map((c) => c.testName)).toEqual([]);
+    expect(run.status).toBe('passed');
+  }, 120_000);
+
+  it('has the database sample: UI and the real record agree, before and after approval [L-03 #6]', async () => {
+    const { services, caller } = setup();
+    const { projectId } = await caller.samples.install();
+    const env = services.environments.list(projectId).find((e) => e.name === SAMPLE_ENV);
+    expect(services.environments.get(env?.id ?? '').dbConnections?.[0]).toMatchObject({
+      name: 'donNghi',
+      kind: 'sqlite',
+      database: site.dbPath,
+    });
+    const suite = services.suites.list(projectId).find((s) => s.name === DB_SAMPLE_SUITE);
+    const { runId } = await caller.runs.start({
+      target: { kind: 'suite', suiteId: suite?.id ?? '' },
+      options: { headless: true },
+    });
+    await collect(await caller.runs.events({ runId }));
+    const run = await caller.runs.get({ runId });
+    const failed = run.cases
+      .filter((c) => c.status !== 'passed')
+      .map((c) => ({
+        test: c.testName,
+        steps: services.runs
+          .listSteps(c.id)
+          .filter((x) => x.status !== 'passed')
+          .map((x) => `${x.stepNo} ${x.status} ${JSON.stringify(x.error)}`),
+      }));
+    expect(failed).toEqual([]);
     expect(run.status).toBe('passed');
   }, 120_000);
 
