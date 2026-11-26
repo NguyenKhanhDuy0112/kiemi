@@ -133,6 +133,7 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
       ...(s.project.pages.length ? { pages: s.project.pages } : {}),
       ...(Object.keys(s.project.formulas).length ? { formulas: sortKeys(s.project.formulas) } : {}),
       ...(s.project.manualCases.length ? { manualCases: s.project.manualCases } : {}),
+      ...(s.project.testPlans.length ? { testPlans: s.project.testPlans } : {}),
       ...(Object.keys(s.project.messageCatalog).length
         ? { messageCatalog: sortKeys(s.project.messageCatalog) }
         : {}),
@@ -437,6 +438,7 @@ export function filesToSnapshot(files: FileMap): {
       pages: project.pages,
       formulas: project.formulas,
       manualCases: project.manualCases,
+      testPlans: project.testPlans,
     },
     products,
     folders: dedupedFolders,

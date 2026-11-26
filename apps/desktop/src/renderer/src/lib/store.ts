@@ -15,6 +15,7 @@ export type View =
   | 'coverage'
   | 'formulas'
   | 'manual'
+  | 'plans'
   | 'elements'
   | 'settings';
 export type ThemeChoice = 'light' | 'dark' | 'system';

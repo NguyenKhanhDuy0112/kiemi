@@ -26,6 +26,7 @@ import {
   MessageCatalogSchema,
   PageDeclsSchema,
   PopupRulesSchema,
+  TestPlansSchema,
 } from '@kiemi/schema';
 import { z } from 'zod';
 import { publicProcedure, router } from '../trpc';
@@ -66,6 +67,10 @@ export const projectsRouter = router({
   setManualCases: publicProcedure
     .input(z.object({ id, cases: ManualCasesSchema }))
     .mutation(({ ctx, input }) => ctx.services.projects.setManualCases(input.id, input.cases)),
+  /** Test rounds per release [T-02]. */
+  setTestPlans: publicProcedure
+    .input(z.object({ id, plans: TestPlansSchema }))
+    .mutation(({ ctx, input }) => ctx.services.projects.setTestPlans(input.id, input.plans)),
   /** Named formulas of the project [P-03]. */
   setFormulas: publicProcedure
     .input(z.object({ id, formulas: FormulasSchema }))

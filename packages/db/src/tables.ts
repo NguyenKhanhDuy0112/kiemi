@@ -12,6 +12,7 @@ import type {
   SshSettings,
   Step,
   TestCase,
+  TestPlan,
 } from '@kiemi/schema';
 import { blob, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
@@ -69,6 +70,8 @@ export const projects = sqliteTable(
     formulas: json<Formulas>('formulas'),
     /** Test cases written for people to run by hand [T-03] (migration 19). */
     manualCases: json<ManualCase[]>('manual_cases'),
+    /** Test rounds per release [T-02] (migration 20). */
+    testPlans: json<TestPlan[]>('test_plans'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );

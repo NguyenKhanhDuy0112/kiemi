@@ -28,6 +28,7 @@ import { useTx } from '@renderer/lib/tx';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronsUpDown,
+  ClipboardCheck,
   ClipboardList,
   Crosshair,
   FileText,
@@ -55,6 +56,7 @@ const NAV: { view: View; icon: typeof FileText }[] = [
   { view: 'coverage', icon: Gauge },
   { view: 'formulas', icon: Sigma },
   { view: 'manual', icon: ListChecks },
+  { view: 'plans', icon: ClipboardCheck },
   { view: 'elements', icon: Crosshair },
   { view: 'settings', icon: Settings },
 ];

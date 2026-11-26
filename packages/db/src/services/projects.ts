@@ -11,6 +11,8 @@ import {
   PageDeclsSchema,
   type PopupRule,
   PopupRulesSchema,
+  type TestPlan,
+  TestPlansSchema,
   VariableNameSchema,
 } from '@kiemi/schema';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -101,6 +103,15 @@ export class ProjectService {
   }
   manualCases(id: string): ManualCase[] {
     return this.repo.get(id).manualCases ?? [];
+  }
+  /** Test rounds per release [T-02]. */
+  setTestPlans(id: string, plans: unknown) {
+    const p = TestPlansSchema.safeParse(plans);
+    if (!p.success) throw validation('test plans', p.error.issues);
+    return this.repo.update(id, { testPlans: p.data });
+  }
+  testPlans(id: string): TestPlan[] {
+    return this.repo.get(id).testPlans ?? [];
   }
   /** Pages that should be tested [CV-02]. */
   setPages(id: string, pages: unknown) {

@@ -208,6 +208,38 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     expect(other.projects.manualCases(projectId)).toEqual(cases);
   });
 
+  it('test plans of a project travel through the project folder [T-02]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const plans = [
+      {
+        id: 'pl1',
+        name: 'Đợt 1',
+        release: '3.2',
+        items: [
+          {
+            id: 'i1',
+            kind: 'manual' as const,
+            refId: 'mc1',
+            name: 'A',
+            assignee: 'An',
+            status: 'pass' as const,
+            note: '',
+          },
+        ],
+      },
+    ];
+    s.projects.setTestPlans(projectId, plans);
+    expect(() => s.projects.setTestPlans(projectId, [{ id: 'x', name: '' }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-plans-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.testPlans(projectId)).toEqual(plans);
+  });
+
   it('declared pages of a project travel through the project folder [CV-02]', () => {
     const { services: s, defaultProjectId: projectId } = createMemoryServices();
     s.projects.setPages(projectId, [{ id: 'p1', name: 'Đăng ký', path: '/dang-ky', kind: 'form' }]);

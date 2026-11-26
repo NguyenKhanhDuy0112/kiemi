@@ -22,6 +22,8 @@ import {
   SharedStepSchema,
   SshSettingsSchema,
   type TestCase,
+  type TestPlan,
+  TestPlansSchema,
   VariableNameSchema,
 } from '@kiemi/schema';
 import { z } from 'zod';
@@ -77,6 +79,8 @@ export const ProjectFileSchema = z.object({
   formulas: FormulasSchema.default({}),
   /** Manual test cases [T-03]. */
   manualCases: ManualCasesSchema.default([]),
+  /** Test rounds [T-02]. */
+  testPlans: TestPlansSchema.default([]),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -190,6 +194,7 @@ export interface ProjectSnapshot {
     pages: PageDecl[];
     formulas: Formulas;
     manualCases: ManualCase[];
+    testPlans: TestPlan[];
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];
