@@ -43,6 +43,7 @@ import {
   Plus,
   Search,
   Settings,
+  ShieldCheck,
   Sigma,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -57,6 +58,7 @@ const NAV: { view: View; icon: typeof FileText }[] = [
   { view: 'formulas', icon: Sigma },
   { view: 'manual', icon: ListChecks },
   { view: 'plans', icon: ClipboardCheck },
+  { view: 'permissions', icon: ShieldCheck },
   { view: 'elements', icon: Crosshair },
   { view: 'settings', icon: Settings },
 ];

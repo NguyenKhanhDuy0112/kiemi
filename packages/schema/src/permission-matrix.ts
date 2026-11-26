@@ -123,6 +123,13 @@ export function permissionSteps(m: PermissionMatrix, role: PermRole): StepInput[
       target: { strategies: [{ kind: 'role', role: 'button', name: m.loginButton }] },
     },
   });
+  // The login page redirects by itself: wait for it, or the next goto would abort it.
+  steps.push({
+    id: id('signed'),
+    action: 'assertUrl',
+    params: { op: 'notContains', value: m.loginPath.split('?')[0] },
+    name: `Đăng nhập xong: ${role.name}`,
+  });
   steps.push({ id: id('home'), action: 'goto', params: { url: `{{app}}${m.homePath}` } });
 
   for (const f of m.functions) {

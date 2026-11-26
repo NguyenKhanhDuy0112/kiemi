@@ -46,6 +46,11 @@ const PlansScreen = lazy(() =>
     default: m.PlansScreen,
   })),
 );
+const PermissionsScreen = lazy(() =>
+  import('@renderer/features/permissions/permissions-screen').then((m) => ({
+    default: m.PermissionsScreen,
+  })),
+);
 const FormulasScreen = lazy(() =>
   import('@renderer/features/formulas/formulas-screen').then((m) => ({
     default: m.FormulasScreen,
@@ -149,6 +154,7 @@ export function App() {
                 {view === 'formulas' && <FormulasScreen />}
                 {view === 'manual' && <ManualScreen />}
                 {view === 'plans' && <PlansScreen />}
+                {view === 'permissions' && <PermissionsScreen />}
                 {view === 'elements' && <ElementsScreen />}
                 {view === 'settings' && <SettingsScreen />}
                 {view === 'history' && <HistoryScreen />}

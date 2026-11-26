@@ -26,6 +26,7 @@
 - `features/manual/` → màn Case thủ công (T-03): `manual-screen.tsx`, `manual-edit.ts` (thuần, có test)
 - `features/manual/import-panel.tsx` → nhập case từ Excel (X-08) · logic ở `db/src/io/manual-excel.ts`, router `routers/manual.ts`
 - Phân quyền (Q-09): `schema/src/permission-matrix.ts` (ma trận + `permissionSteps`), `db/src/io/permission-excel.ts`, `main/permissions/generate-tests.ts`, router `routers/permissions.ts`; demo-site cổng nội bộ `server/portal.ts` + `portal.html`/`portal-fn.html`
+- `features/permissions/` → màn Phân quyền (Q-09): `permissions-screen.tsx`, `matrix-edit.ts`
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)

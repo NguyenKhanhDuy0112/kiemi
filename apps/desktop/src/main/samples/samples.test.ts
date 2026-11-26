@@ -10,6 +10,7 @@ import { SAMPLE_ENV, SAMPLE_PROJECT, sampleWorkbook, syncSampleEnvironment } fro
 import {
   DATA_SAMPLE_FOLDER,
   DATA_SAMPLE_SUITE,
+  PERMISSION_SAMPLE,
   WEB_SAMPLE_FOLDER,
   WEB_SAMPLE_SUITE,
 } from './samples-data';
@@ -183,6 +184,22 @@ describe('sample tests [L-01, S-08]', () => {
           .map((x) => `${x.stepNo} ${x.status} ${JSON.stringify(x.error)}`),
       }));
     expect(failed).toEqual([]);
+    expect(run.status).toBe('passed');
+  }, 120_000);
+
+  it('has the permission-matrix sample: 3 roles, 3 tests, all pass [L-03 #3]', async () => {
+    const { services, caller } = setup();
+    const { projectId } = await caller.samples.install();
+    expect(services.projects.permissionMatrices(projectId)[0]?.functions).toHaveLength(10);
+    const suite = services.suites.list(projectId).find((s) => s.name === PERMISSION_SAMPLE);
+    expect(services.suites.listItems(suite?.id ?? '')).toHaveLength(3);
+    const { runId } = await caller.runs.start({
+      target: { kind: 'suite', suiteId: suite?.id ?? '' },
+      options: { headless: true },
+    });
+    await collect(await caller.runs.events({ runId }));
+    const run = await caller.runs.get({ runId });
+    expect(run.cases.filter((c) => c.status !== 'passed').map((c) => c.testName)).toEqual([]);
     expect(run.status).toBe('passed');
   }, 120_000);
 

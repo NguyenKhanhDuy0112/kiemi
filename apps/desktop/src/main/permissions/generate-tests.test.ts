@@ -104,7 +104,17 @@ describe('permission matrix tests [Q-09]', () => {
     const ids = tests.map((t) => t.id);
 
     const ok = await runAll(ctx, ids);
-    expect(ok.cases.filter((c) => c.status !== 'passed').map((c) => c.testName)).toEqual([]);
+    expect(
+      ok.cases
+        .filter((c) => c.status !== 'passed')
+        .map((c) => ({
+          test: c.testName,
+          steps: services.runs
+            .listSteps(c.id)
+            .filter((x) => x.status !== 'passed' && x.status !== 'skipped')
+            .map((x) => `${x.stepId} ${x.status} ${JSON.stringify(x.error)}`),
+        })),
+    ).toEqual([]);
 
     // The portal now (wrongly) opens "Bảng lương" for employees: only that cell must fail.
     await fetch(`${site.url}/api/portal/leak`, {

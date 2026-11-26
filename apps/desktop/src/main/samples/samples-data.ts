@@ -1,10 +1,11 @@
-import type { Services } from '@kiemi/db';
+import { matrixFromTable, PERMISSION_TEMPLATE, type Services } from '@kiemi/db';
 import {
   CURRENT_SCHEMA_VERSION,
   type StepInput as FullStepInput,
   TestCaseSchema,
 } from '@kiemi/schema';
 import { v7 as uuidv7 } from 'uuid';
+import { generatePermissionTests } from '../permissions/generate-tests';
 
 type StepInput = Omit<FullStepInput, 'id'>;
 
@@ -331,4 +332,39 @@ export function installWebSamples(services: Services, projectId: string, environ
     rows.map((r) => ({ testCaseId: r.id })),
   );
   return rows;
+}
+
+/** Name of the permission sample (matrix, folder of generated tests and suite) [L-03 #3]. */
+export const PERMISSION_SAMPLE = 'Mẫu 3. Ma trận phân quyền';
+const PERMISSION_LOGINS: Record<string, string> = {
+  'nhan-vien': 'nhanvien',
+  'quan-ly': 'quanly',
+  'ke-toan': 'ketoan',
+};
+
+/** Installs L-03 #3: 3 roles × 10 functions → 3 tests, one per role [M14-04b]. */
+export function installPermissionSample(
+  services: Services,
+  projectId: string,
+  environmentId: string,
+) {
+  const { matrix } = matrixFromTable(PERMISSION_TEMPLATE, PERMISSION_SAMPLE, 'sample-permissions');
+  services.projects.setPermissionMatrices(projectId, [
+    {
+      ...matrix,
+      homePath: '/portal.html',
+      roles: matrix.roles.map((r) => ({
+        ...r,
+        username: PERMISSION_LOGINS[r.key] ?? '',
+        // Kept as a secret of the environment, never typed into the test.
+        password: '{{secret.matKhau}}',
+      })),
+    },
+  ]);
+  const { folderId } = generatePermissionTests(services, { projectId, matrixId: matrix.id });
+  const suite = services.suites.create({ projectId, name: PERMISSION_SAMPLE, environmentId });
+  services.suites.setItems(
+    suite.id,
+    services.testCases.list(projectId, folderId).map((t) => ({ testCaseId: t.id })),
+  );
 }
