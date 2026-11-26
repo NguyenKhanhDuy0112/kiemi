@@ -5,6 +5,8 @@ import {
   expectedError,
   formCaseTag,
   generateFormCases,
+  labelsOfCase,
+  withLabels,
 } from '@kiemi/schema';
 
 export interface GenerateResult {
@@ -59,12 +61,14 @@ export function generateFormTests(
       description: [c.why, message ? `Kỳ vọng thông báo: "${message}"` : null]
         .filter(Boolean)
         .join('\n'),
-      tags: [
-        'form-validation',
-        c.expect === 'reject' ? 'negative' : 'positive',
-        `technique:${c.technique}`,
-        formCaseTag(form.id, c.id),
-      ],
+      tags: withLabels(
+        [
+          'form-validation',
+          c.expect === 'reject' ? 'negative' : 'positive',
+          formCaseTag(form.id, c.id),
+        ],
+        labelsOfCase(c.technique, c.id),
+      ),
       steps: caseSteps(form, c, catalog),
     });
     created++;

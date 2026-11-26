@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M11** đang làm trên nhánh `milestone/m11-validate-form`: tiếp **M11-09** (nhãn kỹ thuật + ISO 25010). M10 đã merge (PR #2).
+**M11** đang làm trên nhánh `milestone/m11-validate-form`: tiếp **M11-10** (độ phủ trang + checklist). M10 đã merge (PR #2).
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
@@ -19,6 +19,7 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 - M11-06 xong: checks mới `fieldError` (thông báo trong khối bao riêng ô đó/aria-describedby/validationMessage) + `focus` (`assertFieldError`, `assertFocus`, `engine/src/assertions/checks.ts`); toast `notContains/notEquals` giờ đúng với MỌI thông báo. `caseSteps(form, c, catalog)` thêm bước kiểm tra `soft` với id cố định `CHECK_IDS` (`chk-message|focus|kept|not-sent|sent|saved-<field>`) → M11-07 gom theo id này. Thêm `FormSpec.successMessage/detailPath`, `FieldSpec.trim/readBack` (round-trip, `normalizeSpace:false`). Demo-site `register.html?bug=msg,field,clear,nofocus,sent,trim,accent`; e2e `e2e/form-validation.e2e.test.ts` (chậm ~5 phút: chạy từng case). Email có case độ dài (maxLength) khi không có pattern/rule.
 - M11-07 xong: `schema/src/form-matrix.ts` (`buildMatrix(form, outcomes)`, `ruleOfCase`, tag `form-case:<formId>|<caseId>` do `generate-tests.ts` gắn). Renderer `features/run/form-outcomes.ts` (đọc tag + bước soft lỗi từ `LiveCase`) + `form-matrix.tsx` (hiện đầu màn Kết quả khi run có test sinh từ form; bấm ô → danh sách case → mở test; xuất Excel qua tRPC `forms.tableToExcel`). Test sinh TRƯỚC M11-07 chưa có tag → không vào ma trận (sinh lại sau khi xóa thư mục form).
 - M11-08 xong: `db/src/io/field-spec-excel.ts` (`FIELD_SPEC_TEMPLATE`, `formFromTable` → `{form, warnings}`; nhận tiêu đề vi/en, kiểu vi/en, "Định dạng" = tên quy tắc có sẵn hoặc regex). tRPC `forms.specTemplate|fromExcel`; UI trong `infer-panel.tsx` (chọn file + tải file mẫu; dùng `fileToBase64` của `editor-tabs.tsx`). Cột "Thông báo lỗi" mới chỉ cảnh báo (chưa nhập vào catalog).
+- M11-09 xong: nhãn là tag `technique:<x>` / `quality:<y>` (`schema/src/design-labels.ts`: `TECHNIQUES`, `QUALITY_CHARS`, `labelsOf`, `withLabels`, `labelsOfCase`); test sinh từ form tự gắn; chọn tay ở hộp thoại sửa tên/tag (`components/name-dialog.tsx`). Báo cáo độ phủ theo nhãn → làm ở M11-10 (đọc tag của mọi test theo sản phẩm).
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 

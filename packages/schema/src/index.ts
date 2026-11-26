@@ -1,5 +1,6 @@
 export * from './bad-data';
 export * from './dataset';
+export * from './design-labels';
 export * from './env';
 export * from './field-rules';
 export * from './form-cases';
