@@ -193,4 +193,25 @@ describe('SOCKS router', () => {
     expect(await read('admin.internal')).toBe('B');
     expect(await read('other.example')).toBe('A');
   });
+
+  it('keeps data that arrives in the same chunk as the SOCKS reply (server speaks first)', async () => {
+    // A proxy that answers the handshake and the first payload with ONE write, as
+    // Windows loopback often delivers them.
+    const proxy = createServer((s) => {
+      let step = 0;
+      s.on('data', () => {
+        step++;
+        if (step === 1) s.write(Buffer.from([5, 0]));
+        else
+          s.end(Buffer.concat([Buffer.from([5, 0, 0, 1, 0, 0, 0, 0, 0, 0]), Buffer.from('HELLO')]));
+      });
+    });
+    await new Promise<void>((r) => proxy.listen(0, '127.0.0.1', r));
+    closers.push(() => new Promise<void>((r) => proxy.close(() => r())));
+    const port = (proxy.address() as { port: number }).port;
+    const s = await viaSocks5('127.0.0.1', port)('banner.internal', 22);
+    let text = '';
+    for await (const chunk of s) text += String(chunk);
+    expect(text).toBe('HELLO');
+  });
 });

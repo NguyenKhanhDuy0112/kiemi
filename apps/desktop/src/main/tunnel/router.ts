@@ -4,29 +4,37 @@ import type { Duplex } from 'node:stream';
 /** Opens a raw TCP stream to `host:port` (directly, through SSH, through a proxy…). */
 export type Connector = (host: string, port: number) => Promise<Duplex>;
 
-/** Reads from `sock` until `done(buffer)` returns the byte count to consume. */
+/**
+ * Reads from `sock` until `done(buffer)` returns the byte count to consume. Uses
+ * paused-mode reads (`readable` + `read()`), never `data`: a `data` listener puts the
+ * stream in flowing mode and the bytes after the reply — the server spoke first and
+ * they came in the same chunk — would be emitted to nobody once it is removed.
+ */
 function readUntil(sock: Duplex, done: (buf: Buffer) => number | undefined): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     let buf = Buffer.alloc(0);
-    const onData = (chunk: Buffer) => {
-      buf = Buffer.concat([buf, chunk]);
-      const n = done(buf);
-      if (n === undefined) return;
-      cleanup();
-      const rest = buf.subarray(n);
-      if (rest.length) sock.unshift(rest);
-      resolve(buf.subarray(0, n));
+    const onReadable = () => {
+      for (let chunk = sock.read() as Buffer | null; chunk !== null; chunk = sock.read()) {
+        buf = Buffer.concat([buf, chunk]);
+        const n = done(buf);
+        if (n === undefined) continue;
+        cleanup();
+        const rest = buf.subarray(n);
+        if (rest.length) sock.unshift(rest);
+        resolve(buf.subarray(0, n));
+        return;
+      }
     };
     const onEnd = () => {
       cleanup();
       reject(new Error('Proxy closed the connection'));
     };
     const cleanup = () => {
-      sock.off('data', onData);
+      sock.off('readable', onReadable);
       sock.off('error', onEnd);
       sock.off('close', onEnd);
     };
-    sock.on('data', onData);
+    sock.on('readable', onReadable);
     sock.once('error', onEnd);
     sock.once('close', onEnd);
   });
