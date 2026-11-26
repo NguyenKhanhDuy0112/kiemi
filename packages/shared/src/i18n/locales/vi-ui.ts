@@ -1242,10 +1242,16 @@ export const viUi = {
       label: 'Giả lập thời gian',
       sentence: 'Đồng hồ trình duyệt: {{op}} {{time}}',
     },
+    gridRow: {
+      label: 'Thao tác trên dòng của lưới',
+      sentence: 'Lưới {{target}}: {{do}} dòng có {{where}}',
+    },
+    gridFilter: { label: 'Lọc ở tiêu đề cột', sentence: 'Lọc cột {{column}} = {{value}}' },
     assertVariable: { label: 'Kiểm tra biến', sentence: 'Kiểm tra biến {{name}} {{op}} {{value}}' },
     unknown: { label: 'Thao tác khác', sentence: 'Thao tác {{action}}' },
   },
   params: {
+    do: 'Việc cần làm',
     virtual: 'Lưới cuộn ảo (cuộn để đọc hết dòng)',
     amount: 'Lượng',
     unit: 'Đơn vị',

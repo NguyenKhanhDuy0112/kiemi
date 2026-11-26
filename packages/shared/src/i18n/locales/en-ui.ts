@@ -1243,6 +1243,14 @@ export const enUi = {
       label: 'Fake the time',
       sentence: 'Browser clock: {{op}} {{time}}',
     },
+    gridRow: {
+      label: 'Work on a grid row',
+      sentence: 'Grid {{target}}: {{do}} the row with {{where}}',
+    },
+    gridFilter: {
+      label: 'Filter under a column header',
+      sentence: 'Filter column {{column}} = {{value}}',
+    },
     assertVariable: {
       label: 'Check variable',
       sentence: 'Check variable {{name}} {{op}} {{value}}',
@@ -1250,6 +1258,7 @@ export const enUi = {
     unknown: { label: 'Other action', sentence: 'Action {{action}}' },
   },
   params: {
+    do: 'What to do',
     virtual: 'Virtual-scroll grid (scroll to read every row)',
     amount: 'Amount',
     unit: 'Unit',

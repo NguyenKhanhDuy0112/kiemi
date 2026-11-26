@@ -14,6 +14,7 @@ import { extractTableAction } from './extract-table';
 import { fillAction } from './fill';
 import { generateFileAction } from './generate-file';
 import { gotoAction } from './goto';
+import { gridFilterAction, gridRowAction } from './grid';
 import { hoverAction } from './hover';
 import { ifAction } from './if';
 import { loopAction } from './loop';
@@ -65,6 +66,8 @@ export const builtinActions: ActionDefinition[] = [
   useSessionAction,
   clearDataAction,
   clockAction,
+  gridRowAction,
+  gridFilterAction,
   waitAction,
   extractAction,
   extractTableAction,

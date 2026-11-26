@@ -593,3 +593,58 @@ describe('virtual-scroll grid [W-03]', () => {
     ]);
   });
 });
+
+describe('grid rows and header filters [W-03]', () => {
+  const grid = { css: '#grid' };
+  const open = [
+    step('goto', { url: '/grid.html' }),
+    step('waitUntil', {
+      condition: { assert: 'visible', target: { css: '#viewport [aria-rowindex="2"]' } },
+      timeoutSec: 5,
+    }),
+  ];
+  const where = (value: string) => ({ column: 'Mã', value });
+
+  it('ticks, opens, edits rows far below the first screen and filters by header', async () => {
+    const r = await e.run(
+      [
+        ...open,
+        step('gridRow', { target: grid, where: where('SP0777'), do: 'select' }),
+        step('assertText', { target: { css: '#selected-count' }, value: '1' }),
+        step('gridRow', { target: grid, where: where('SP0777'), do: 'unselect' }),
+        step('assertText', { target: { css: '#selected-count' }, value: '0' }),
+        step('gridRow', { target: grid, where: where('SP0900'), do: 'expand' }),
+        step('assertText', { target: { css: '#grid' }, op: 'contains', value: 'Chi tiết SP0900' }),
+        step('gridRow', {
+          target: grid,
+          where: where('SP0500'),
+          do: 'edit',
+          column: 'Số lượng',
+          value: '99',
+        }),
+        step('assertTable', {
+          target: grid,
+          virtual: true,
+          where: where('SP0500'),
+          column: 'Số lượng',
+          value: '99',
+        }),
+        step('gridFilter', { target: grid, column: 'Mã', value: 'SP0123' }),
+        step('assertText', { target: { css: '#shown-count' }, value: '1' }),
+        step('gridFilter', { target: grid, column: 'Mã', value: '' }),
+        step('gridFilter', { target: grid, column: 'Tên', value: 'kéo' }),
+        step('assertText', { target: { css: '#shown-count' }, value: '125' }),
+        step(
+          'gridRow',
+          { target: grid, where: where('SP9999'), do: 'select' },
+          { mode: 'soft', timeoutMs: 20_000 },
+        ),
+        step('gridFilter', { target: grid, column: 'Giá không có', value: 'x' }, { mode: 'soft' }),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 30_000 } } },
+    );
+    const sm = summary(r);
+    expect(sm.slice(0, 15)).toEqual(Array.from({ length: 15 }, (_, i) => `${i + 1} passed`));
+    expect(sm.slice(15)).toEqual(['16 failed ELEMENT_NOT_FOUND', '17 failed INVALID_PARAMS']);
+  });
+});

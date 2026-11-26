@@ -155,7 +155,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M13-04** Giả lập thời gian (đặt giờ, tua nhanh, đóng băng) [Y-01]
 - [x] **M13-05** HTTP Basic / NTLM / Windows auth theo môi trường [W-01]
 - [x] **M13-06a** Grid phức tạp — đọc: cuộn ảo (`virtual`) cho extractTable + các kiểm tra bảng, trang demo grid 1.000 dòng [W-03]
-- [ ] **M13-06b** Grid phức tạp — thao tác: sửa ô inline, chọn dòng, mở dòng con, lọc ở header (action `gridRow`/`gridFilter`) [W-03]
+- [x] **M13-06b** Grid phức tạp — thao tác: sửa ô inline, chọn dòng, mở dòng con, lọc ở header (action `gridRow`/`gridFilter`) [W-03]
 - [ ] **M13-07** Control phức tạp (Select2-like, rich text, date-range, mask, autocomplete) — recorder ghi thành 1 step có nghĩa [W-04]
 - [ ] **M13-08** Upload qua input ẩn và kéo thả [W-06]
 - [ ] **M13-09** Demo-site: control phức tạp, Basic auth, khuyến mãi theo ngày + đếm ngược; mẫu L-03 #8 [L-03]
