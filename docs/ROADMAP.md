@@ -168,7 +168,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M14-04a** Ma trận phân quyền — lõi: schema + đọc Excel + sinh test mỗi vai trò (menu, URL trực tiếp) + demo-site cổng nội bộ 3 vai trò + e2e báo đúng ô vi phạm [Q-09]
 - [x] **M14-04b** Ma trận phân quyền — màn hình nhập Excel/sửa/sinh test + mẫu L-03 #3 [Q-09, L-03]
 - [x] **M14-05** Báo cáo Excel/PDF (sheet Tổng hợp + Chi tiết) [X-01]
-- [ ] **M14-06** Thông báo kết quả qua webhook (Teams, Slack, Google Chat, Telegram, SMTP) [X-03]
+- [x] **M14-06** Thông báo kết quả qua webhook (Teams, Slack, Google Chat, Telegram, SMTP) [X-03]
 - [ ] **M14-07** ADR + `apps/cli` (`kiemi run …`) dùng chung engine, đóng gói cùng app, hẹn giờ, JUnit XML [X-04]
 - [ ] **M14-08** ADR + Query DB (SQL Server, Postgres, MySQL ở main process), mặc định chỉ đọc, ghi bị W-10 chặn; mẫu L-03 #6 [X-05, L-03]
 - [ ] **M14-09** Rà soát `QC-COVERAGE.md` (không còn ❌ ở dòng v1.1), user guide, phát hành v1.1

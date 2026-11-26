@@ -14,6 +14,7 @@ import {
 } from './routers/data';
 import { formulasRouter } from './routers/formulas';
 import { manualRouter } from './routers/manual';
+import { notifyRouter } from './routers/notify';
 import { permissionsRouter } from './routers/permissions';
 import { formsRouter, recorderRouter, savedLoginsRouter } from './routers/recorder';
 import { reportsRouter } from './routers/reports';
@@ -47,6 +48,7 @@ export const rootRouter = router({
   manual: manualRouter,
   permissions: permissionsRouter,
   reports: reportsRouter,
+  notify: notifyRouter,
   savedLogins: savedLoginsRouter,
   updates: updatesRouter,
   sharedResources: sharedResourcesRouter,

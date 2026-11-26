@@ -2,6 +2,7 @@ import type { RepoContext } from '../repo';
 import { DatasetService } from './datasets';
 import { ElementService } from './elements';
 import { EnvironmentService, type SecretCipher } from './environments';
+import { NotifyChannelService } from './notify-channels';
 import { ProductService } from './products';
 import { FolderService, ProjectService } from './projects';
 import { RunService } from './runs';
@@ -15,6 +16,7 @@ import { TestCaseService } from './test-cases';
 export * from './datasets';
 export * from './elements';
 export * from './environments';
+export * from './notify-channels';
 export * from './products';
 export * from './projects';
 export * from './runs';
@@ -41,6 +43,7 @@ export interface Services {
   readonly settings: SettingsService;
   readonly runs: RunService;
   readonly savedLogins: SavedLoginService;
+  readonly notifyChannels: NotifyChannelService;
 }
 
 /** All data services of one workspace. */
@@ -60,5 +63,6 @@ export function createServices(ctx: RepoContext, cipher: SecretCipher): Services
     settings: new SettingsService(ctx),
     runs: new RunService(ctx),
     savedLogins: new SavedLoginService(ctx, cipher),
+    notifyChannels: new NotifyChannelService(ctx, cipher),
   };
 }

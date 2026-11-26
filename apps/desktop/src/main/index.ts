@@ -16,6 +16,7 @@ import { autoUpdater } from 'electron-updater';
 import { rootRouter } from './api/root';
 import { CrashReports } from './crash/crash-reports';
 import { isTrustedRendererUrl } from './ipc-allow';
+import { notifyRun } from './notify/send';
 import { ProjectFolderManager } from './projects/folder-manager';
 import { SoftLocks } from './projects/locks';
 import { RecorderManager } from './record/recorder-manager';
@@ -139,6 +140,7 @@ function registerIpc(data: { services: Services; defaultProjectId: string }): vo
     artifactsRoot: join(userData, 'runs'),
     browsersPath: join(userData, 'browsers'),
     openTunnel: (ssh, secrets) => openSshTunnel(ssh, secrets),
+    onFinished: (runId) => void notifyRun(data.services, runId),
   });
   runs = runManager;
   // Recording / Pick run in their own engine process too [M5].

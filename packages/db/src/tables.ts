@@ -5,6 +5,7 @@ import type {
   Locator,
   ManualCase,
   MessageCatalog,
+  NotifyConfig,
   PageDecl,
   PermissionMatrix,
   PopupRule,
@@ -388,6 +389,30 @@ export const settings = sqliteTable(
   (t) => [uniqueIndex('settings_workspace_key_idx').on(t.workspaceId, t.key)],
 );
 
+/** Where run results are announced: Slack, Teams, Google Chat, Telegram, email [X-03]. */
+export const notifyChannels = sqliteTable(
+  'notify_channels',
+  {
+    ...base,
+    projectId: text('project_id').notNull(),
+    name: text('name').notNull(),
+    kind: text('kind', { enum: ['slack', 'teams', 'gchat', 'telegram', 'email'] }).notNull(),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+    sendWhen: text('send_when', { enum: ['always', 'failed'] })
+      .notNull()
+      .default('always'),
+    /** Non-secret settings (chat id, SMTP host…). */
+    config: json<NotifyConfig>('config'),
+    /** Webhook URL / bot token / SMTP password, encrypted like secrets [N-07]. */
+    ciphertext: blob('ciphertext', { mode: 'buffer' }),
+    /** Result of the last send, to show in settings. */
+    lastOk: integer('last_ok', { mode: 'boolean' }),
+    lastMessage: text('last_message'),
+    lastAt: integer('last_at', { mode: 'timestamp_ms' }),
+  },
+  (t) => [index('notify_channels_project_idx').on(t.projectId)],
+);
+
 /** Saved login sessions (cookies + localStorage), reused by later tests until they expire [F-02]. */
 export const savedLogins = sqliteTable(
   'saved_logins',
@@ -452,5 +477,6 @@ export const ALL_TABLES = {
   artifacts,
   settings,
   savedLogins,
+  notifyChannels,
   sharedResources,
 } as const;

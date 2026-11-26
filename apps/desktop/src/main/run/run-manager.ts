@@ -48,6 +48,8 @@ export interface RunManagerDeps {
   browsersPath: string;
   /** Opens one SSH tunnel; called once per distinct SSH setting of the cells a run uses [O-02]. */
   openTunnel?: OpenTunnel;
+  /** Called once when a run has ended, e.g. to send notifications [X-03]; must not throw. */
+  onFinished?: (runId: string) => void;
   /** Grace period after Stop before the engine process is killed. */
   cancelKillMs?: number;
 }
@@ -730,6 +732,11 @@ export class RunManager {
     });
     active.worker?.kill();
     void active.tunnel?.close().catch(() => undefined);
+    try {
+      this.#d.onFinished?.(active.runId);
+    } catch {
+      // a listener never changes the run
+    }
   }
 
   #publish(active: ActiveRun, event: RunFeedEvent): void {
