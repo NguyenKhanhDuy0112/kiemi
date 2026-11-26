@@ -66,6 +66,8 @@ export function EditorScreen({ testId }: { testId: string }) {
     ...trpc.environments.get.queryOptions({ id: firstEnvId ?? '' }),
     enabled: !!firstEnvId,
   });
+  // Workspace library steps are called by id too [O-07].
+  const library = useQuery(trpc.sharedResources.list.queryOptions({ kind: 'shared_step' }));
   const shared = useQuery({
     ...trpc.sharedSteps.list.queryOptions({ projectId: projectId ?? '' }),
     enabled: !!projectId,
@@ -215,8 +217,12 @@ export function EditorScreen({ testId }: { testId: string }) {
   }, [doc, env.data, datasets.data]);
 
   const sharedNames = useMemo(
-    () => new Map((shared.data ?? []).map((s) => [s.id, s.name])),
-    [shared.data],
+    () =>
+      new Map([
+        ...(library.data ?? []).map((r) => [r.id, r.name] as const),
+        ...(shared.data ?? []).map((s) => [s.id, s.name] as const),
+      ]),
+    [shared.data, library.data],
   );
 
   if (!doc || test.isLoading) {

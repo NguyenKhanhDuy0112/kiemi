@@ -107,3 +107,35 @@ describe('shared resources [O-07]', () => {
     expect(code(() => s.sharedResources.get(promoted.id))).toBe('NOT_FOUND');
   });
 });
+
+describe('shared step usages [O-07]', () => {
+  it('finds tests (even nested) that call a shared step', () => {
+    const { services: s, defaultProjectId } = createMemoryServices();
+    const other = s.projects.create({ name: 'Other' });
+    const call = (shared: string): Step => ({
+      id: `c-${shared}`,
+      action: 'call',
+      params: { shared, args: {} },
+      session: 'default',
+      enabled: true,
+      mode: 'hard',
+    });
+    const make = (projectId: string, name: string, steps: Step[]) => {
+      const t = s.testCases.create({ projectId, name });
+      s.testCases.save(t.id, { ...s.testCases.get(t.id).content, steps });
+      return t;
+    };
+    const a = make(defaultProjectId, 'A', [call('X')]);
+    const b = make(other.id, 'B', [
+      { ...call('none'), action: 'loop', params: { steps: [call('X')] } },
+    ]);
+    make(other.id, 'C', [call('Y')]);
+    expect(
+      s.testCases
+        .usersOfSharedStep('X')
+        .map((t) => t.id)
+        .sort(),
+    ).toEqual([a.id, b.id].sort());
+    expect(s.testCases.usersOfSharedStep('Z')).toEqual([]);
+  });
+});

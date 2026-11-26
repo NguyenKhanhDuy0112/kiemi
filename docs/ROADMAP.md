@@ -102,7 +102,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M9-08a** Giới hạn test theo môi trường — engine: skip logic + `RunResult.skipped` + lý do bỏ qua; kiểm tra `only`/`except` trong `RunManager.start` (dùng tên/id/loại môi trường) [O-06, S]
 - [x] **M9-08b** Giới hạn test theo môi trường — UI: editor chọn `environments.only/except`, hộp thoại suite chọn môi trường mặc định [O-06, S]
 - [x] **M9-09a** Phạm vi tài nguyên dùng chung — DB/schema: bảng `shared_resources`, cột phạm vi Sản phẩm/Dự án/Workspace, service + migration [O-07, M]
-- [ ] **M9-09b** Phạm vi tài nguyên dùng chung — UI: menu "Dùng chéo dự án", danh sách test bị ảnh hưởng khi sửa step dùng chung [O-07, M]
+- [x] **M9-09b** Phạm vi tài nguyên dùng chung — UI: menu "Dùng chéo dự án", danh sách test bị ảnh hưởng khi sửa step dùng chung [O-07, M]
 - [ ] **M9-10** Chuyển dự án nhanh (bộ chọn, gần đây, ghim) + tìm kiếm toàn workspace Ctrl/Cmd+K [O-08, S]
 - [ ] **M9-11** Demo-site: 2 app khác domain (admin/web) + e2e: 1 test đi qua 2 sản phẩm, đổi môi trường lấy đúng URL/tài khoản; test cả milestone M9 + app thật + mở PR [L]
 

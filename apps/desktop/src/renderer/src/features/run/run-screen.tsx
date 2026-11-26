@@ -130,13 +130,19 @@ export function RunScreen({ runId }: { runId: string }) {
     });
     return m;
   }, [testIds, tests]);
+  // Workspace library steps are called by id too [O-07].
+  const library = useQuery(trpc.sharedResources.list.queryOptions({ kind: 'shared_step' }));
   const shared = useQuery({
     ...trpc.sharedSteps.list.queryOptions({ projectId: detail?.projectId ?? '' }),
     enabled: !!detail?.projectId,
   });
   const sharedNames = useMemo(
-    () => new Map((shared.data ?? []).map((s) => [s.id, s.name])),
-    [shared.data],
+    () =>
+      new Map([
+        ...(library.data ?? []).map((r) => [r.id, r.name] as const),
+        ...(shared.data ?? []).map((s) => [s.id, s.name] as const),
+      ]),
+    [shared.data, library.data],
   );
 
   if (!view) {

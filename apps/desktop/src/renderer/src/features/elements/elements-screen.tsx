@@ -13,6 +13,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Crosshair, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { SharedLibrary } from './shared-library';
 
 /** A ref key derived from an element name: "Nút Lưu" → el_Nut_Luu. */
 export function refFromName(name: string, taken: ReadonlySet<string>): string {
@@ -233,6 +234,12 @@ export function ElementsScreen() {
             </ul>
           )}
         </section>
+        <SharedLibrary
+          projectId={projectId}
+          projectElements={lib.data ?? []}
+          testDoc={test.data?.content}
+          onSaveDoc={(doc) => void saveDoc(doc)}
+        />
       </div>
     </div>
   );

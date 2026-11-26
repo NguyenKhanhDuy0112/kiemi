@@ -18,13 +18,14 @@
 - `features/editor/` → bảng bước, `schema-form.tsx` (form tự sinh), `editor-tabs.tsx` (Dữ liệu/Biến/Phiên), `effective-variables.tsx`, `environment-rows.tsx`
 - `features/environments/` → `environments-screen.tsx` (ma trận Môi trường × Sản phẩm, biến các cấp, bí mật, proxy/SSH), `environment-badge.tsx`
 - `features/run/` → `run-screen.tsx`, `run-dialog.tsx` (`useStartRun`), `run-store.ts`, `report.ts`, `confirm-protected.tsx`
+- `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)
 - `features/{record,history,elements,settings,onboarding,projects,update}/`
 - `components/ui/` → shadcn (không sửa tay) · `components/mascot/` → Cú Kiemi
 ## apps/demo-site
 - web mục tiêu cho e2e (`server.ts` + trang HTML); `startDemoServer()` từ `@kiemi/demo-site/server`
 ## packages/
 - `schema/src/` → `test-case.ts` (DSL v2), `step.ts`, `locator.ts`, `env.ts` (Env, apps, loại môi trường), `product.ts`, `migrate.ts` (migration DSL) · fixtures ở `schema/fixtures/vN/`
-- `db/src/` → `tables.ts` (Drizzle), `migrations.ts` (SQL theo số), `services/*.ts` (1 service/bảng), `folder/` (DB ↔ thư mục dự án: `format.ts`, `files.ts`, `snapshot.ts`, `sync.ts`), `io/` (bundle, Excel/CSV), `testing.ts` (`createMemoryServices`)
+- `db/src/` → `tables.ts` (Drizzle), `migrations.ts` (SQL theo số), `services/*.ts` (1 service/bảng; `shared-resources.ts` = thư viện workspace), `folder/` (DB ↔ thư mục dự án: `format.ts`, `files.ts`, `snapshot.ts`, `sync.ts`), `io/` (bundle, Excel/CSV), `testing.ts` (`createMemoryServices`)
 - `engine/src/` → `runner.ts` (`runTestCase`), `define-action.ts`, `actions/<type>.ts`, `assertions/`, `locator/`, `browser/` (launch, proxy, sessions), `vars/` (biến, `{{app}}`, các cấp), `run/` (services, debug, `protection.ts`), `e2e/` (demo-site)
 - `recorder/src/` → `injected.ts` (script trang), `collector.ts`, `pure.ts`
 - `shared/src/i18n/locales/` → `vi.ts`/`en.ts` (lỗi engine), `vi-ui.ts`/`en-ui.ts` (chuỗi UI)

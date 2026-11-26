@@ -7,12 +7,12 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M9-09b** (UI menu "Dùng chéo dự án", danh sách test bị ảnh hưởng khi sửa step dùng chung) → M9-10 → M9-11.
+**M9-10** (chuyển dự án nhanh + Ctrl/Cmd+K) → M9-11 → M9-10 → M9-11.
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
 - Generator `pnpm gen action|i18n|table|router <tên>` (`scripts/gen/index.mjs`): tạo file + vá registry (actions/index.ts, vi-ui/en-ui, migrations.ts+tables.ts, root.ts). Sau khi gen chạy `biome check --write` cho file đã đụng. `gen table` làm `database.test.ts` (danh sách bảng cứng) fail → thêm tên bảng vào test; điền TODO i18n.
-- M9-09a xong: bảng `shared_resources` (migration 10; `kind` shared_step|element, `scope` workspace|project|product, `data` JSON) + `SharedResourceService` (`packages/db/src/services/shared-resources.ts`), tRPC `sharedResources.*`. Thư viện workspace (scope=workspace) được nối vào run: `run-manager` gộp `sharedResources.sharedStepsForRun()`; step gọi theo **id**. Step/phần tử cấp dự án/sản phẩm vẫn ở bảng cũ. CHƯA đồng bộ vào thư mục dự án (không thuộc dự án nào) — 09b cần: `usages` (quét test có `call.shared == id`) và UI.
+- M9-09 xong: bảng `shared_resources` (migration 10) + `SharedResourceService`, tRPC `sharedResources.*` (kể cả `usages` → `TestCaseService.usersOfSharedStep`). Thư viện workspace nối vào run (`run-manager` gộp `sharedStepsForRun()`; step gọi theo **id**). UI: `features/elements/shared-library.tsx` (cuối màn Phần tử: "Dùng chéo dự án", danh sách test bị ảnh hưởng). Chưa có: form chọn step dùng chung trong editor (call), sửa nội dung step thư viện, đồng bộ thư viện vào thư mục dự án.
 - Nhánh hiện tại `m9` (pre-convention); từ M10 dùng `milestone/m10-<tên>` theo quy ước mới (CLAUDE.md §2 mục 6).
 - CI: job `quick` (Linux, nhánh không phải main) và `full` (Win+Mac, PR/main) — xem `.github/workflows/ci.yml`.
 
@@ -90,3 +90,4 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 | 2026-11-26 | M9-08b | xong | Tab "Môi trường" ở editor (only/except + lý do); case bị giới hạn hiện `skipped` + lý do ở màn chạy; test `nextEnvLimit`, `applyFeed` plan skipped |
 
 | 2026-11-26 | M9-09a | xong | Bảng `shared_resources` + service + router + gộp vào run; test `shared-resources.test.ts` |
+| 2026-11-26 | M9-09b | xong | UI thư viện workspace + danh sách test bị ảnh hưởng; test `usersOfSharedStep` |

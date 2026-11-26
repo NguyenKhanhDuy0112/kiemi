@@ -22,6 +22,16 @@ export type TestCaseRow = typeof testCases.$inferSelect;
 /** List item without the (possibly large) content. */
 export type TestCaseSummary = Omit<TestCaseRow, 'content'> & { stepCount: number };
 
+/** True if any `call` step (at any nesting depth) of `value` runs the shared step `sharedId`. */
+function callsShared(value: unknown, sharedId: string): boolean {
+  if (Array.isArray(value)) return value.some((v) => callsShared(v, sharedId));
+  if (typeof value !== 'object' || value === null) return false;
+  const o = value as Record<string, unknown>;
+  const params = o.params as Record<string, unknown> | undefined;
+  if (o.action === 'call' && params?.shared === sharedId) return true;
+  return Object.values(o).some((v) => callsShared(v, sharedId));
+}
+
 export class TestCaseService {
   readonly repo: Repo<typeof testCases>;
   readonly #ctx: RepoContext;
@@ -41,6 +51,14 @@ export class TestCaseService {
     return this.repo
       .list(filter, testCases.name)
       .map(({ content, ...rest }) => ({ ...rest, stepCount: content.steps.length }));
+  }
+
+  /** Tests of the whole workspace that call a shared step — what an edit would affect [O-07]. */
+  usersOfSharedStep(sharedId: string): { id: string; name: string; projectId: string }[] {
+    return this.repo
+      .list(undefined, testCases.name)
+      .filter((r) => callsShared([r.content.steps, r.content.cleanup], sharedId))
+      .map((r) => ({ id: r.id, name: r.name, projectId: r.projectId }));
   }
 
   get(id: string): TestCaseRow {
