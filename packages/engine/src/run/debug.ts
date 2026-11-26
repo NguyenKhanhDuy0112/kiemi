@@ -1,3 +1,4 @@
+import type { RunError } from '@kiemi/schema';
 import type { StepPhase } from '../events';
 
 /** Step about to run, as seen by a debugger. */
@@ -11,10 +12,19 @@ export interface StepGate {
 /** Awaited before every step; resolve to let the step run [H-03]. */
 export interface RunDebugger {
   beforeStep(step: StepGate, signal: AbortSignal): Promise<void>;
+  /**
+   * Awaited when a step has failed, the browser still open [FX-01, FX-05]:
+   * `retry` runs it again · `skip` marks it skipped and goes on · `continue`
+   * keeps the failure on record but runs the next steps · `stop` ends the test.
+   */
+  afterFail?(step: StepGate, error: RunError, signal: AbortSignal): Promise<FailDecision>;
 }
 
+export type FailDecision = 'retry' | 'skip' | 'continue' | 'stop';
+
 export interface DebugListener {
-  onPause?(step: StepGate): void;
+  /** `error` is set when the pause is on a failed step [FX-01]. */
+  onPause?(step: StepGate, error?: RunError): void;
   onResume?(step: StepGate): void;
 }
 
@@ -31,19 +41,48 @@ export class DebugController implements RunDebugger {
   #stepping = false;
   #release: (() => void) | undefined;
   #paused: StepGate | undefined;
+  #pauseOnFail: boolean;
+  #runTo: string | undefined;
+  #failDecision: ((d: FailDecision) => void) | undefined;
+  #failed: { step: StepGate; error: RunError } | undefined;
   readonly #listener: DebugListener;
 
   constructor(
-    options: { breakpoints?: Iterable<string>; pauseAtStart?: boolean } = {},
+    options: {
+      breakpoints?: Iterable<string>;
+      pauseAtStart?: boolean;
+      pauseOnFail?: boolean;
+    } = {},
     listener: DebugListener = {},
   ) {
     this.#breakpoints = new Set(options.breakpoints ?? []);
     this.#pauseRequested = options.pauseAtStart === true;
+    this.#pauseOnFail = options.pauseOnFail === true;
     this.#listener = listener;
   }
 
   get paused(): StepGate | undefined {
     return this.#paused;
+  }
+
+  /** Failed step waiting for a decision [FX-01]. */
+  get failed(): { step: StepGate; error: RunError } | undefined {
+    return this.#failed;
+  }
+
+  setPauseOnFail(on: boolean): void {
+    this.#pauseOnFail = on;
+  }
+
+  /** Runs until `stepId` (exclusive), then pauses there — "run to here" [FX-05]. */
+  runTo(stepId: string): void {
+    this.#runTo = stepId;
+    this.resume();
+  }
+
+  /** Answers a failed-step pause. No-op when nothing failed. */
+  decide(decision: FailDecision): void {
+    this.#failDecision?.(decision);
   }
 
   setBreakpoints(ids: Iterable<string>): void {
@@ -55,6 +94,10 @@ export class DebugController implements RunDebugger {
   }
 
   resume(): void {
+    if (this.#failDecision) {
+      this.decide('continue');
+      return;
+    }
     this.#pauseRequested = false;
     this.#stepping = false;
     this.#release?.();
@@ -62,6 +105,10 @@ export class DebugController implements RunDebugger {
 
   /** Runs the next step, then pauses again. */
   step(): void {
+    if (this.#failDecision) {
+      this.decide('retry');
+      return;
+    }
     this.#stepping = true;
     this.#release?.();
   }
@@ -69,10 +116,14 @@ export class DebugController implements RunDebugger {
   async beforeStep(step: StepGate, signal: AbortSignal): Promise<void> {
     if (step.phase === 'cleanup' || signal.aborted) return;
     const shouldPause =
-      this.#pauseRequested || this.#stepping || this.#breakpoints.has(step.stepId);
+      this.#pauseRequested ||
+      this.#stepping ||
+      this.#breakpoints.has(step.stepId) ||
+      this.#runTo === step.stepId;
     if (!shouldPause) return;
     this.#stepping = false;
     this.#pauseRequested = false;
+    if (this.#runTo === step.stepId) this.#runTo = undefined;
     this.#paused = step;
     this.#listener.onPause?.(step);
     await new Promise<void>((resolve) => {
@@ -86,5 +137,26 @@ export class DebugController implements RunDebugger {
     });
     this.#paused = undefined;
     this.#listener.onResume?.(step);
+  }
+
+  async afterFail(step: StepGate, error: RunError, signal: AbortSignal): Promise<FailDecision> {
+    if (!this.#pauseOnFail || step.phase === 'cleanup' || signal.aborted) return 'stop';
+    this.#paused = step;
+    this.#failed = { step, error };
+    this.#listener.onPause?.(step, error);
+    const decision = await new Promise<FailDecision>((resolve) => {
+      const done = (d: FailDecision) => {
+        signal.removeEventListener('abort', onAbort);
+        this.#failDecision = undefined;
+        resolve(d);
+      };
+      const onAbort = () => done('stop');
+      this.#failDecision = done;
+      signal.addEventListener('abort', onAbort);
+    });
+    this.#paused = undefined;
+    this.#failed = undefined;
+    this.#listener.onResume?.(step);
+    return decision;
   }
 }

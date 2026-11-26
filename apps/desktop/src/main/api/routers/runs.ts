@@ -26,6 +26,11 @@ export const runsRouter = router({
           z.object({ type: z.literal('resume') }),
           z.object({ type: z.literal('step') }),
           z.object({
+            type: z.literal('decide'),
+            decision: z.enum(['retry', 'skip', 'continue', 'stop']),
+          }),
+          z.object({ type: z.literal('runTo'), stepId: z.string().min(1) }),
+          z.object({
             type: z.literal('breakpoints'),
             stepIds: z.array(z.string().min(1)).max(500),
           }),

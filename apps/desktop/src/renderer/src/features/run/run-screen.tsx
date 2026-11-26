@@ -112,6 +112,8 @@ export function RunScreen({ runId }: { runId: string }) {
   const control = useRunStore((s) => s.control);
   const breakpoints = useRunStore((s) => s.breakpoints);
   const toggleBreakpoint = useRunStore((s) => s.toggleBreakpoint);
+  const decide = useRunStore((s) => s.decide);
+  const runTo = useRunStore((s) => s.runTo);
   const startRun = useStartRun();
   const [selected, setSelected] = useState<string | null>(null);
   const [shot, setShot] = useState<{ src: string; title: string } | null>(null);
@@ -232,7 +234,26 @@ export function RunScreen({ runId }: { runId: string }) {
         <div className="ml-auto flex items-center gap-1">
           {running ? (
             <>
-              {view.paused ? (
+              {view.paused?.error ? (
+                <>
+                  <Button size="sm" onClick={() => void decide(runId, 'retry')}>
+                    <RotateCcw /> {tx('ui.run.retryStep')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void decide(runId, 'continue')}
+                  >
+                    <Play /> {tx('ui.run.continueAfter')}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void decide(runId, 'skip')}>
+                    <StepForward /> {tx('ui.run.skipStep')}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => void decide(runId, 'stop')}>
+                    <Square /> {tx('ui.run.endTest')}
+                  </Button>
+                </>
+              ) : view.paused ? (
                 <>
                   <Button size="sm" onClick={() => void control(runId, 'resume')}>
                     <Play /> {tx('ui.run.resume')}
@@ -298,7 +319,17 @@ export function RunScreen({ runId }: { runId: string }) {
             view.paused ? 'bg-warning/10' : 'bg-primary/5',
           )}
         >
-          {view.paused ? (
+          {view.paused?.error ? (
+            <>
+              <CircleAlert className="size-4 shrink-0 text-fail-text" />
+              <span>
+                {tx('ui.run.failedAt', { step: view.paused.stepNo })}{' '}
+                <span className="font-medium">
+                  {describeRunError(view.paused.error, tx).message}
+                </span>
+              </span>
+            </>
+          ) : view.paused ? (
             <>
               <Pause className="size-4 text-warning-text" />
               {tx('ui.run.pausedAt', { step: view.paused.stepNo })}
@@ -383,6 +414,11 @@ export function RunScreen({ runId }: { runId: string }) {
               paused={view.paused?.runCaseId === current.runCaseId ? view.paused.stepId : undefined}
               breakpoints={single ? (breakpoints[current.testCaseId] ?? []) : undefined}
               onToggleBreakpoint={(stepId) => toggleBreakpoint(current.testCaseId, stepId, runId)}
+              onRunTo={
+                view.paused?.runCaseId === current.runCaseId && single
+                  ? (stepId) => void runTo(runId, stepId)
+                  : undefined
+              }
               onShot={setShot}
             />
           ) : null}
@@ -409,6 +445,7 @@ function CaseView({
   paused,
   breakpoints,
   onToggleBreakpoint,
+  onRunTo,
   onShot,
 }: {
   runId: string;
@@ -418,6 +455,8 @@ function CaseView({
   paused: string | undefined;
   breakpoints: string[] | undefined;
   onToggleBreakpoint: (stepId: string) => void;
+  /** Set while the run is paused: run to a later step and pause there [FX-05]. */
+  onRunTo: ((stepId: string) => void) | undefined;
   onShot: (s: { src: string; title: string }) => void;
 }) {
   const tx = useTx();
@@ -459,7 +498,7 @@ function CaseView({
               data-status={r?.status ?? 'none'}
               className={cn(
                 'flex flex-col border-b py-1.5 pr-4 text-sm',
-                paused === step.id && 'bg-warning/10',
+                paused === step.id && 'bg-warning/10 ring-1 ring-inset ring-warning/40',
                 r?.status === 'running' && 'bg-primary/5',
               )}
               style={{ paddingLeft: `${depth * 24 + 8}px` }}
@@ -492,6 +531,16 @@ function CaseView({
                     sharedNames={sharedNames}
                   />
                 </div>
+                {onRunTo && top && !r && paused !== step.id && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 shrink-0 px-2 text-xs"
+                    onClick={() => onRunTo(step.id)}
+                  >
+                    <Play /> {tx('ui.run.runToHere')}
+                  </Button>
+                )}
                 {r?.durationMs !== undefined && (
                   <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                     {tx('ui.run.duration', { seconds: seconds(r.durationMs) })}

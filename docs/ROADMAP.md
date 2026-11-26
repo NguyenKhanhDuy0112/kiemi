@@ -107,8 +107,8 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M9-11** Demo-site: 2 app khác domain (admin/web) + e2e: 1 test đi qua 2 sản phẩm, đổi môi trường lấy đúng URL/tài khoản; test cả milestone M9 + app thật + mở PR [L]
 
 ## M10 — Sửa khi fail
-- [ ] **M10-01** Tạm dừng khi lỗi: giữ trình duyệt + mọi tab/phiên, chọn sẵn step lỗi, highlight phần tử (bật mặc định khi chạy tay, tắt khi suite/CLI) [FX-01] [S]
-- [ ] **M10-02** Thử lại step · Tiếp tục từ đây · Bỏ qua step · Chạy lại đến bước N rồi dừng [FX-05] [S]
+- [x] **M10-01** Tạm dừng khi lỗi: giữ trình duyệt + mọi tab/phiên, chọn sẵn step lỗi, highlight phần tử (bật mặc định khi chạy tay, tắt khi suite/CLI) [FX-01] [S]
+- [x] **M10-02** Thử lại step · Tiếp tục từ đây · Bỏ qua step · Chạy lại đến bước N rồi dừng [FX-05] [S]
 - [ ] **M10-03** Sửa step tại chỗ trên màn Chạy (panel thuộc tính dùng chung với màn Soạn) + chọn lại phần tử trên trang thật (Pick/Highlight) [FX-02, FX-03] [M]
 - [ ] **M10-04** Chèn step trước/sau step lỗi: thêm tay hoặc ghi thao tác từ trạng thái hiện tại [FX-04] [S]
 - [ ] **M10-05** Trình xử lý popup toàn cục ("nếu thấy X thì bấm Y", cấp dự án) [W-09] [M]

@@ -7,15 +7,14 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M10** (nhánh mới `milestone/m10-<tên>` từ `main`; xem ROADMAP). M9 đã xong, PR chờ merge.
+**M10** đang làm trên nhánh `milestone/m10-fix-on-fail`: tiếp M10-03 (xem ROADMAP). M9 đã merge (PR #1).
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
-- Generator `pnpm gen action|i18n|table|router <tên>` (`scripts/gen/index.mjs`): tạo file + vá registry (actions/index.ts, vi-ui/en-ui, migrations.ts+tables.ts, root.ts). Sau khi gen chạy `biome check --write` cho file đã đụng. `gen table` làm `database.test.ts` (danh sách bảng cứng) fail → thêm tên bảng vào test; điền TODO i18n.
-- M9-09 xong: bảng `shared_resources` (migration 10) + `SharedResourceService`, tRPC `sharedResources.*` (kể cả `usages` → `TestCaseService.usersOfSharedStep`). Thư viện workspace nối vào run (`run-manager` gộp `sharedStepsForRun()`; step gọi theo **id**). UI: `features/elements/shared-library.tsx` (cuối màn Phần tử: "Dùng chéo dự án", danh sách test bị ảnh hưởng). Chưa có: form chọn step dùng chung trong editor (call), sửa nội dung step thư viện, đồng bộ thư viện vào thư mục dự án.
-- M9-10 xong: ghim/gần đây dự án lưu `localStorage` (`lib/recent-projects.ts`, state `projectPrefs` trong `lib/store.ts`; sắp xếp ở sidebar + palette), tìm toàn workspace qua tRPC `search.index` (`routers/search.ts`) → `components/command-palette.tsx` lọc phía client.
-- Nhánh hiện tại `m9` (pre-convention); từ M10 dùng `milestone/m10-<tên>` theo quy ước mới (CLAUDE.md §2 mục 6).
-- CI: job `quick` (Linux, nhánh không phải main) và `full` (Win+Mac, PR/main) — xem `.github/workflows/ci.yml`.
+- M10-01/02 xong: `DebugController` (`packages/engine/src/run/debug.ts`) có `afterFail` → quyết định `retry|skip|continue|stop`, `runTo(stepId)`; runner `#runOne` lặp lại step khi `retry`, viền đỏ phần tử lỗi lúc chờ. Worker: message `decide`/`runTo` (`protocol.ts`, `worker-core.ts`, tRPC `runs.control`), event `debug` có `error`. UI: nút ở thanh đầu `run-screen.tsx`, store `decide/runTo`. `pauseOnFail` do UI gửi (test đơn, `useStartRun`); main chỉ bật khi trình duyệt hiện.
+- Sửa step tại chỗ (M10-03): engine đang chạy dùng bản step lúc bắt đầu — cần message mới đưa step đã sửa vào runner (thay theo `stepId`) trước khi `retry`.
+- Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
+- Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 
 ## Vấn đề tồn đọng / Câu hỏi cho người dùng
 - **Thư mục dự án** (ADR 0018, M9-02/03): `packages/db/src/folder/` (`format.ts`, `files.ts` DB↔file, `snapshot.ts` đọc/đối chiếu DB, `sync.ts` đồng bộ ba chiều + `attachProjectFolder`/`openProjectFolder`, `disk.ts`). Main: `src/main/projects/folder-manager.ts` (đồng bộ sau mỗi mutation 300 ms qua middleware tRPC, lúc mở/đóng app, watcher `fs.watch` + quét 3 s), `locks.ts` (khóa mềm `.kiemi/locks/`, hết hạn 2 phút). Thư mục mặc định `<Tài liệu>/Kiemi/<tên dự án>`, đổi bằng `KIEMI_PROJECTS_DIR` (dùng khi kiểm tra tự động; app thật lần đầu chạy bản này sẽ **chuyển dự án cũ ra `~/Documents/Kiemi`**). Renderer: `features/projects/` (hộp thoại xung đột, nhập secret còn thiếu, menu "Mở thư mục dự án…"). Bundle `.zip` (J-03) chưa mang sản phẩm — nhập vào sản phẩm đầu tiên.
@@ -94,3 +93,4 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 | 2026-11-26 | M9-09b | xong | UI thư viện workspace + danh sách test bị ảnh hưởng; test `usersOfSharedStep` |
 | 2026-11-26 | M9-10 | xong | Chuyển dự án nhanh (ghim/gần đây) + Ctrl/⌘K tìm test/phần tử/step toàn workspace; test `recent-projects`, `search.index` |
 | 2026-11-26 | M9-11 | xong | Demo-site 2 app khác tên miền (`site.apps.web/admin`, Chromium `DEMO_HOST_RULES`); e2e `products.e2e.test.ts` (1 test đi qua 2 sản phẩm, đổi môi trường đúng URL/tài khoản). Cả M9: lint + typecheck + test pass; app thật `_electron.launch`: palette dự án, thư viện dùng chéo, tab Môi trường OK |
+| 2026-11-26 | M10-01, M10-02 | xong | Tạm dừng khi step lỗi (giữ trình duyệt, viền đỏ) + Thử lại/Tiếp tục/Bỏ qua/Kết thúc + chạy đến bước N rồi dừng; test `debug.test.ts`, `run-manager.test.ts` |

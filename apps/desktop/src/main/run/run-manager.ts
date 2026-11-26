@@ -70,6 +70,7 @@ export type RunFeedEvent =
       state: 'paused' | 'running';
       stepId: string;
       stepNo: string;
+      error?: RunError | undefined;
     }
   | { type: 'engine'; runId: string; runCaseId: string; event: EngineEvent };
 
@@ -323,6 +324,10 @@ export class RunManager {
       return { runId: run.id };
     }
     const debugging = (opts.breakpoints?.length ?? 0) > 0 || opts.pauseAtStart === true;
+    // Only when asked (the UI asks for a hand-run single test) and the browser is
+    // visible: stop on a failure and keep it open for fixing it [FX-01].
+    const headless = debugging ? false : (opts.headless ?? settings.headless);
+    const pauseOnFail = opts.pauseOnFail === true && !headless;
     void this.#execute(
       active,
       {
@@ -332,7 +337,7 @@ export class RunManager {
           settings: {
             browser: settings.browser,
             // Debugging needs a visible browser [S-03].
-            headless: debugging ? false : (opts.headless ?? settings.headless),
+            headless,
             ...(opts.slowMoMs ? { slowMoMs: opts.slowMoMs } : {}),
           },
           browsersPath: this.#d.browsersPath,
@@ -341,6 +346,7 @@ export class RunManager {
         debug: {
           breakpoints: opts.breakpoints ?? [],
           pauseAtStart: opts.pauseAtStart === true,
+          pauseOnFail,
         },
       },
       env,
@@ -371,7 +377,9 @@ export class RunManager {
       | { type: 'pause' }
       | { type: 'resume' }
       | { type: 'step' }
-      | { type: 'breakpoints'; stepIds: string[] },
+      | { type: 'breakpoints'; stepIds: string[] }
+      | { type: 'decide'; decision: 'retry' | 'skip' | 'continue' | 'stop' }
+      | { type: 'runTo'; stepId: string },
   ): boolean {
     const active = this.#runs.get(runId);
     if (!active || active.finished || !active.worker) return false;
@@ -503,6 +511,7 @@ export class RunManager {
           state: msg.state,
           stepId: msg.stepId,
           stepNo: msg.stepNo,
+          ...(msg.error ? { error: msg.error } : {}),
         });
         return;
       case 'event': {

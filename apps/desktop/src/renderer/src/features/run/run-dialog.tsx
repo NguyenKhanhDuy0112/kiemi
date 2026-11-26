@@ -61,6 +61,8 @@ export function useStartRun() {
       ...(environmentId === undefined ? {} : { environmentId }),
       options: {
         ...prefs,
+        // Hand-run single test: keep the browser open on a failed step [FX-01].
+        ...(target.kind === 'test' ? { pauseOnFail: true } : {}),
         ...(breakpoints.length ? { breakpoints } : {}),
         ...(extra.startAtStepId ? { startAtStepId: extra.startAtStepId } : {}),
         ...(extra.pauseAtStart ? { pauseAtStart: true } : {}),

@@ -24,6 +24,8 @@ export const RunOptionsInputSchema = z.object({
   breakpoints: z.array(z.string().min(1)).max(500).optional(),
   /** Pause before the first step (step-by-step run) [H-03]. */
   pauseAtStart: z.boolean().optional(),
+  /** Keep the browser open on a failed step for fixing; default on for one hand-run test [FX-01]. */
+  pauseOnFail: z.boolean().optional(),
   /** Stop the remaining tests after the first one that does not pass [H-04]. */
   stopOnFailure: z.boolean().optional(),
   screenshots: z.enum(['onFailure', 'always', 'off']).optional(),

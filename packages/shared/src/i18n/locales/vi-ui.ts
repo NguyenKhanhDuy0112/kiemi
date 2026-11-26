@@ -196,6 +196,13 @@ export const viUi = {
     downloading: 'Đang tải trình duyệt… {{percent}}%',
     progress: 'Đang chạy bước {{step}} / {{total}}',
     pausedAt: 'Đang tạm dừng trước bước {{step}}. Trình duyệt vẫn mở để bạn xem trang.',
+    failedAt:
+      'Bước {{step}} bị lỗi — trình duyệt vẫn mở, bạn xem và sửa trang rồi chọn cách đi tiếp.',
+    retryStep: 'Thử lại bước này',
+    continueAfter: 'Tiếp tục từ đây',
+    skipStep: 'Bỏ qua bước',
+    endTest: 'Kết thúc test',
+    runToHere: 'Chạy đến bước này rồi dừng',
     status: {
       queued: 'Đang chờ',
       running: 'Đang chạy',

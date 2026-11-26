@@ -479,24 +479,50 @@ class Run {
     });
 
     const self: Parent = { step, stepNo, children: [], topNo };
-    const diagStart = this.#diagnostics.length;
     let lastLocator: PwLocator | undefined;
     let error: RunError | undefined;
     let cancelled = false;
     let skipped = false;
     let container = false;
+    /** Debugger said "continue": the failure stays on record, the run goes on [FX-05]. */
+    let keepGoing = false;
 
-    try {
-      const action = this.#opts.registry.get(step.action);
-      container = action?.container === true;
-      const run = await this.#executeStep(step, stepNo, topNo, signal, self, (l) => {
-        lastLocator = l;
-      });
-      skipped = run === 'skipped';
-      if (!skipped && !container) this.#checkDiagnostics(diagStart, topNo, stepNo);
-    } catch (err) {
-      error = this.#maskError(toRunError(err));
-      cancelled = error.code === 'RUN_CANCELLED';
+    for (;;) {
+      const diagStart = this.#diagnostics.length;
+      error = undefined;
+      cancelled = false;
+      skipped = false;
+      self.children = [];
+      try {
+        const action = this.#opts.registry.get(step.action);
+        container = action?.container === true;
+        const run = await this.#executeStep(step, stepNo, topNo, signal, self, (l) => {
+          lastLocator = l;
+        });
+        skipped = run === 'skipped';
+        if (!skipped && !container) this.#checkDiagnostics(diagStart, topNo, stepNo);
+      } catch (err) {
+        error = this.#maskError(toRunError(err));
+        cancelled = error.code === 'RUN_CANCELLED';
+      }
+      const dbg = this.#opts.debugger;
+      if (!error || cancelled || container || !dbg?.afterFail) break;
+      // Failed with the browser still open: wait for the tester's decision [FX-01].
+      const gate = {
+        stepId: step.id,
+        stepNo,
+        phase,
+        ...(parent ? { parentStepId: parent.step.id } : {}),
+      };
+      const restore = await this.#outline(step.session, lastLocator);
+      const decision = await dbg.afterFail(gate, error, signal);
+      await restore?.();
+      if (decision === 'retry' && !signal.aborted) continue;
+      if (decision === 'skip') {
+        error = undefined;
+        skipped = true;
+      } else if (decision === 'continue') keepGoing = true;
+      break;
     }
 
     const status: StepResult['status'] =
@@ -530,7 +556,44 @@ class Run {
       ...(self.children.length > 0 ? { children: self.children } : {}),
     };
     if (error) this.#log(cancelled ? 'warn' : 'error', error.message, step.id);
-    return { result, stop: cancelled || (error !== undefined && step.mode === 'hard') };
+    return {
+      result,
+      stop: cancelled || (error !== undefined && step.mode === 'hard' && !keepGoing),
+    };
+  }
+
+  /** Red frame on the failed element while the run waits; returns the undo [FX-01]. */
+  async #outline(
+    session: string,
+    locator: PwLocator | undefined,
+  ): Promise<(() => Promise<void>) | undefined> {
+    if (!locator || !this.#pages.isOpen(session)) return undefined;
+    const prev = await locator
+      .evaluate(
+        (el) => {
+          const h = el as HTMLElement;
+          const before = { outline: h.style.outline, offset: h.style.outlineOffset };
+          h.style.outline = '3px solid #E5484D';
+          h.style.outlineOffset = '2px';
+          return before;
+        },
+        undefined,
+        { timeout: 1000 },
+      )
+      .catch(() => undefined);
+    if (!prev) return undefined;
+    return async () => {
+      await locator
+        .evaluate(
+          (el, r) => {
+            (el as HTMLElement).style.outline = r.outline;
+            (el as HTMLElement).style.outlineOffset = r.offset;
+          },
+          prev,
+          { timeout: 1000 },
+        )
+        .catch(() => undefined);
+    };
   }
 
   #checkDiagnostics(from: number, topNo: number, stepNo: string): void {

@@ -47,13 +47,17 @@ export type HostToWorker =
       /** Stop the remaining tests after the first one that does not pass [H-04]. */
       stopOnFailure?: boolean;
       /** Breakpoints (step ids) and "pause before the first step" [H-03]. */
-      debug?: { breakpoints?: string[]; pauseAtStart?: boolean };
+      debug?: { breakpoints?: string[]; pauseAtStart?: boolean; pauseOnFail?: boolean };
     }
   | { type: 'cancel' }
   | { type: 'pause' }
   | { type: 'resume' }
   | { type: 'step' }
   | { type: 'breakpoints'; stepIds: string[] }
+  /** Answer to a step that failed and is waiting [FX-01, FX-05]. */
+  | { type: 'decide'; decision: 'retry' | 'skip' | 'continue' | 'stop' }
+  /** Run until this step, then pause before it [FX-05]. */
+  | { type: 'runTo'; stepId: string }
   | RecordStart
   | { type: 'recordCommand'; command: RecordCommand };
 
@@ -68,6 +72,8 @@ export type WorkerToHost =
       runCaseId: string;
       stepId: string;
       stepNo: string;
+      /** Set when paused on a failed step [FX-01]. */
+      error?: RunError;
     }
   /** All requests finished (each one's result also came as a `runEnd` event). */
   | { type: 'done'; results: RunResult[] }

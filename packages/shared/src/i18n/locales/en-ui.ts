@@ -197,6 +197,13 @@ export const enUi = {
     downloading: 'Downloading the browser… {{percent}}%',
     progress: 'Running step {{step}} / {{total}}',
     pausedAt: 'Paused before step {{step}}. The browser stays open so you can look at the page.',
+    failedAt:
+      'Step {{step}} failed — the browser is still open. Check or fix the page, then choose how to go on.',
+    retryStep: 'Retry this step',
+    continueAfter: 'Continue from here',
+    skipStep: 'Skip step',
+    endTest: 'End test',
+    runToHere: 'Run to this step and pause',
     status: {
       queued: 'Waiting',
       running: 'Running',

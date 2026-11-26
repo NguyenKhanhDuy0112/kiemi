@@ -45,7 +45,9 @@ export interface LiveRun {
   /** Chromium download (first run without Edge/Chrome) [N-03]. */
   downloadPercent?: number | undefined;
   /** Paused before this step [H-03]. */
-  paused?: { runCaseId: string; stepId: string; stepNo: string } | undefined;
+  paused?:
+    | { runCaseId: string; stepId: string; stepNo: string; error?: RunError | undefined }
+    | undefined;
   /** Run-level error (engine crash, browser, SSH…). */
   error?: RunError | undefined;
   stopping: boolean;
@@ -113,7 +115,7 @@ export function applyFeed(run: LiveRun, e: RunFeedEvent): LiveRun {
         ...run,
         paused:
           e.state === 'paused'
-            ? { runCaseId: e.runCaseId, stepId: e.stepId, stepNo: e.stepNo }
+            ? { runCaseId: e.runCaseId, stepId: e.stepId, stepNo: e.stepNo, error: e.error }
             : undefined,
       };
     case 'engine': {

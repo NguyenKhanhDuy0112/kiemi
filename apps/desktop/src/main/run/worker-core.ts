@@ -38,13 +38,14 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
   const debug = new DebugController(
     {},
     {
-      onPause: (s) =>
+      onPause: (s, error) =>
         post({
           type: 'debug',
           state: 'paused',
           runCaseId: current,
           stepId: s.stepId,
           stepNo: s.stepNo,
+          ...(error ? { error } : {}),
         }),
       onResume: (s) =>
         post({
@@ -60,6 +61,7 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
   async function start(msg: Extract<HostToWorker, { type: 'start' }>): Promise<void> {
     debug.setBreakpoints(msg.debug?.breakpoints ?? []);
     if (msg.debug?.pauseAtStart) debug.pause();
+    debug.setPauseOnFail(msg.debug?.pauseOnFail === true);
     let launched: Pick<LaunchedBrowser, 'browser'> | undefined;
     try {
       launched = await launch({
@@ -126,6 +128,12 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
           return;
         case 'step':
           debug.step();
+          return;
+        case 'decide':
+          debug.decide(msg.decision);
+          return;
+        case 'runTo':
+          debug.runTo(msg.stepId);
           return;
         case 'breakpoints':
           debug.setBreakpoints(msg.stepIds);
