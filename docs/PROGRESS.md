@@ -1,17 +1,18 @@
 # PROGRESS
 
 ## Trạng thái hiện tại
-M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-15). M2 — Lưu trữ **xong** (M2-01 → M2-05, `@kiemi/db`). M3 — UI soạn test **xong** (M3-01 → M3-08). M4 — Chạy & Kết quả **xong** (M4-01 → M4-06). M5 — Recorder & Pick **xong** (M5-01 → M5-09). M6 — Hoàn thiện sản phẩm **xong** (M6-01 → M6-04). M7 — Đóng gói & Phát hành **xong** (M7-01 → M7-05; M7-02 chốt phát hành chưa ký, ký thật = N-14 v1.x). **Đã phát hành v0.1.0** trên GitHub Releases (repo đổi tên thành `kiemi`). M8 — Giao diện thân thiện **xong** (Cú Kiemi, splash, chuyển động, token mềm), phát hành **v0.2.0**. M9 — Dự án · Sản phẩm · Môi trường **đang làm** (xong M9-01 → M9-07). Đã có monorepo (pnpm workspaces + Turborepo + TypeScript strict + Biome + Vitest), package khung `@kiemi/shared`, và `apps/desktop` (Electron 45 + electron-vite 6 + React 19 + Tailwind 4 + shadcn/ui) mở được cửa sổ "Hello Kiemi", IPC renderer ↔ main qua electron-trpc (ADR 0002), i18n vi/en (bản dịch ở `@kiemi/shared`, hook `useT`), `apps/demo-site` (web mục tiêu cho e2e engine, cổng 5180), và CI GitHub Actions (lint + typecheck + test trên Windows & macOS).
+M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-15). M2 — Lưu trữ **xong** (M2-01 → M2-05, `@kiemi/db`). M3 — UI soạn test **xong** (M3-01 → M3-08). M4 — Chạy & Kết quả **xong** (M4-01 → M4-06). M5 — Recorder & Pick **xong** (M5-01 → M5-09). M6 — Hoàn thiện sản phẩm **xong** (M6-01 → M6-04). M7 — Đóng gói & Phát hành **xong** (M7-01 → M7-05; M7-02 chốt phát hành chưa ký, ký thật = N-14 v1.x). **Đã phát hành v0.1.0** trên GitHub Releases (repo đổi tên thành `kiemi`). M8 — Giao diện thân thiện **xong** (Cú Kiemi, splash, chuyển động, token mềm), phát hành **v0.2.0**. M9 — Dự án · Sản phẩm · Môi trường **đang làm** (xong M9-01 → M9-07z). Đã có monorepo (pnpm workspaces + Turborepo + TypeScript strict + Biome + Vitest), package khung `@kiemi/shared`, và `apps/desktop` (Electron 45 + electron-vite 6 + React 19 + Tailwind 4 + shadcn/ui) mở được cửa sổ "Hello Kiemi", IPC renderer ↔ main qua electron-trpc (ADR 0002), i18n vi/en (bản dịch ở `@kiemi/shared`, hook `useT`), `apps/demo-site` (web mục tiêu cho e2e engine, cổng 5180), và CI GitHub Actions (lint + typecheck + test trên Windows & macOS).
 
 ## Đang làm dở
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M9-07z** Generator `pnpm gen action|i18n|table|router <tên>` — tạo file khuôn cho action engine, file i18n, bảng DB migration, tRPC router; giúp các task sau (M9-08a+) không viết tay từng file. Sau đó M9-08a (engine skip logic) → M9-08b (UI) → M9-09a/b → M9-10 → M9-11.
+**M9-08a** (engine skip logic) → M9-08b (UI) → M9-09a/b → M9-10 → M9-11.
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
-- Task M9-07z: tạo `scripts/gen/` với generator CLI; mẫu action ở `packages/engine/src/actions/wait.ts`, mẫu router ở `apps/desktop/src/main/api/routers/data.ts`, mẫu migration ở `packages/db/src/migrations.ts`.
+- Generator `pnpm gen action|i18n|table|router <tên>` (`scripts/gen/index.mjs`): tạo file + vá registry (actions/index.ts, vi-ui/en-ui, migrations.ts+tables.ts, root.ts). Sau khi gen chạy `biome check --write` cho file đã đụng. `gen table` làm `database.test.ts` (danh sách bảng cứng) fail → thêm tên bảng vào test; điền TODO i18n.
+- Làm M9-08a: thêm field skip vào schema DSL (cần migration + fixture), engine ở `packages/engine/src/runner.ts`.
 - Nhánh hiện tại `m9` (pre-convention); từ M10 dùng `milestone/m10-<tên>` theo quy ước mới (CLAUDE.md §2 mục 6).
 - CI: job `quick` (Linux, nhánh không phải main) và `full` (Win+Mac, PR/main) — xem `.github/workflows/ci.yml`.
 
@@ -84,3 +85,4 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 | 2026-11-23 | — | Thêm bộ quy tắc tiết kiệm token: CLAUDE.md §8, đổi quy trình thành **1 task/phiên**, `scripts/spec-lookup.mjs`, hook lọc output test `.claude/hooks/filter-test-output.sh`, `docs/CODEMAP.md`, mục "Lưu ý cho task sau" | |
 | 2026-11-23 | chore | Hoàn tất cài đặt token: CLAUDE.md 160→140 dòng, skills branding/release, archive nhật ký M0-M8, chia M9-08/09, thêm M9-07z, luật nhánh milestone + CI quick/full | |
 | 2026-11-23 | chore | Ghi quy ước Git vào CLAUDE.md: tên nhánh `<loại>/<ID>-<mô-tả>`, quy trình PR milestone, tag phát hành | |
+| 2026-11-26 | M9-07z | xong | Generator `pnpm gen action\|i18n\|table\|router <tên>` (`scripts/gen/index.mjs`); đã thử cả 4 loại, typecheck pass |

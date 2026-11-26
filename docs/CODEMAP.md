@@ -35,3 +35,4 @@
 - Thêm tRPC → router trong `api/routers/data.ts` (input Zod), test qua `createCaller` như `api/data.test.ts`
 - Thêm màn hình/khối UI → copy cấu trúc `features/environments/environments-screen.tsx` (Section + shadcn), chuỗi vào `vi-ui.ts` trước rồi `en-ui.ts`
 - Thêm mã lỗi engine → `engine/src/errors.ts` + `shared/.../vi.ts`/`en.ts` + danh sách trong `shared/src/i18n/errors.test.ts`
+- Tạo file khuôn → `pnpm gen action|i18n|table|router <tên>` (`scripts/gen/index.mjs`, tự vá registry/i18n/migration); xong chạy `biome check --write` file đã đụng

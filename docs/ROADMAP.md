@@ -98,7 +98,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M9-05** Ma trận Môi trường × Sản phẩm: mỗi ô URL, tài khoản/secret, proxy/SSH tunnel, biến; ô trống; nhân bản môi trường; DSL v2 `{{app.<sảnPhẩm>}}` (migration v1 → v2); engine mở tunnel theo ô [O-02]
 - [x] **M9-06** Loại môi trường + màu nhận diện (thanh tiêu đề, màn Chạy, báo cáo) + bảo vệ Production: chặn step ghi (cleanup, API POST/PUT/DELETE, DB write), xác nhận 2 lần, cảnh báo đỏ [O-03, W-10]
 - [x] **M9-07** Kế thừa biến nhiều cấp (Workspace → … → Dòng dữ liệu) + màn "Giá trị hiệu lực"; dataset/biến/secret riêng theo môi trường [O-04, O-05]
-- [ ] **M9-07z** Generator `pnpm gen action|i18n|table|router <tên>`: tạo file khuôn cho action engine/file i18n/migration DB/tRPC router; không viết tay từng file từ đây trở đi [S]
+- [x] **M9-07z** Generator `pnpm gen action|i18n|table|router <tên>`: tạo file khuôn cho action engine/file i18n/migration DB/tRPC router; không viết tay từng file từ đây trở đi [S]
 - [ ] **M9-08a** Giới hạn test theo môi trường — engine: skip logic + `RunResult.skipped` + lý do bỏ qua; kiểm tra `only`/`except` trong `RunManager.start` (dùng tên/id/loại môi trường) [O-06, S]
 - [ ] **M9-08b** Giới hạn test theo môi trường — UI: editor chọn `environments.only/except`, hộp thoại suite chọn môi trường mặc định [O-06, S]
 - [ ] **M9-09a** Phạm vi tài nguyên dùng chung — DB/schema: bảng `shared_resources`, cột phạm vi Sản phẩm/Dự án/Workspace, service + migration [O-07, M]
