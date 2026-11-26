@@ -273,3 +273,60 @@ describe('table vs expected list and two-source expectation [P-05, P-06, Q-03]',
     expect(warns.length).toBe(warns.filter((x) => JSON.stringify(x).includes('1200000')).length);
   });
 });
+
+describe('table rules [Q-01, Q-02, Q-03]', () => {
+  const open = [
+    step('goto', { url: '/table.html' }),
+    step('waitUntil', {
+      condition: { assert: 'visible', target: { css: '#products-table tbody tr:first-child' } },
+      timeoutSec: 5,
+    }),
+  ];
+  const t = { css: '#products-table' };
+  const walk = { allPages: true, next: { css: '#next' } };
+  const quick = { request: { options: { defaultStepTimeoutMs: 1500 } } };
+
+  it('walks every page for rows, order and the total', async () => {
+    const r = await e.run([
+      ...open,
+      step('assertAllRows', { target: t, column: 'Tồn kho', op: 'gte', value: 0, ...walk }),
+      ...open,
+      step('assertSorted', { target: t, column: 'Mã', direction: 'asc', ...walk }),
+      ...open,
+      step('assertRowTotal', { target: t, value: 47, ...walk }),
+    ]);
+    expect(summary(r).filter((x) => !x.endsWith('passed'))).toEqual([]);
+  });
+
+  it('names the rows that break a condition or the order', async () => {
+    const r = await e.run(
+      [
+        ...open,
+        step('assertAllRows', {
+          target: t,
+          column: 'Nhóm',
+          op: 'equals',
+          value: 'Không có nhóm này',
+        }),
+        step('assertSorted', { target: t, column: 'Tồn kho', direction: 'asc' }, { mode: 'soft' }),
+        step('assertRowTotal', { target: t, value: 11 }, { mode: 'soft' }),
+      ],
+      quick,
+    );
+    const s = summary(r);
+    expect(s[2]).toBe('3 failed ASSERTION_FAILED');
+    expect(JSON.stringify(r)).toContain('10/10 rows break it');
+  });
+
+  it('reads the total from a label such as "Tổng 3 bản ghi"', async () => {
+    const html = encodeURIComponent(
+      '<p id="t">Tổng 3 bản ghi</p><table id="x"><tr><th>Tên</th></tr><tr><td>An</td></tr><tr><td>Ăn</td></tr><tr><td>Bình</td></tr></table>',
+    );
+    const r = await e.run([
+      step('goto', { url: `data:text/html;charset=utf-8,${html}` }),
+      step('assertRowTotal', { target: { css: '#x' }, label: { css: '#t' } }),
+      step('assertSorted', { target: { css: '#x' }, column: 'Tên', kind: 'text' }),
+    ]);
+    expect(summary(r)).toEqual(['1 passed', '2 passed', '3 passed']);
+  });
+});

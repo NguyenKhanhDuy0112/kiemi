@@ -1192,6 +1192,18 @@ export const viUi = {
       label: 'Kiểm tra bảng khớp danh sách kỳ vọng',
       sentence: 'Bảng {{target}} khớp danh sách kỳ vọng theo cột {{key}}',
     },
+    assertAllRows: {
+      label: 'Kiểm tra mọi dòng của bảng',
+      sentence: 'Mọi dòng của bảng {{target}} có {{column}} {{op}} {{value}}',
+    },
+    assertSorted: {
+      label: 'Kiểm tra bảng đã sắp xếp',
+      sentence: 'Bảng {{target}} sắp xếp theo {{column}} ({{direction}})',
+    },
+    assertRowTotal: {
+      label: 'Kiểm tra tổng số dòng',
+      sentence: 'Số dòng của bảng {{target}} bằng tổng {{label}}',
+    },
     assertExpected: {
       label: 'Kiểm tra theo kỳ vọng (Excel / công thức)',
       sentence: 'Giá trị {{target}} khớp kỳ vọng',
@@ -1225,6 +1237,9 @@ export const viUi = {
     regex: 'Chỉ lấy phần khớp (biểu thức)',
     into: 'Tên biến',
     allPages: 'Duyệt mọi trang',
+    direction: 'Chiều sắp xếp',
+    kind: 'Kiểu dữ liệu',
+    label: 'Chỗ hiện tổng',
     expected: 'Danh sách kỳ vọng',
     key: 'Cột khóa',
     columns: 'Chỉ so các cột',

@@ -1193,6 +1193,18 @@ export const enUi = {
       label: 'Check table matches expected list',
       sentence: 'Table {{target}} matches the expected list by column {{key}}',
     },
+    assertAllRows: {
+      label: 'Check every table row',
+      sentence: 'Every row of {{target}} has {{column}} {{op}} {{value}}',
+    },
+    assertSorted: {
+      label: 'Check table is sorted',
+      sentence: 'Table {{target}} is sorted by {{column}} ({{direction}})',
+    },
+    assertRowTotal: {
+      label: 'Check total row count',
+      sentence: 'Row count of {{target}} equals the total {{label}}',
+    },
     assertExpected: {
       label: 'Check against expectation (Excel / formula)',
       sentence: '{{target}} matches the expectation',
@@ -1229,6 +1241,9 @@ export const enUi = {
     regex: 'Keep only the matching part (pattern)',
     into: 'Variable name',
     allPages: 'Go through every page',
+    direction: 'Sort direction',
+    kind: 'Data type',
+    label: 'Where the total is shown',
     expected: 'Expected list',
     key: 'Key column',
     columns: 'Compare only columns',

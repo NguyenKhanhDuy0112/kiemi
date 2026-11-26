@@ -19,6 +19,7 @@ import {
   TextOpSchema,
 } from './compare';
 import { describeDiff, diffTables, isClean, sameCell } from './table-diff';
+import { ROW_OPS, sortProblems, violations } from './table-rules';
 
 export interface CheckResult {
   pass: boolean;
@@ -311,6 +312,106 @@ export const tableCheck = defineCheck({
   },
 });
 
+/** Shared by the checks that read a whole table, optionally every page [Q-01 → Q-03]. */
+const tableScope = {
+  target,
+  allPages: z.boolean().default(false),
+  next: target.optional(),
+  maxPages: z.coerce.number().int().positive().max(200).default(50),
+};
+const needsNext = [
+  (p: { allPages: boolean; next?: unknown }) => !p.allPages || p.next !== undefined,
+  'next (the next-page button) is required',
+] as const;
+
+/** Every row (all pages if asked) satisfies `column op value` [Q-01]. */
+export const allRowsCheck = defineCheck({
+  name: 'allRows',
+  params: z
+    .object({
+      ...tableScope,
+      column: z.string().min(1),
+      op: z.enum(ROW_OPS),
+      value: z.unknown().optional(),
+      /** Upper bound for `between`. */
+      max: z.unknown().optional(),
+    })
+    .refine(...needsNext),
+  async check(p, ctx) {
+    const { rows } = await readRows(ctx, { ...p, once: true });
+    const bad = violations(rows, p.column, p.op, p.value, p.max, ctx.run.env?.locale ?? 'vi');
+    return {
+      pass: bad.length === 0 && rows.length > 0,
+      actual:
+        rows.length === 0
+          ? 'no rows'
+          : bad.length
+            ? `${bad.length}/${rows.length} rows break it: ${bad
+                .slice(0, 5)
+                .map((v) => `#${v.row} ${v.value}`)
+                .join(', ')}${bad.length > 5 ? ', …' : ''}`
+            : `${rows.length} rows`,
+      expected: `${p.column} ${p.op} ${stringify(p.value)}`,
+      details: { rows: rows.length, violations: bad },
+      final: p.allPages,
+    };
+  },
+});
+
+/** The table is sorted by a column, Vietnamese order for text [Q-02]. */
+export const sortedCheck = defineCheck({
+  name: 'sorted',
+  params: z
+    .object({
+      ...tableScope,
+      column: z.string().min(1),
+      direction: z.enum(['asc', 'desc']).default('asc'),
+      kind: z.enum(['auto', 'number', 'date', 'text']).default('auto'),
+    })
+    .refine(...needsNext),
+  async check(p, ctx) {
+    const { rows } = await readRows(ctx, { ...p, once: true });
+    const bad = sortProblems(rows, p.column, p.direction, p.kind, ctx.run.env?.locale ?? 'vi');
+    return {
+      pass: bad.length === 0,
+      actual: bad.length
+        ? bad.map((b) => `row ${b.row}: "${b.value}" after "${b.previous}"`).join('; ')
+        : `${rows.length} rows in order`,
+      expected: `${p.column} ${p.direction === 'asc' ? 'ascending' : 'descending'}`,
+      details: { rows: rows.length, problems: bad },
+      final: p.allPages,
+    };
+  },
+});
+
+/** Number of rows (all pages) equals the total shown elsewhere ("Tổng 125") or a given value [Q-03]. */
+export const rowTotalCheck = defineCheck({
+  name: 'rowTotal',
+  params: z
+    .object({
+      ...tableScope,
+      /** Element that shows the total, e.g. "Tổng 125 bản ghi". */
+      label: target.optional(),
+      /** A fixed expected count instead of a label. */
+      value: z.unknown().optional(),
+    })
+    .refine(...needsNext)
+    .refine((p) => p.label !== undefined || p.value !== undefined, 'label or value is required'),
+  async check(p, ctx) {
+    const locale = ctx.run.env?.locale ?? 'vi';
+    const { rows } = await readRows(ctx, { ...p, once: true });
+    const shown = p.label ? await elementText(ctx, p.label) : stringify(p.value);
+    const total = extractNumber(shown, locale);
+    return {
+      pass: total !== undefined && rows.length === total,
+      actual: `${rows.length} rows`,
+      expected: total === undefined ? shown : total,
+      details: { rows: rows.length, shown },
+      final: p.allPages,
+    };
+  },
+});
+
 /** A list given as a variable, or as JSON text typed in the editor. */
 function asList(v: unknown): Record<string, unknown>[] | undefined {
   let value = v;
@@ -596,6 +697,9 @@ export const CHECKS: readonly CheckDef[] = [
   focusCheck,
   variableCheck,
   tableCompareCheck,
+  allRowsCheck,
+  sortedCheck,
+  rowTotalCheck,
   expectedCheck,
 ] as CheckDef[];
 
