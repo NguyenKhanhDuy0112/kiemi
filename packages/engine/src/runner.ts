@@ -23,7 +23,7 @@ import { EngineError, StepFailure, toRunError } from './errors';
 import type { EngineEvent, EngineEventListener, LogLevel, StepPhase } from './events';
 import { evaluateCondition } from './flow/condition';
 import { type ResolvedLocator, resolveLocator } from './locator/resolve';
-import type { RunDebugger } from './run/debug';
+import type { LiveSessions, RunDebugger } from './run/debug';
 import { findWriteSteps } from './run/protection';
 import type { SavedLogin } from './run/services';
 import { DialogController, type RunServices } from './run/services';
@@ -438,6 +438,8 @@ class Run {
     signal: AbortSignal,
     parent: Parent | undefined,
   ): Promise<Outcome> {
+    // Edited while the run waited on an earlier step [FX-02].
+    step = this.#opts.debugger?.stepEdit?.(step.id) ?? step;
     if (!step.enabled) return { result: this.#skipped(step), stop: false };
     if (signal.aborted) {
       return {
@@ -454,8 +456,15 @@ class Run {
     const topNo = parent ? parent.topNo : index + 1;
     if (this.#opts.debugger) {
       await this.#opts.debugger.beforeStep(
-        { stepId: step.id, stepNo, phase, ...(parent ? { parentStepId: parent.step.id } : {}) },
+        {
+          stepId: step.id,
+          stepNo,
+          phase,
+          session: step.session,
+          ...(parent ? { parentStepId: parent.step.id } : {}),
+        },
         signal,
+        this.#live(),
       );
       if (signal.aborted) {
         return {
@@ -512,12 +521,16 @@ class Run {
         stepId: step.id,
         stepNo,
         phase,
+        session: step.session,
         ...(parent ? { parentStepId: parent.step.id } : {}),
       };
       const restore = await this.#outline(step.session, lastLocator);
-      const decision = await dbg.afterFail(gate, error, signal);
+      const decision = await dbg.afterFail(gate, error, signal, this.#live());
       await restore?.();
-      if (decision === 'retry' && !signal.aborted) continue;
+      if (decision === 'retry' && !signal.aborted) {
+        step = dbg.stepEdit?.(step.id) ?? step;
+        continue;
+      }
       if (decision === 'skip') {
         error = undefined;
         skipped = true;
@@ -560,6 +573,10 @@ class Run {
       result,
       stop: cancelled || (error !== undefined && step.mode === 'hard' && !keepGoing),
     };
+  }
+
+  #live(): LiveSessions {
+    return { context: (session) => this.#pages.context(session) };
   }
 
   /** Red frame on the failed element while the run waits; returns the undo [FX-01]. */
@@ -720,7 +737,10 @@ class Run {
       vars: this.#vars,
       run: this.#services,
       resolve: async (target, opts) => {
-        const { locator, name } = toLocator(target, this.#req.testCase.elements);
+        const { locator, name } = toLocator(
+          target,
+          this.#opts.debugger?.elementsEdit?.() ?? this.#req.testCase.elements,
+        );
         const page = await this.#pages.page(step.session);
         const resolved: ResolvedLocator = await resolveLocator(
           () => [page.mainFrame(), ...page.frames().filter((f) => f !== page.mainFrame())],

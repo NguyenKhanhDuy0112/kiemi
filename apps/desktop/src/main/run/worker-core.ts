@@ -10,8 +10,10 @@ import {
   runTestCase,
   toRunError,
 } from '@kiemi/engine';
+import { type Recorder, type RecorderOptions, startRecorder } from '@kiemi/recorder';
 import type { RunResult } from '@kiemi/schema';
-import { createRecordSession, type RecordDeps } from '../record/record-core';
+import type { BrowserContext } from 'playwright-core';
+import { createRecordSession } from '../record/record-core';
 import type { HostToWorker, WorkerToHost } from './protocol';
 
 export interface WorkerDeps {
@@ -19,7 +21,7 @@ export interface WorkerDeps {
   run?: (request: RunRequest, options: RunOptions) => Promise<RunResult>;
   registry?: ActionRegistry;
   /** Recorder factory (tests use a fake one). */
-  startRecorder?: RecordDeps['start'];
+  startRecorder?: (context: BrowserContext, options: RecorderOptions) => Promise<Recorder>;
 }
 
 /**
@@ -35,6 +37,28 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
   let started = false;
   /** Request (run case) currently running, for debug messages. */
   let current = '';
+  const startRec = deps.startRecorder ?? startRecorder;
+  /** Pick / Highlight helper on the paused run's page; lives until the run goes on [FX-03]. */
+  let live: Recorder | undefined;
+  const stopLive = () => {
+    const r = live;
+    live = undefined;
+    void r?.stop().catch(() => undefined);
+  };
+  async function liveRecorder(strings: Record<string, string>): Promise<Recorder | undefined> {
+    if (live) return live;
+    const gate = debug.paused;
+    const sessions = debug.live;
+    if (!gate || !sessions) return undefined;
+    const context = await sessions.context(gate.session);
+    live = await startRec(context, {
+      session: gate.session,
+      strings,
+      capture: false,
+      toolbar: false,
+    });
+    return live;
+  }
   const debug = new DebugController(
     {},
     {
@@ -47,14 +71,16 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
           stepNo: s.stepNo,
           ...(error ? { error } : {}),
         }),
-      onResume: (s) =>
+      onResume: (s) => {
+        stopLive();
         post({
           type: 'debug',
           state: 'running',
           runCaseId: current,
           stepId: s.stepId,
           stepNo: s.stepNo,
-        }),
+        });
+      },
     },
   );
 
@@ -128,6 +154,22 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
           return;
         case 'step':
           debug.step();
+          return;
+        case 'edit':
+          if (msg.step) debug.editStep(msg.step);
+          if (msg.elements) debug.editElements(msg.elements);
+          return;
+        case 'livePick':
+          void liveRecorder(msg.strings)
+            .then((r) => r?.pick() ?? null)
+            .catch(() => null)
+            .then((locator) => post({ type: 'pickResult', requestId: msg.requestId, locator }));
+          return;
+        case 'liveHighlight':
+          void liveRecorder(msg.strings)
+            .then((r) => r?.highlight(msg.locator) ?? { count: 0 })
+            .catch(() => ({ count: 0 }))
+            .then((result) => post({ type: 'highlightResult', requestId: msg.requestId, result }));
           return;
         case 'decide':
           debug.decide(msg.decision);

@@ -203,6 +203,11 @@ export const viUi = {
     skipStep: 'Bỏ qua bước',
     endTest: 'Kết thúc test',
     runToHere: 'Chạy đến bước này rồi dừng',
+    fixTitle: 'Sửa bước',
+    saveAndRetry: 'Lưu và thử lại',
+    saveFix: 'Lưu thay đổi',
+    fixApplied: 'Đã lưu — bước sẽ chạy bản mới.',
+    fixNotSaved: 'Chưa lưu được vào test, nhưng lần chạy này vẫn dùng bản mới.',
     status: {
       queued: 'Đang chờ',
       running: 'Đang chạy',

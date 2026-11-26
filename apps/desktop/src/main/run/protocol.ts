@@ -6,7 +6,7 @@ import type {
   SavedLogin,
 } from '@kiemi/engine';
 import type { HighlightResult, StepChange, Suggestion } from '@kiemi/recorder';
-import type { Env, Locator, RunError, RunResult, Secrets, Step } from '@kiemi/schema';
+import type { Env, Locator, RunError, RunResult, Secrets, Step, TestCase } from '@kiemi/schema';
 
 /** Starts a recording (or a Pick-only "inspect" session) [K-01, C-06]. */
 export interface RecordStart {
@@ -58,6 +58,16 @@ export type HostToWorker =
   | { type: 'decide'; decision: 'retry' | 'skip' | 'continue' | 'stop' }
   /** Run until this step, then pause before it [FX-05]. */
   | { type: 'runTo'; stepId: string }
+  /** Step / elements edited while the run waits [FX-02, FX-03]. */
+  | { type: 'edit'; step?: Step | undefined; elements?: TestCase['elements'] | undefined }
+  /** Pick / Highlight on the page of the paused run [FX-03]. */
+  | { type: 'livePick'; requestId: string; strings: Record<string, string> }
+  | {
+      type: 'liveHighlight';
+      requestId: string;
+      locator: Locator;
+      strings: Record<string, string>;
+    }
   | RecordStart
   | { type: 'recordCommand'; command: RecordCommand };
 

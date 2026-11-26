@@ -155,6 +155,31 @@ describe('debugging a run [H-03]', () => {
       expect(calls).toEqual(['a', 'f', 'c', 'z']);
     });
 
+    it('retry runs the edited step; edits also apply to steps not run yet', async () => {
+      const { dbg, done } = start(5);
+      await tick();
+      dbg.editStep({
+        id: 'f',
+        action: 'note',
+        params: { value: 'fixed' },
+        session: 'default',
+        enabled: true,
+        mode: 'hard',
+      } as never);
+      dbg.editStep({
+        id: 'c',
+        action: 'note',
+        params: { value: 'c2' },
+        session: 'default',
+        enabled: true,
+        mode: 'hard',
+      } as never);
+      dbg.decide('retry');
+      const result = await done;
+      expect(calls).toEqual(['a', 'f', 'fixed', 'c2', 'z']);
+      expect(result.status).toBe('passed');
+    });
+
     it('cancel releases a run paused on a failure', async () => {
       const ac = new AbortController();
       const { done } = start(5, ac.signal);

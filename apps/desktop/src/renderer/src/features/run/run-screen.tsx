@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { childLists } from '../editor/doc-model';
 import { StepSentence } from '../editor/step-sentence';
 import { EnvironmentPill } from '../environments/environment-badge';
+import { FixStepPanel } from './fix-step-panel';
 import { buildHtmlReport } from './report';
 import { useStartRun } from './run-dialog';
 import {
@@ -116,6 +117,11 @@ export function RunScreen({ runId }: { runId: string }) {
   const runTo = useRunStore((s) => s.runTo);
   const startRun = useStartRun();
   const [selected, setSelected] = useState<string | null>(null);
+  /** Step opened in the "Sửa bước" panel while the run waits; default = the waiting step [FX-02]. */
+  const [fixPick, setFixPick] = useState<string | null>(null);
+  const waitingStep = view?.paused?.stepId;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: forget the pick when the run moves on.
+  useEffect(() => setFixPick(null), [waitingStep]);
   const [shot, setShot] = useState<{ src: string; title: string } | null>(null);
 
   const testIds = useMemo(
@@ -414,6 +420,8 @@ export function RunScreen({ runId }: { runId: string }) {
               paused={view.paused?.runCaseId === current.runCaseId ? view.paused.stepId : undefined}
               breakpoints={single ? (breakpoints[current.testCaseId] ?? []) : undefined}
               onToggleBreakpoint={(stepId) => toggleBreakpoint(current.testCaseId, stepId, runId)}
+              fixStepId={single && view.paused ? (fixPick ?? view.paused.stepId) : undefined}
+              onSelectStep={single && view.paused ? setFixPick : undefined}
               onRunTo={
                 view.paused?.runCaseId === current.runCaseId && single
                   ? (stepId) => void runTo(runId, stepId)
@@ -423,6 +431,19 @@ export function RunScreen({ runId }: { runId: string }) {
             />
           ) : null}
         </div>
+        {single && view.paused && current && docs[current.testCaseId] && (
+          <FixStepPanel
+            runId={runId}
+            testCaseId={current.testCaseId}
+            doc={docs[current.testCaseId] as TestCase}
+            version={tests[testIds.indexOf(current.testCaseId)]?.data?.version ?? 0}
+            stepId={fixPick ?? view.paused.stepId}
+            failed={
+              view.paused.error !== undefined &&
+              (fixPick ?? view.paused.stepId) === view.paused.stepId
+            }
+          />
+        )}
       </div>
 
       <Dialog open={shot !== null} onOpenChange={(o) => !o && setShot(null)}>
@@ -446,6 +467,8 @@ function CaseView({
   breakpoints,
   onToggleBreakpoint,
   onRunTo,
+  fixStepId,
+  onSelectStep,
   onShot,
 }: {
   runId: string;
@@ -457,6 +480,9 @@ function CaseView({
   onToggleBreakpoint: (stepId: string) => void;
   /** Set while the run is paused: run to a later step and pause there [FX-05]. */
   onRunTo: ((stepId: string) => void) | undefined;
+  /** Step shown in the "Sửa bước" panel, and how to open another one [FX-02]. */
+  fixStepId: string | undefined;
+  onSelectStep: ((stepId: string) => void) | undefined;
   onShot: (s: { src: string; title: string }) => void;
 }) {
   const tx = useTx();
@@ -499,6 +525,7 @@ function CaseView({
               className={cn(
                 'flex flex-col border-b py-1.5 pr-4 text-sm',
                 paused === step.id && 'bg-warning/10 ring-1 ring-inset ring-warning/40',
+                fixStepId === step.id && paused !== step.id && 'bg-primary/5',
                 r?.status === 'running' && 'bg-primary/5',
               )}
               style={{ paddingLeft: `${depth * 24 + 8}px` }}
@@ -524,7 +551,20 @@ function CaseView({
                 <span className="w-9 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
                   {no}
                 </span>
-                <div className={cn('min-w-0 flex-1', !step.enabled && 'opacity-55')}>
+                <div
+                  className={cn('min-w-0 flex-1', !step.enabled && 'opacity-55')}
+                  {...(onSelectStep
+                    ? {
+                        role: 'button',
+                        tabIndex: 0,
+                        title: tx('ui.run.fixTitle'),
+                        onClick: () => onSelectStep(step.id),
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') onSelectStep(step.id);
+                        },
+                      }
+                    : {})}
+                >
                   <StepSentence
                     step={step}
                     elements={doc?.elements ?? {}}

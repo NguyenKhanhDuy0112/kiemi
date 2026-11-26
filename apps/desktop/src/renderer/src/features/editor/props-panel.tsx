@@ -1,3 +1,4 @@
+import type { Step, TestCase } from '@kiemi/schema';
 import {
   Collapsible,
   CollapsibleContent,
@@ -23,7 +24,6 @@ import { type JsonSchema, SchemaForm } from './schema-form';
 /** Right panel: details of the selected step (M3-03, U-01, U-04). */
 export function PropsPanel({ focusParam }: { focusParam: string | null }) {
   const tx = useTx();
-  const { data: actions } = useActions();
   const doc = useEditorStore((s) => s.doc);
   const selectedId = useEditorStore((s) => s.selectedId);
   const apply = useEditorStore((s) => s.apply);
@@ -31,8 +31,31 @@ export function PropsPanel({ focusParam }: { focusParam: string | null }) {
   if (!doc || !step) {
     return <p className="p-4 text-sm text-muted-foreground">{tx('ui.editor.selectStep')}</p>;
   }
+  return (
+    <StepForm
+      doc={doc}
+      step={step}
+      focusParam={focusParam}
+      onPatch={(p) => apply((d) => updateStep(d, step.id, p))}
+    />
+  );
+}
+
+/** Form of one step; shared by the editor and the Run screen [FX-02]. */
+export function StepForm({
+  doc,
+  step,
+  focusParam,
+  onPatch: patch,
+}: {
+  doc: TestCase;
+  step: Step;
+  focusParam: string | null;
+  onPatch: (p: Parameters<typeof updateStep>[2]) => void;
+}) {
+  const tx = useTx();
+  const { data: actions } = useActions();
   const info = byType(actions).get(step.action);
-  const patch = (p: Parameters<typeof updateStep>[2]) => apply((d) => updateStep(d, step.id, p));
 
   return (
     <section className="flex flex-col gap-4 p-4" aria-label={tx('ui.props.title')}>

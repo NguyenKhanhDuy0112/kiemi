@@ -1,4 +1,11 @@
 import { readFileSync } from 'node:fs';
+import {
+  ElementRefSchema,
+  ElementSchema,
+  LocatorSchema,
+  type Step,
+  StepSchema,
+} from '@kiemi/schema';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { resolveInside } from '../../results/artifact-path';
@@ -31,6 +38,11 @@ export const runsRouter = router({
           }),
           z.object({ type: z.literal('runTo'), stepId: z.string().min(1) }),
           z.object({
+            type: z.literal('edit'),
+            step: z.custom<Step>((v) => StepSchema.safeParse(v).success).optional(),
+            elements: z.record(ElementRefSchema, ElementSchema).optional(),
+          }),
+          z.object({
             type: z.literal('breakpoints'),
             stepIds: z.array(z.string().min(1)).max(500),
           }),
@@ -38,6 +50,16 @@ export const runsRouter = router({
       }),
     )
     .mutation(({ ctx, input }) => ({ ok: ctx.runs.control(input.runId, input.command) })),
+
+  /** Click an element on the page of the paused run [FX-03]. */
+  livePick: publicProcedure
+    .input(runId)
+    .mutation(async ({ ctx, input }) => ({ locator: await ctx.runs.livePick(input.runId) })),
+
+  /** Show where a locator points on the page of the paused run [FX-03]. */
+  liveHighlight: publicProcedure
+    .input(runId.extend({ locator: LocatorSchema }))
+    .mutation(({ ctx, input }) => ctx.runs.liveHighlight(input.runId, input.locator)),
 
   /** Stored run with its cases, steps and files [S-04]. */
   get: publicProcedure.input(runId).query(({ ctx, input }) => {

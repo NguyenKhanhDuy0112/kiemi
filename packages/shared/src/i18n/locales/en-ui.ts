@@ -204,6 +204,11 @@ export const enUi = {
     skipStep: 'Skip step',
     endTest: 'End test',
     runToHere: 'Run to this step and pause',
+    fixTitle: 'Fix step',
+    saveAndRetry: 'Save and retry',
+    saveFix: 'Save changes',
+    fixApplied: 'Saved — the step will run with the new version.',
+    fixNotSaved: 'Could not save to the test, but this run still uses the new version.',
     status: {
       queued: 'Waiting',
       running: 'Running',

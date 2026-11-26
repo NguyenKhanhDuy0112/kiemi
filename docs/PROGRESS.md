@@ -7,12 +7,12 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M10** đang làm trên nhánh `milestone/m10-fix-on-fail`: tiếp M10-03 (xem ROADMAP). M9 đã merge (PR #1).
+**M10** đang làm trên nhánh `milestone/m10-fix-on-fail`: tiếp M10-04 (xem ROADMAP). M9 đã merge (PR #1).
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
 - M10-01/02 xong: `DebugController` (`packages/engine/src/run/debug.ts`) có `afterFail` → quyết định `retry|skip|continue|stop`, `runTo(stepId)`; runner `#runOne` lặp lại step khi `retry`, viền đỏ phần tử lỗi lúc chờ. Worker: message `decide`/`runTo` (`protocol.ts`, `worker-core.ts`, tRPC `runs.control`), event `debug` có `error`. UI: nút ở thanh đầu `run-screen.tsx`, store `decide/runTo`. `pauseOnFail` do UI gửi (test đơn, `useStartRun`); main chỉ bật khi trình duyệt hiện.
-- Sửa step tại chỗ (M10-03): engine đang chạy dùng bản step lúc bắt đầu — cần message mới đưa step đã sửa vào runner (thay theo `stepId`) trước khi `retry`.
+- M10-03 xong: sửa step khi run đang chờ. Engine: `DebugController.editStep/editElements` + `stepEdit/elementsEdit` (runner dùng bản sửa theo `stepId`, kể cả step chưa chạy); `LiveSessions` (context của run đang mở) truyền qua `beforeStep/afterFail` → worker (`worker-core.ts`) dựng recorder `capture:false` để Pick/Highlight (`livePick/liveHighlight`, tRPC `runs.livePick|liveHighlight`, `runs.control {type:'edit'}`). UI: `features/run/fix-step-panel.tsx` dùng `StepForm` (tách từ `props-panel.tsx`) + `PickSourceContext` (`editor/pick-context.tsx`); lưu test bằng `testCases.save` (khóa version). Chưa có: sửa phần tử dùng chung (M10-08), chèn step (M10-04).
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 
@@ -94,3 +94,4 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 | 2026-11-26 | M9-10 | xong | Chuyển dự án nhanh (ghim/gần đây) + Ctrl/⌘K tìm test/phần tử/step toàn workspace; test `recent-projects`, `search.index` |
 | 2026-11-26 | M9-11 | xong | Demo-site 2 app khác tên miền (`site.apps.web/admin`, Chromium `DEMO_HOST_RULES`); e2e `products.e2e.test.ts` (1 test đi qua 2 sản phẩm, đổi môi trường đúng URL/tài khoản). Cả M9: lint + typecheck + test pass; app thật `_electron.launch`: palette dự án, thư viện dùng chéo, tab Môi trường OK |
 | 2026-11-26 | M10-01, M10-02 | xong | Tạm dừng khi step lỗi (giữ trình duyệt, viền đỏ) + Thử lại/Tiếp tục/Bỏ qua/Kết thúc + chạy đến bước N rồi dừng; test `debug.test.ts`, `run-manager.test.ts` |
+| 2026-11-26 | M10-03 | xong | Sửa step tại chỗ trên màn Chạy + chọn lại phần tử trên trang thật; test `worker-core.test.ts`, `debug.test.ts`, `run-manager.test.ts` |

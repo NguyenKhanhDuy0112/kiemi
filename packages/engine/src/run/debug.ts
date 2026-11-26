@@ -1,4 +1,5 @@
-import type { RunError } from '@kiemi/schema';
+import type { RunError, Step, TestCase } from '@kiemi/schema';
+import type { BrowserContext } from 'playwright-core';
 import type { StepPhase } from '../events';
 
 /** Step about to run, as seen by a debugger. */
@@ -6,18 +7,34 @@ export interface StepGate {
   stepId: string;
   stepNo: string;
   phase: StepPhase;
+  /** Session (browser context) the step works in. */
+  session: string;
   parentStepId?: string | undefined;
+}
+
+/** The run's open browser, handed over while it waits (Pick / Highlight on the real page) [FX-03]. */
+export interface LiveSessions {
+  context(session: string): Promise<BrowserContext>;
 }
 
 /** Awaited before every step; resolve to let the step run [H-03]. */
 export interface RunDebugger {
-  beforeStep(step: StepGate, signal: AbortSignal): Promise<void>;
+  beforeStep(step: StepGate, signal: AbortSignal, live?: LiveSessions): Promise<void>;
   /**
    * Awaited when a step has failed, the browser still open [FX-01, FX-05]:
    * `retry` runs it again · `skip` marks it skipped and goes on · `continue`
    * keeps the failure on record but runs the next steps · `stop` ends the test.
    */
-  afterFail?(step: StepGate, error: RunError, signal: AbortSignal): Promise<FailDecision>;
+  afterFail?(
+    step: StepGate,
+    error: RunError,
+    signal: AbortSignal,
+    live?: LiveSessions,
+  ): Promise<FailDecision>;
+  /** Step edited while the run waited — used instead of the planned one [FX-02]. */
+  stepEdit?(stepId: string): Step | undefined;
+  /** Elements edited while the run waited (re-picked) [FX-03]. */
+  elementsEdit?(): TestCase['elements'] | undefined;
 }
 
 export type FailDecision = 'retry' | 'skip' | 'continue' | 'stop';
@@ -45,6 +62,9 @@ export class DebugController implements RunDebugger {
   #runTo: string | undefined;
   #failDecision: ((d: FailDecision) => void) | undefined;
   #failed: { step: StepGate; error: RunError } | undefined;
+  #live: LiveSessions | undefined;
+  readonly #stepEdits = new Map<string, Step>();
+  #elementEdits: TestCase['elements'] | undefined;
   readonly #listener: DebugListener;
 
   constructor(
@@ -68,6 +88,28 @@ export class DebugController implements RunDebugger {
   /** Failed step waiting for a decision [FX-01]. */
   get failed(): { step: StepGate; error: RunError } | undefined {
     return this.#failed;
+  }
+
+  /** Browser sessions while paused (else undefined) [FX-03]. */
+  get live(): LiveSessions | undefined {
+    return this.#paused ? this.#live : undefined;
+  }
+
+  /** The tester edited a step while paused [FX-02]. */
+  editStep(step: Step): void {
+    this.#stepEdits.set(step.id, step);
+  }
+
+  editElements(elements: TestCase['elements']): void {
+    this.#elementEdits = elements;
+  }
+
+  stepEdit(stepId: string): Step | undefined {
+    return this.#stepEdits.get(stepId);
+  }
+
+  elementsEdit(): TestCase['elements'] | undefined {
+    return this.#elementEdits;
   }
 
   setPauseOnFail(on: boolean): void {
@@ -113,7 +155,7 @@ export class DebugController implements RunDebugger {
     this.#release?.();
   }
 
-  async beforeStep(step: StepGate, signal: AbortSignal): Promise<void> {
+  async beforeStep(step: StepGate, signal: AbortSignal, live?: LiveSessions): Promise<void> {
     if (step.phase === 'cleanup' || signal.aborted) return;
     const shouldPause =
       this.#pauseRequested ||
@@ -125,6 +167,7 @@ export class DebugController implements RunDebugger {
     this.#pauseRequested = false;
     if (this.#runTo === step.stepId) this.#runTo = undefined;
     this.#paused = step;
+    this.#live = live;
     this.#listener.onPause?.(step);
     await new Promise<void>((resolve) => {
       const done = () => {
@@ -139,9 +182,15 @@ export class DebugController implements RunDebugger {
     this.#listener.onResume?.(step);
   }
 
-  async afterFail(step: StepGate, error: RunError, signal: AbortSignal): Promise<FailDecision> {
+  async afterFail(
+    step: StepGate,
+    error: RunError,
+    signal: AbortSignal,
+    live?: LiveSessions,
+  ): Promise<FailDecision> {
     if (!this.#pauseOnFail || step.phase === 'cleanup' || signal.aborted) return 'stop';
     this.#paused = step;
+    this.#live = live;
     this.#failed = { step, error };
     this.#listener.onPause?.(step, error);
     const decision = await new Promise<FailDecision>((resolve) => {

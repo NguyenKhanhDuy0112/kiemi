@@ -7,15 +7,20 @@ import {
   type SavedLogin,
   type StepPhase,
 } from '@kiemi/engine';
+import type { HighlightResult } from '@kiemi/recorder';
 import type {
   ArtifactRef,
   Dataset,
   Env,
+  Locator,
   RunError,
   RunResult,
   Secrets,
+  Step,
   TestCase,
 } from '@kiemi/schema';
+import { translations } from '@kiemi/shared';
+import { v7 as uuidv7 } from 'uuid';
 import { type OpenTunnel, prepareNetwork, type TunnelLike, usedProducts } from '../tunnel/network';
 import type { HostToWorker, WorkerToHost } from './protocol';
 import { type StartRunInput, StartRunInputSchema } from './start-input';
@@ -95,6 +100,8 @@ interface ActiveRun {
   /** Artifact sub-folder of each case, relative to the run folder ('' = the run folder). */
   caseDirs: Map<string, string>;
   steps: Map<string, StepInfo>;
+  /** Pick / Highlight answers still awaited from the engine process [FX-03]. */
+  waiting: Map<string, { resolve: (value: unknown) => void; fallback: unknown }>;
 }
 
 interface CasePlan {
@@ -253,6 +260,7 @@ export class RunManager {
       openCases: new Set(),
       caseDirs: new Map(),
       steps: new Map(),
+      waiting: new Map(),
     };
     this.#runs.set(run.id, active);
     this.#trim();
@@ -379,12 +387,48 @@ export class RunManager {
       | { type: 'step' }
       | { type: 'breakpoints'; stepIds: string[] }
       | { type: 'decide'; decision: 'retry' | 'skip' | 'continue' | 'stop' }
-      | { type: 'runTo'; stepId: string },
+      | { type: 'runTo'; stepId: string }
+      | { type: 'edit'; step?: Step | undefined; elements?: TestCase['elements'] | undefined },
   ): boolean {
     const active = this.#runs.get(runId);
     if (!active || active.finished || !active.worker) return false;
     active.worker.send(cmd);
     return true;
+  }
+
+  /** Lets the tester click an element on the page of the paused run [FX-03]. */
+  livePick(runId: string): Promise<Locator | null> {
+    return this.#ask<Locator | null>(runId, null, (requestId, strings) => ({
+      type: 'livePick',
+      requestId,
+      strings,
+    }));
+  }
+
+  /** Shows a locator on the page of the paused run [FX-03]. */
+  liveHighlight(runId: string, locator: Locator): Promise<HighlightResult> {
+    return this.#ask<HighlightResult>(runId, { count: 0 }, (requestId, strings) => ({
+      type: 'liveHighlight',
+      requestId,
+      strings,
+      locator,
+    }));
+  }
+
+  #ask<T>(
+    runId: string,
+    fallback: T,
+    msg: (requestId: string, strings: Record<string, string>) => HostToWorker,
+  ): Promise<T> {
+    const active = this.#runs.get(runId);
+    if (!active || active.finished || !active.worker) return Promise.resolve(fallback);
+    const requestId = uuidv7();
+    const lang = this.#d.services.settings.getAll().language;
+    const answer = new Promise<T>((resolve) =>
+      active.waiting.set(requestId, { resolve: (v) => resolve(v as T), fallback }),
+    );
+    active.worker.send(msg(requestId, { ...translations[lang].recorder }));
+    return answer;
   }
 
   isRunning(runId: string): boolean {
@@ -514,6 +558,14 @@ export class RunManager {
           ...(msg.error ? { error: msg.error } : {}),
         });
         return;
+      case 'pickResult':
+        active.waiting.get(msg.requestId)?.resolve(msg.locator);
+        active.waiting.delete(msg.requestId);
+        return;
+      case 'highlightResult':
+        active.waiting.get(msg.requestId)?.resolve(msg.result);
+        active.waiting.delete(msg.requestId);
+        return;
       case 'event': {
         const caseId = msg.event.runId;
         if (!active.caseIds.has(caseId)) return;
@@ -615,6 +667,8 @@ export class RunManager {
 
   #finish(active: ActiveRun, status: FinalStatus, error?: RunError): void {
     if (active.finished) return;
+    for (const w of active.waiting.values()) w.resolve(w.fallback);
+    active.waiting.clear();
     const s = this.#d.services.runs;
     for (const caseId of active.openCases) {
       try {

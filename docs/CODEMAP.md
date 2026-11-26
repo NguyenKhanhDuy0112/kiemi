@@ -18,7 +18,7 @@
 - `features/tests/` → cây Dự án → Sản phẩm → Thư mục → Test, suite-dialog
 - `features/editor/` → bảng bước, `schema-form.tsx` (form tự sinh), `editor-tabs.tsx` (Dữ liệu/Biến/Phiên), `effective-variables.tsx`, `environment-rows.tsx`
 - `features/environments/` → `environments-screen.tsx` (ma trận Môi trường × Sản phẩm, biến các cấp, bí mật, proxy/SSH), `environment-badge.tsx`
-- `features/run/` → `run-screen.tsx`, `run-dialog.tsx` (`useStartRun`), `run-store.ts`, `report.ts`, `confirm-protected.tsx`
+- `features/run/` → `fix-step-panel.tsx` (sửa step khi run chờ, FX-02/03), `run-screen.tsx`, `run-dialog.tsx` (`useStartRun`), `run-store.ts`, `report.ts`, `confirm-protected.tsx`
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)
 - `features/{record,history,elements,settings,onboarding,projects,update}/`
 - `components/ui/` → shadcn (không sửa tay) · `components/mascot/` → Cú Kiemi
