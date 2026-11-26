@@ -270,3 +270,28 @@ export function defaultParams(schema: Record<string, unknown>): Record<string, u
     if (p.default !== undefined) out[k] = structuredClone(p.default);
   return out;
 }
+
+type EnvLimit = NonNullable<TestCase['environments']>;
+export type EnvMode = 'all' | 'only' | 'except';
+
+/** Pure: the limit after picking a mode / toggling an environment name / editing the reason [O-06]. */
+export function nextEnvLimit(
+  current: TestCase['environments'],
+  change: { mode: EnvMode } | { toggle: string } | { reason: string },
+): TestCase['environments'] {
+  const mode: EnvMode = current?.only ? 'only' : current?.except ? 'except' : 'all';
+  const names = current?.only ?? current?.except ?? [];
+  const reason = current?.reason;
+  const build = (m: EnvMode, list: string[], why: string | undefined): EnvLimit | undefined => {
+    if (m === 'all') return undefined;
+    return { [m]: list, ...(why ? { reason: why } : {}) } as EnvLimit;
+  };
+  if ('mode' in change) return build(change.mode, change.mode === mode ? names : [], reason);
+  if ('toggle' in change) {
+    const list = names.includes(change.toggle)
+      ? names.filter((n) => n !== change.toggle)
+      : [...names, change.toggle];
+    return build(mode === 'all' ? 'except' : mode, list, reason);
+  }
+  return current ? { ...current, ...(change.reason ? { reason: change.reason } : {}) } : current;
+}

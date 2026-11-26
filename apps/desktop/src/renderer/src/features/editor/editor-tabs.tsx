@@ -1,5 +1,6 @@
 import type { DatasetSource, Step, TestCase } from '@kiemi/schema';
 import { Button } from '@renderer/components/ui/button';
+import { Checkbox } from '@renderer/components/ui/checkbox';
 import { Input } from '@renderer/components/ui/input';
 import { Label } from '@renderer/components/ui/label';
 import {
@@ -17,7 +18,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileUp, Plus, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { childLists, sessionUsage } from './doc-model';
+import { childLists, type EnvMode, nextEnvLimit, sessionUsage } from './doc-model';
 import { useEditorStore } from './editor-store';
 import { EffectiveVariables } from './effective-variables';
 import { EnvironmentRows } from './environment-rows';
@@ -448,5 +449,71 @@ function SavedLogins() {
         </ul>
       )}
     </section>
+  );
+}
+
+/** Tab "Môi trường": which environments the test may run on [O-06]. */
+export function EnvironmentsTab() {
+  const tx = useTx();
+  const projectId = useAppStore((s) => s.projectId);
+  const doc = useEditorStore((s) => s.doc);
+  const envs = useQuery({
+    ...trpc.environments.list.queryOptions({ projectId: projectId ?? '' }),
+    enabled: !!projectId,
+  });
+  if (!doc) return null;
+  const limit = doc.environments;
+  const mode: EnvMode = limit?.only ? 'only' : limit?.except ? 'except' : 'all';
+  const names = limit?.only ?? limit?.except ?? [];
+  const apply = (change: Parameters<typeof nextEnvLimit>[1]) =>
+    setDoc((d) => {
+      const { environments: _old, ...rest } = d;
+      const next = nextEnvLimit(d.environments, change);
+      return next ? { ...rest, environments: next } : (rest as TestCase);
+    });
+  const known = new Set((envs.data ?? []).map((e) => e.name));
+  const options = [...(envs.data ?? []).map((e) => e.name), ...names.filter((n) => !known.has(n))];
+  return (
+    <div className="flex flex-col gap-3 p-4">
+      <p className="text-sm text-muted-foreground">{tx('ui.envLimit.hint')}</p>
+      <Select value={mode} onValueChange={(m) => apply({ mode: m as EnvMode })}>
+        <SelectTrigger className="w-72" aria-label={tx('ui.envLimit.mode')}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">{tx('ui.envLimit.all')}</SelectItem>
+          <SelectItem value="only">{tx('ui.envLimit.only')}</SelectItem>
+          <SelectItem value="except">{tx('ui.envLimit.except')}</SelectItem>
+        </SelectContent>
+      </Select>
+      {mode !== 'all' && (
+        <ul className="flex flex-col gap-1.5">
+          {options.map((name) => (
+            <li key={name} className="flex items-center gap-2">
+              <Checkbox
+                id={`env-limit-${name}`}
+                checked={names.includes(name)}
+                onCheckedChange={() => apply({ toggle: name })}
+              />
+              <Label htmlFor={`env-limit-${name}`} className="font-normal">
+                {name}
+              </Label>
+            </li>
+          ))}
+        </ul>
+      )}
+      {mode !== 'all' && (
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="env-limit-reason">{tx('ui.envLimit.reason')}</Label>
+          <Input
+            id="env-limit-reason"
+            className="max-w-md"
+            placeholder={tx('ui.envLimit.reasonPlaceholder')}
+            value={limit?.reason ?? ''}
+            onChange={(e) => apply({ reason: e.target.value })}
+          />
+        </div>
+      )}
+    </div>
   );
 }

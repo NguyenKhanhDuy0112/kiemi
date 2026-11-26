@@ -9,6 +9,7 @@ import {
   insertStep,
   moveStep,
   newStepId,
+  nextEnvLimit,
   removeStep,
   savedVariables,
   sessionUsage,
@@ -261,5 +262,21 @@ describe('variable suggestions [E-01, M3-04]', () => {
   it('inserts the chosen variable and places the caret after it', () => {
     expect(applySuggestion('Mã {{ma', 7, 'maDon')).toEqual({ text: 'Mã {{maDon}}', caret: 12 });
     expect(applySuggestion('A {{}} B', 4, 'today')).toEqual({ text: 'A {{today}} B', caret: 11 });
+  });
+});
+
+describe('nextEnvLimit [O-06]', () => {
+  it('switches mode, toggles names and clears on "all"', () => {
+    const only = nextEnvLimit(undefined, { mode: 'only' });
+    expect(only).toEqual({ only: [] });
+    const picked = nextEnvLimit(only, { toggle: 'Staging' });
+    expect(picked).toEqual({ only: ['Staging'] });
+    expect(nextEnvLimit(picked, { reason: 'x' })).toEqual({ only: ['Staging'], reason: 'x' });
+    expect(nextEnvLimit({ only: ['Staging'], reason: 'x' }, { mode: 'except' })).toEqual({
+      except: [],
+      reason: 'x',
+    });
+    expect(nextEnvLimit(picked, { toggle: 'Staging' })).toEqual({ only: [] });
+    expect(nextEnvLimit(picked, { mode: 'all' })).toBeUndefined();
   });
 });

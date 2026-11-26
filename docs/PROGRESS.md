@@ -7,12 +7,12 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M9-08b** (UI: editor chọn `environments.only/except`, hộp thoại suite chọn môi trường mặc định; hiện lý do bỏ qua) → M9-09a/b → M9-10 → M9-11.
+**M9-09a** (DB/schema `shared_resources`, phạm vi Sản phẩm/Dự án/Workspace) → M9-09b → M9-10 → M9-11.
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
 - Generator `pnpm gen action|i18n|table|router <tên>` (`scripts/gen/index.mjs`): tạo file + vá registry (actions/index.ts, vi-ui/en-ui, migrations.ts+tables.ts, root.ts). Sau khi gen chạy `biome check --write` cho file đã đụng. `gen table` làm `database.test.ts` (danh sách bảng cứng) fail → thêm tên bảng vào test; điền TODO i18n.
-- M9-08b: bỏ qua theo môi trường đã xong ở engine/main: `engine/src/run/env-limit.ts` (`environmentSkip`, khớp id/tên/loại), `RunManager.start` ghi case `skipped` + lỗi `ENV_SKIPPED` (`details.environment/reason`), `PlannedCase.skipped` trong event `plan`. UI còn phải: hiển thị lý do ở màn chạy/lịch sử (run-state.ts hiện chỉ đánh dấu `skipped` khi hết lần chạy), editor test (field `environments` đã có trong schema v2).
+- M9-08b xong: tab "Môi trường" ở editor (`EnvironmentsTab` + `nextEnvLimit` thuần ở `editor/doc-model.ts`), `run-state.ts` đánh dấu case `skipped` + lỗi `ENV_SKIPPED` từ event `plan`; hộp thoại suite đã có chọn môi trường mặc định từ trước. Chế độ only/except nhận biết bằng có khóa (mảng rỗng vẫn là chế độ đó).
 - Nhánh hiện tại `m9` (pre-convention); từ M10 dùng `milestone/m10-<tên>` theo quy ước mới (CLAUDE.md §2 mục 6).
 - CI: job `quick` (Linux, nhánh không phải main) và `full` (Win+Mac, PR/main) — xem `.github/workflows/ci.yml`.
 
@@ -87,3 +87,4 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 | 2026-11-23 | chore | Ghi quy ước Git vào CLAUDE.md: tên nhánh `<loại>/<ID>-<mô-tả>`, quy trình PR milestone, tag phát hành | |
 | 2026-11-26 | M9-07z | xong | Generator `pnpm gen action\|i18n\|table\|router <tên>` (`scripts/gen/index.mjs`); đã thử cả 4 loại, typecheck pass |
 | 2026-11-26 | M9-08a | xong | Engine `environmentSkip` + RunManager bỏ qua test theo môi trường (case `skipped`, mã `ENV_SKIPPED`, lý do); test unit + RunManager |
+| 2026-11-26 | M9-08b | xong | Tab "Môi trường" ở editor (only/except + lý do); case bị giới hạn hiện `skipped` + lý do ở màn chạy; test `nextEnvLimit`, `applyFeed` plan skipped |

@@ -100,7 +100,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M9-07** Kế thừa biến nhiều cấp (Workspace → … → Dòng dữ liệu) + màn "Giá trị hiệu lực"; dataset/biến/secret riêng theo môi trường [O-04, O-05]
 - [x] **M9-07z** Generator `pnpm gen action|i18n|table|router <tên>`: tạo file khuôn cho action engine/file i18n/migration DB/tRPC router; không viết tay từng file từ đây trở đi [S]
 - [x] **M9-08a** Giới hạn test theo môi trường — engine: skip logic + `RunResult.skipped` + lý do bỏ qua; kiểm tra `only`/`except` trong `RunManager.start` (dùng tên/id/loại môi trường) [O-06, S]
-- [ ] **M9-08b** Giới hạn test theo môi trường — UI: editor chọn `environments.only/except`, hộp thoại suite chọn môi trường mặc định [O-06, S]
+- [x] **M9-08b** Giới hạn test theo môi trường — UI: editor chọn `environments.only/except`, hộp thoại suite chọn môi trường mặc định [O-06, S]
 - [ ] **M9-09a** Phạm vi tài nguyên dùng chung — DB/schema: bảng `shared_resources`, cột phạm vi Sản phẩm/Dự án/Workspace, service + migration [O-07, M]
 - [ ] **M9-09b** Phạm vi tài nguyên dùng chung — UI: menu "Dùng chéo dự án", danh sách test bị ảnh hưởng khi sửa step dùng chung [O-07, M]
 - [ ] **M9-10** Chuyển dự án nhanh (bộ chọn, gần đây, ghim) + tìm kiếm toàn workspace Ctrl/Cmd+K [O-08, S]

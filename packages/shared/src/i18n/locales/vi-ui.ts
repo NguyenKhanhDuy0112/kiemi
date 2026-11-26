@@ -132,7 +132,13 @@ export const viUi = {
     moveTo: 'Chuyển vào thư mục',
   },
   editor: {
-    tabs: { steps: 'Các bước', data: 'Dữ liệu', variables: 'Biến', sessions: 'Phiên' },
+    tabs: {
+      steps: 'Các bước',
+      data: 'Dữ liệu',
+      variables: 'Biến',
+      sessions: 'Phiên',
+      environments: 'Môi trường',
+    },
     addStep: 'Thêm bước',
     addStepHint: 'Chọn thao tác cần thêm',
     emptyTitle: 'Test này chưa có bước nào',
@@ -373,6 +379,15 @@ export const viUi = {
       'Khai báo một lần ở cấp rộng, ghi đè ở cấp hẹp hơn: Workspace → Dự án → Sản phẩm → Môi trường → Bộ test → Test → Dòng dữ liệu.',
     sharedLevel: 'Cấp',
     productLevel: 'Sản phẩm “{{name}}”',
+  },
+  envLimit: {
+    hint: 'Giới hạn test chỉ chạy (hoặc không chạy) trên một số môi trường. Test bị giới hạn sẽ được bỏ qua kèm lý do.',
+    mode: 'Giới hạn',
+    all: 'Chạy trên mọi môi trường',
+    only: 'Chỉ chạy trên…',
+    except: 'Không chạy trên…',
+    reason: 'Lý do (hiện khi bỏ qua)',
+    reasonPlaceholder: 'Vd: Không thao tác dữ liệu thật trên Production',
   },
   sessions: {
     hint: 'Mỗi phiên là một người dùng riêng (cookie, đăng nhập riêng). Dùng khi test cần nhiều vai trò, vd nhân viên tạo đơn → quản lý duyệt.',

@@ -134,7 +134,13 @@ export const enUi = {
     moveTo: 'Move to folder',
   },
   editor: {
-    tabs: { steps: 'Steps', data: 'Data', variables: 'Variables', sessions: 'Sessions' },
+    tabs: {
+      steps: 'Steps',
+      data: 'Data',
+      variables: 'Variables',
+      sessions: 'Sessions',
+      environments: 'Environments',
+    },
     addStep: 'Add step',
     addStepHint: 'Choose the action to add',
     emptyTitle: 'This test has no steps yet',
@@ -374,6 +380,15 @@ export const enUi = {
       'Declare once at a wide level, override at a narrower one: Workspace → Project → Product → Environment → Suite → Test → Data row.',
     sharedLevel: 'Level',
     productLevel: 'Product “{{name}}”',
+  },
+  envLimit: {
+    hint: 'Limit this test to run only (or never) on some environments. A limited test is skipped with the reason.',
+    mode: 'Limit',
+    all: 'Run on every environment',
+    only: 'Run only on…',
+    except: 'Do not run on…',
+    reason: 'Reason (shown when skipped)',
+    reasonPlaceholder: 'E.g. Never touch real data on Production',
   },
   sessions: {
     hint: 'Each session is a separate user (own cookies and login). Use it when a test needs several roles, e.g. employee creates → manager approves.',
