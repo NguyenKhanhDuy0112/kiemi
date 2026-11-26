@@ -47,6 +47,7 @@ function fieldOf(root: Json, key: string, raw: Json, required: boolean): FieldSp
     required,
     allowedChars: 'any',
     unique: false,
+    badData: true,
     readOnly: s.readOnly === true,
     options: enumValues,
     ruleRefs: [],

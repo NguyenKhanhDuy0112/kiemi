@@ -97,8 +97,12 @@ describe('generateFormCases [R-03]', () => {
   });
 
   it('size is in the expected range for a 5-field form', () => {
+    // Ticked by default: the all-valid case + one per broken rule; bad data is on top, unticked.
+    const ticked = cases.filter((c) => c.selected).length;
+    expect(ticked).toBeGreaterThanOrEqual(10);
     expect(cases.length).toBeGreaterThanOrEqual(20);
-    expect(cases.length).toBeLessThanOrEqual(55);
+    expect(ticked).toBeLessThanOrEqual(55);
+    expect(cases.length).toBeLessThanOrEqual(90);
   });
 });
 
@@ -197,5 +201,50 @@ describe('caseSteps [R-03]', () => {
       'Vui lòng nhập Họ tên',
     );
     expect(expectedError(form, generateFormCases(form)[0] as never)).toBeUndefined();
+  });
+});
+
+describe('bad data cases [R-04]', () => {
+  const cases = generateFormCases(form);
+  const by = (id: string) => cases.find((c) => c.id === id);
+
+  it('lists the standard bad values per field, unticked, each with a Vietnamese label', () => {
+    const bad = cases.filter((c) => c.technique === 'badData');
+    expect(bad.length).toBeGreaterThan(10);
+    expect(bad.every((c) => !c.selected && c.name.length > 8 && c.why.length > 8)).toBe(true);
+    expect(by('name:bad.whitespace-only')).toMatchObject({
+      expect: 'reject',
+      messageKey: 'required',
+      values: { name: '   ' },
+    });
+    expect(by('name:bad.script-tag')).toMatchObject({ expect: 'safe' });
+    expect(by('name:bad.very-long')).toMatchObject({ expect: 'reject', messageKey: 'maxLength' });
+    expect(by('name:bad.vietnamese-nfd')?.values.name).not.toBe(
+      by('name:bad.vietnamese-nfc')?.values.name,
+    );
+    expect(by('name:bad.vietnamese-nfd')?.values.name?.normalize('NFC')).toBe('Nguyễn Thị Ánh');
+    // Not required: spaces only is just survived.
+    expect(by('phone:bad.whitespace-only')).toMatchObject({ expect: 'safe' });
+  });
+
+  it('can be switched off per field, and fits dates and numbers', () => {
+    const f = FormSpecSchema.parse({
+      id: 'x',
+      name: 'X',
+      fields: [
+        { key: 'a', label: 'A', badData: false },
+        { key: 'd', label: 'Ngày', type: 'date' },
+        { key: 'n', label: 'Số', type: 'number', min: 1 },
+      ],
+    });
+    const ids = generateFormCases(f).map((c) => c.id);
+    expect(ids.some((i) => i.startsWith('a:bad.'))).toBe(false);
+    expect(ids).toContain('d:bad.date-31-feb');
+    expect(ids).toContain('n:bad.scientific');
+    expect(ids).not.toContain('d:bad.script-tag');
+    expect(generateFormCases(f).find((c) => c.id === 'n:bad.negative-number')).toMatchObject({
+      expect: 'reject',
+      messageKey: 'min',
+    });
   });
 });

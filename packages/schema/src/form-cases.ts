@@ -1,3 +1,4 @@
+import { badDataFor } from './bad-data';
 import {
   type BadValue,
   type EffectiveRules,
@@ -8,7 +9,13 @@ import {
 import type { FieldCondition, FieldSpec, FormSpec } from './form-spec';
 
 /** Standard test-design technique a case comes from [R-03]. */
-export type CaseTechnique = 'valid' | 'equivalence' | 'boundary' | 'decision' | 'pairwise';
+export type CaseTechnique =
+  | 'valid'
+  | 'equivalence'
+  | 'boundary'
+  | 'decision'
+  | 'pairwise'
+  | 'badData';
 
 /** One generated case: values for the whole form, only one field wrong at a time [R-03]. */
 export interface FormCase {
@@ -19,7 +26,7 @@ export interface FormCase {
   /** Key of the field this case breaks (or probes); none for the all-valid and pairwise cases. */
   field?: string;
   /** What the form should do. */
-  expect: 'accept' | 'reject';
+  expect: 'accept' | 'reject' | 'safe';
   /** Catalog key of the error expected on `field` ("required", "minLength", "format.vn-phone"…). */
   messageKey?: string;
   messageParams?: Record<string, string | number>;
@@ -244,7 +251,12 @@ export function generateFormCases(form: FormSpec): FormCase[] {
       values?: Record<string, string>;
       selected?: boolean;
     },
-  ) => cases.push({ values: base, selected: c.expect === 'reject', ...c });
+  ) =>
+    cases.push({
+      values: base,
+      selected: c.expect === 'reject' && c.technique !== 'badData',
+      ...c,
+    });
   const withValue = (key: string, value: string) => ({ ...base, [key]: value });
 
   for (const f of form.fields) {
@@ -465,6 +477,45 @@ export function generateFormCases(form: FormSpec): FormCase[] {
         messageKey: 'allowedChars',
         values: withValue(f.key, charBad),
         why: 'Có ký tự ngoài phạm vi cho phép.',
+      });
+    }
+
+    for (const d of badDataFor(f)) {
+      const outcome = d.outcome(f, isRequired(f, base));
+      const value = d.value(f);
+      const messageKey =
+        outcome !== 'reject'
+          ? undefined
+          : value.trim() === ''
+            ? 'required'
+            : d.id === 'very-long'
+              ? 'maxLength'
+              : d.id.startsWith('date')
+                ? 'pattern'
+                : d.id.includes('number') || d.id === 'zero'
+                  ? 'min'
+                  : 'pattern';
+      add({
+        id: `${f.key}:bad.${d.id}`,
+        name: `${L}: ${d.label}`,
+        technique: 'badData',
+        field: f.key,
+        expect: outcome,
+        ...(messageKey ? { messageKey } : {}),
+        ...(messageKey === 'maxLength' && eff.maxLength !== undefined
+          ? { messageParams: { max: eff.maxLength } }
+          : {}),
+        ...(messageKey === 'min' && eff.min !== undefined
+          ? { messageParams: { min: eff.min } }
+          : {}),
+        values: withValue(f.key, value),
+        why:
+          outcome === 'accept'
+            ? `${d.label}: form phải chấp nhận (và lưu đúng).`
+            : outcome === 'reject'
+              ? `${d.label}: form phải từ chối.`
+              : `${d.label}: form không được lỗi, không chạy mã lạ.`,
+        selected: false,
       });
     }
 

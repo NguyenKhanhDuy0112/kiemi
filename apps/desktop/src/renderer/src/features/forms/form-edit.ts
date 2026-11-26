@@ -29,6 +29,7 @@ export function newField(form: FormSpec, type: FieldType = 'text'): FieldSpec {
     required: false,
     allowedChars: 'any',
     unique: false,
+    badData: true,
     readOnly: false,
     options: [],
     ruleRefs: [],

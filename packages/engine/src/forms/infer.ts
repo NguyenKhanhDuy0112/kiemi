@@ -109,6 +109,7 @@ export function inferField(c: ScannedControl, taken: Set<string>): FieldSpec {
     required: c.required || c.labelStar,
     allowedChars: allowedFromPattern(c.pattern),
     unique: false,
+    badData: true,
     readOnly: c.readOnly,
     options: type === 'dropdown' ? c.options : [],
     ruleRefs: [],

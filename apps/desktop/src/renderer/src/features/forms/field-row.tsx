@@ -406,6 +406,14 @@ export function FieldRow({
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
+                checked={field.badData}
+                aria-label={tx('ui.forms.badData')}
+                onCheckedChange={(v) => set({ badData: v === true })}
+              />
+              {tx('ui.forms.badData')}
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
                 checked={field.readOnly}
                 aria-label={tx('ui.forms.readOnly')}
                 onCheckedChange={(v) => set({ readOnly: v === true })}

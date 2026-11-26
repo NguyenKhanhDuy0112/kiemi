@@ -74,6 +74,8 @@ export const FieldSpecSchema = z
     /** The value must not already exist (e.g. username, email). */
     unique: z.boolean().default(false),
     defaultValue: z.string().optional(),
+    /** List the standard bad values of this field when generating tests [R-04]. */
+    badData: z.boolean().default(true),
     /** A value the field accepts, used when generating tests (needed for hand-written patterns). */
     example: z.string().optional(),
     readOnly: z.boolean().default(false),
