@@ -35,6 +35,7 @@ describe('database & migrations [M2-01]', () => {
         'saved_logins',
         'secrets',
         'settings',
+        'shared_resources',
         'shared_steps',
         'suite_items',
         'suites',

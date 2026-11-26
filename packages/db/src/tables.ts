@@ -363,6 +363,35 @@ export const savedLogins = sqliteTable(
   (t) => [index('saved_logins_project_idx').on(t.projectId)],
 );
 
+/** What a shared resource is; its `data` shape depends on it [O-07]. */
+export type SharedResourceKind = 'shared_step' | 'element';
+/** Where a shared resource applies [O-07]. */
+export type SharedResourceScope = 'workspace' | 'project' | 'product';
+/** `data` of a `shared_step` is `{ params, steps }`; of an `element` is `{ locator, pageUrl }`. */
+export type SharedResourceData =
+  | { params: SharedStep['params']; steps: Step[] }
+  | { locator: Locator; pageUrl?: string | null };
+
+/**
+ * Resources shared beyond one project: the workspace library (used across projects) [O-07]
+ * (migration 10). Project/product-level steps and elements stay in their own tables.
+ */
+export const sharedResources = sqliteTable(
+  'shared_resources',
+  {
+    ...base,
+    kind: text('kind').$type<SharedResourceKind>().notNull(),
+    scope: text('scope').$type<SharedResourceScope>().notNull(),
+    /** `null` for the workspace scope. */
+    projectId: text('project_id'),
+    /** Only for the product scope. */
+    productId: text('product_id'),
+    name: text('name').notNull(),
+    data: json<SharedResourceData>('data').notNull(),
+  },
+  (t) => [index('shared_resources_workspace_idx').on(t.workspaceId)],
+);
+
 export const ALL_TABLES = {
   workspaces,
   projects,
@@ -384,4 +413,5 @@ export const ALL_TABLES = {
   artifacts,
   settings,
   savedLogins,
+  sharedResources,
 } as const;

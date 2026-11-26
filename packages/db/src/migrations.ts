@@ -353,4 +353,23 @@ UPDATE "environments" SET "type" = 'test' WHERE lower("name") IN ('test', 'qa', 
 ALTER TABLE "products" ADD COLUMN "variables" TEXT;
 ALTER TABLE "datasets" ADD COLUMN "env_rows" TEXT;`,
   },
+  {
+    id: 10,
+    name: 'shared-resources',
+    sql: `CREATE TABLE "shared_resources" (
+  "id" TEXT PRIMARY KEY,
+  "workspace_id" TEXT NOT NULL,
+  "created_at" INTEGER NOT NULL,
+  "updated_at" INTEGER NOT NULL,
+  "deleted_at" INTEGER,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "kind" TEXT NOT NULL,
+  "scope" TEXT NOT NULL,
+  "project_id" TEXT,
+  "product_id" TEXT,
+  "name" TEXT NOT NULL,
+  "data" TEXT NOT NULL
+);
+CREATE INDEX "shared_resources_workspace_idx" ON "shared_resources" ("workspace_id");`,
+  },
 ];

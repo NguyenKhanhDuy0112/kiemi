@@ -223,7 +223,11 @@ export class RunManager {
         type: env.type,
       });
     const settings = s.settings.getAll();
-    const sharedSteps = s.sharedSteps.forRun(projectId);
+    // Project steps plus the workspace library, called by id [O-07].
+    const sharedSteps = [
+      ...s.sharedSteps.forRun(projectId),
+      ...s.sharedResources.sharedStepsForRun(),
+    ];
     // Inherited variables [O-04]: workspace → project → the test's product.
     const workspaceVars = settings.workspaceVariables;
     const projectVars = s.projects.get(projectId).variables ?? {};

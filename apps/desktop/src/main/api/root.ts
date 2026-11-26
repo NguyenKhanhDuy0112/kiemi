@@ -14,6 +14,7 @@ import {
 import { recorderRouter, savedLoginsRouter } from './routers/recorder';
 import { runsRouter } from './routers/runs';
 import { samplesRouter } from './routers/samples';
+import { sharedResourcesRouter } from './routers/shared-resources';
 import { systemRouter } from './routers/system';
 import { updatesRouter } from './routers/updates';
 import { createCallerFactory, router } from './trpc';
@@ -36,6 +37,7 @@ export const rootRouter = router({
   recorder: recorderRouter,
   savedLogins: savedLoginsRouter,
   updates: updatesRouter,
+  sharedResources: sharedResourcesRouter,
 });
 
 export type AppRouter = typeof rootRouter;
