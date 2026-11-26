@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { readRows } from '../actions/_table';
 import type { ActionContext } from '../define-action';
 import { EngineError } from '../errors';
 import { countMatches } from '../locator/resolve';
@@ -17,11 +18,16 @@ import {
   TextMatchOptions,
   TextOpSchema,
 } from './compare';
+import { describeDiff, diffTables, isClean, sameCell } from './table-diff';
 
 export interface CheckResult {
   pass: boolean;
   actual?: unknown;
   expected?: unknown;
+  /** Structured data kept in the failure (e.g. the cells that differ) [P-06]. */
+  details?: Record<string, unknown>;
+  /** No point retrying (the check moved the page, e.g. walked every page). */
+  final?: boolean;
 }
 
 /**
@@ -305,6 +311,110 @@ export const tableCheck = defineCheck({
   },
 });
 
+/** A list given as a variable, or as JSON text typed in the editor. */
+function asList(v: unknown): Record<string, unknown>[] | undefined {
+  let value = v;
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return undefined;
+    }
+  }
+  return Array.isArray(value) && value.every((x) => x !== null && typeof x === 'object')
+    ? (value as Record<string, unknown>[])
+    : undefined;
+}
+
+/** Table vs the expected list, matched by key, order ignored [P-06, Q-03]. */
+export const tableCompareCheck = defineCheck({
+  name: 'tableCompare',
+  params: z
+    .object({
+      target,
+      /** The expected rows: a list variable (`{{children.SanPham}}`) or JSON. */
+      expected: z.unknown(),
+      /** Column that identifies a row. */
+      key: z.string().min(1),
+      /** Columns to compare (default: all columns of the expected rows). */
+      columns: z.array(z.string().min(1)).optional(),
+      allPages: z.boolean().default(false),
+      next: target.optional(),
+      maxPages: z.coerce.number().int().positive().max(200).default(50),
+    })
+    .refine((p) => !p.allPages || p.next !== undefined, 'next (the next-page button) is required'),
+  async check(p, ctx) {
+    const expected = asList(p.expected);
+    if (!expected)
+      throw new EngineError('INVALID_PARAMS', 'expected must be a list of rows', {
+        value: stringify(p.expected),
+      });
+    const { rows } = await readRows(ctx, { ...p, once: true });
+    const diff = diffTables(rows, expected, p.key, p.columns, ctx.run.env?.locale ?? 'vi');
+    const clean = isClean(diff) && diff.duplicates.length === 0;
+    return {
+      pass: clean,
+      actual: clean ? `${rows.length} rows` : describeDiff(diff),
+      expected: `${expected.length} rows by ${p.key}`,
+      details: { ...diff },
+      final: p.allPages,
+    };
+  },
+});
+
+/**
+ * Expected value from two sources: a column the tester filled in the data and/or
+ * a formula; with both they are cross-checked and a mismatch is warned [P-05].
+ */
+export const expectedCheck = defineCheck({
+  name: 'expected',
+  params: z
+    .object({
+      target: target.optional(),
+      actual: z.unknown().optional(),
+      /** Expectation typed in the data (e.g. `{{row.tongTien}}`). */
+      data: z.unknown().optional(),
+      /** Expectation computed by a formula (e.g. `{{TongDon(gioHang, 0)}}`). */
+      formula: z.unknown().optional(),
+      tolerance: z.unknown().optional(),
+      tolerancePercent: z.unknown().optional(),
+    })
+    .refine((p) => p.target !== undefined || p.actual !== undefined, 'target or actual is required')
+    .refine(
+      (p) => blank(p.data) === false || blank(p.formula) === false,
+      'data or formula is required',
+    ),
+  async check(p, ctx) {
+    const locale = ctx.run.env?.locale ?? 'vi';
+    const hasData = !blank(p.data);
+    const hasFormula = !blank(p.formula);
+    const tol = {
+      absolute: p.tolerance === undefined ? undefined : extractNumber(p.tolerance, locale),
+      percent:
+        p.tolerancePercent === undefined ? undefined : extractNumber(p.tolerancePercent, locale),
+    };
+    const same = (a: unknown, b: unknown) => {
+      const x = extractNumber(a, locale);
+      const y = extractNumber(b, locale);
+      if (x !== undefined && y !== undefined && /\d/.test(stringify(a)) && /\d/.test(stringify(b)))
+        return compareNumber(x, 'eq', y, undefined, tol);
+      return sameCell(a, b, locale);
+    };
+    if (hasData && hasFormula && !same(p.data, p.formula)) {
+      ctx.log(
+        `Kỳ vọng trong Excel khác công thức: Excel = ${stringify(p.data)}, công thức = ${stringify(p.formula)}`,
+        'warn',
+      );
+    }
+    const expected = hasData ? p.data : p.formula;
+    const actual = p.target ? await elementText(ctx, p.target) : p.actual;
+    return { pass: same(actual, expected), actual, expected };
+  },
+});
+
+const blank = (v: unknown) =>
+  v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
+
 export const urlCheck = defineCheck({
   name: 'url',
   params: z.object({
@@ -485,6 +595,8 @@ export const CHECKS: readonly CheckDef[] = [
   fieldErrorCheck,
   focusCheck,
   variableCheck,
+  tableCompareCheck,
+  expectedCheck,
 ] as CheckDef[];
 
 export const CHECKS_BY_NAME: ReadonlyMap<string, CheckDef> = new Map(

@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M12** đang làm trên nhánh `milestone/m12-data-compute`: M12-01 → M12-04 xong → M12-05. M11 đã merge.
+**M12** đang làm trên nhánh `milestone/m12-data-compute`: M12-01 → M12-05 xong → M12-06. M11 đã merge.
 Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D.
 
 ## Lưu ý cho task sau
@@ -29,6 +29,7 @@ Việc còn treo của v1.0: checklist `docs/RELEASE-CHECKLIST.md` mục C và D
 - M12-03a xong: ADR 0019. `engine/src/vars/`: `values.ts` (`toNumber/stringify/compareValues/matchesCriteria`), `sheet.ts` (hàm bảng tính), `evaluate.ts` (`cmp`, `IF` lười, `callFormula`, `trace`), `expression.ts` (so sánh, `f(x).y`, `nodeText`), `VariableScopes.formulas` + `VariableStore.explain(expr)` → `{value, steps}`. Hàm tra không phân biệt hoa/thường. Test `vars/formulas.test.ts`. M12-03b: lưu theo dự án (mẫu: `messageCatalog` M11-03) + UI thử công thức.
 - M12-03b xong: `schema/src/formulas.ts` (`FormulasSchema`), cột `projects.formulas` (migration 16) + `project.json`, tRPC `projects.setFormulas`, `formulas.explain` (`routers/formulas.ts`, chạy `VariableStore.explain`), `RunRequest.formulas` ← `run-manager`. UI view mới `formulas` (sidebar "Công thức", `features/formulas/`: `formula-edit.ts` thuần + `formulas-screen.tsx` có ô "Thử công thức" hiện từng bước). Tên công thức trùng hàm có sẵn → công thức thắng.
 - M12-04 xong: `assertNumber` thêm `tolerance` (tuyệt đối) / `tolerancePercent` (lấy mức lớn hơn; lỗi hiện `1000 (chênh -100)` vs `1100 ± 55`); `Env.locale` ('vi' mặc định | 'en'; cột `environments.locale` migration 17, thư mục dự án, ô chọn ở màn Môi trường) quyết định cách đọc `1.250`; `toNumber(v, locale)`, hàm `parseNumber/formatNumber/formatMoney` (`vars/values.ts`). Chưa làm: ngày theo locale (`dd/MM` vs `MM/dd`) — vẫn mặc định dd/MM/yyyy.
+- M12-05 xong: `assertTableCompare` (`expected` list/JSON, `key`, `columns`, `allPages`+`next`; diff `missing/extra/mismatched/duplicates` ở `error.details.diff`, UI tô đỏ ô lệch `features/run/table-diff*.tsx`) và `assertExpected` (`data` + `formula`, warn log "Kỳ vọng trong Excel khác công thức", so với giá trị Excel). `{{children.<Bảng>}}` = dòng con của dòng dữ liệu hiện tại. Logic thuần: `assertions/table-diff.ts`. `readRows(ctx, …)` (`actions/_table.ts`) dùng chung đọc bảng/duyệt trang; `CheckResult.final` = không thử lại; duyệt mọi trang bắt đầu từ trang HIỆN TẠI (phải đang ở trang 1).
 - Nhánh milestone `milestone/m10-fix-on-fail`; CI: job `quick` (nhánh) / `full` (PR/main). Commit KHÔNG kèm dòng Co-Authored-By (CLAUDE.md §2.6).
 - Generator `pnpm gen action|i18n|table|router <tên>` vá registry; sau gen chạy `biome check --write`.
 

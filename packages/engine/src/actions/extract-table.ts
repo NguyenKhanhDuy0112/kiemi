@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { defineAction } from '../define-action';
-import { left, target } from './_common';
-import { readAllPages, readTable } from './_table';
+import { target } from './_common';
+import { readRows } from './_table';
 
 const MAX_ROWS = 5000;
 
@@ -24,27 +24,8 @@ export const extractTableAction = defineAction({
     .refine((p) => !p.allPages || p.next !== undefined, 'next (the next-page button) is required'),
   ui: { label: 'actions.extractTable', icon: 'table', group: 'data' },
   async execute(p, ctx) {
-    const { locator } = await ctx.resolve(p.target);
-    let rows: Awaited<ReturnType<typeof readTable>>;
-    let pages = 1;
-    if (p.allPages && p.next) {
-      const nextTarget = p.next;
-      const res = await readAllPages(locator, {
-        maxPages: p.maxPages,
-        changeMs: Math.min(5000, left(ctx)),
-        next: async () => {
-          const { locator: btn } = await ctx.resolve(nextTarget, { state: 'attached' });
-          if (!(await btn.isEnabled().catch(() => false))) return false;
-          await btn.click({ timeout: left(ctx) });
-          return true;
-        },
-      });
-      rows = res.rows;
-      pages = res.pages;
-    } else {
-      rows = await readTable(locator);
-    }
-    rows = rows.slice(0, MAX_ROWS);
+    const { rows: all, pages } = await readRows(ctx, p);
+    const rows = all.slice(0, MAX_ROWS);
     ctx.vars.set(p.into, rows);
     ctx.log(`${p.into} = ${rows.length} row(s), ${pages} page(s)`);
   },

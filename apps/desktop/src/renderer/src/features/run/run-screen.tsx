@@ -51,6 +51,8 @@ import {
 } from './run-state';
 import { useRunStore } from './run-store';
 import { StatusIcon } from './step-status';
+import { diffOf, type TableDiffView } from './table-diff';
+import { TableDiff } from './table-diff-view';
 
 const STATUS_BADGE: Record<LiveCaseStatus, string> = {
   queued: 'border-muted-foreground/40 text-muted-foreground',
@@ -676,6 +678,9 @@ function CaseView({
                   <p className="text-xs text-muted-foreground">
                     {describeRunError(r.error, tx).hint}
                   </p>
+                  {diffOf(r.error.details) && (
+                    <TableDiff diff={diffOf(r.error.details) as TableDiffView} />
+                  )}
                   <Button
                     size="sm"
                     variant="ghost"

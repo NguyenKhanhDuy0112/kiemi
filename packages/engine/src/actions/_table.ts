@@ -1,4 +1,6 @@
 import type { Locator } from 'playwright-core';
+import type { ActionContext } from '../define-action';
+import type { TargetParam } from '../run/target';
 
 /** One table row: cells by header name, plus `text` (whole row) and `cells` (by position). */
 export type TableRow = Record<string, unknown> & { text: string; cells: string[] };
@@ -57,4 +59,35 @@ export async function readAllPages(
     }
   }
   return { rows: all, pages };
+}
+
+export interface ReadRowsOptions {
+  target: TargetParam;
+  allPages?: boolean | undefined;
+  /** The "next page" button (with `allPages`). */
+  next?: TargetParam | undefined;
+  maxPages?: number | undefined;
+  /** One resolution attempt without waiting (assertions retry by themselves). */
+  once?: boolean | undefined;
+}
+
+/** Rows of the table on the page, optionally walking every page [P-02, P-06, Q-03]. */
+export async function readRows(
+  ctx: ActionContext,
+  o: ReadRowsOptions,
+): Promise<{ rows: TableRow[]; pages: number }> {
+  const wait = o.once ? { timeoutMs: 0 } : {};
+  const { locator } = await ctx.resolve(o.target, wait);
+  if (!o.allPages || !o.next) return { rows: await readTable(locator), pages: 1 };
+  const nextTarget = o.next;
+  return readAllPages(locator, {
+    maxPages: o.maxPages ?? 50,
+    changeMs: Math.min(5000, Math.max(1, ctx.remainingMs())),
+    next: async () => {
+      const { locator: btn } = await ctx.resolve(nextTarget, { state: 'attached', ...wait });
+      if (!(await btn.isEnabled().catch(() => false))) return false;
+      await btn.click({ timeout: Math.max(1, ctx.remainingMs()) });
+      return true;
+    },
+  });
 }

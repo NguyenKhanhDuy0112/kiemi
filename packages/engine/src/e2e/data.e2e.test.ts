@@ -189,3 +189,87 @@ describe('number tolerance and locale [P-04, P-10]', () => {
     expect(summary(r)).toEqual(['1 passed']);
   });
 });
+
+describe('table vs expected list and two-source expectation [P-05, P-06, Q-03]', () => {
+  const open = [
+    step('goto', { url: '/table.html' }),
+    step('waitUntil', {
+      condition: { assert: 'visible', target: { css: '#products-table tbody tr:first-child' } },
+      timeoutSec: 5,
+    }),
+  ];
+  const all = step('extractTable', {
+    target: { css: '#products-table' },
+    into: 'all',
+    allPages: true,
+    next: { css: '#next' },
+  });
+
+  it('matches every page against the list read before, ignoring order', async () => {
+    const r = await e.run([
+      ...open,
+      all,
+      ...open, // back to page 1 (the walk above ended on the last page)
+      step('assertTableCompare', {
+        target: { css: '#products-table' },
+        expected: '{{all}}',
+        key: 'Mã',
+        columns: ['Tên sản phẩm', 'Giá'],
+        allPages: true,
+        next: { css: '#next' },
+      }),
+    ]);
+    expect(summary(r)).toEqual([
+      '1 passed',
+      '2 passed',
+      '3 passed',
+      '4 passed',
+      '5 passed',
+      '6 passed',
+    ]);
+  });
+
+  it('reports missing rows with the structured diff', async () => {
+    const r = await e.run(
+      [
+        ...open,
+        all,
+        step('assertTableCompare', {
+          target: { css: '#products-table' },
+          expected: '{{all}}',
+          key: 'Mã',
+        }),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 2000 } } },
+    );
+    expect(summary(r)).toEqual(['1 passed', '2 passed', '3 passed', '4 failed ASSERTION_FAILED']);
+    const text = JSON.stringify(r);
+    expect(text).toContain('thiếu 40'); // the walk left the table on its last page (7 rows)
+    expect(text).toContain('"missing"');
+  });
+
+  it('warns when the Excel expectation differs from the formula, and still checks the Excel value', async () => {
+    const events: EngineEvent[] = [];
+    const r = await e.run(
+      [
+        step('assertExpected', {
+          actual: '1.250.000 ₫',
+          data: '1250000',
+          formula: '{{1000000 + 250000}}',
+        }),
+        step('assertExpected', {
+          actual: '1.250.000 ₫',
+          data: '1200000',
+          formula: '{{1000000 + 250000}}',
+        }),
+      ],
+      { events, request: { options: { defaultStepTimeoutMs: 1000 } } },
+    );
+    expect(summary(r)).toEqual(['1 passed', '2 failed ASSERTION_FAILED']);
+    const warns = events.filter((x) =>
+      JSON.stringify(x).includes('Kỳ vọng trong Excel khác công thức'),
+    );
+    expect(warns.length).toBeGreaterThan(0);
+    expect(warns.length).toBe(warns.filter((x) => JSON.stringify(x).includes('1200000')).length);
+  });
+});

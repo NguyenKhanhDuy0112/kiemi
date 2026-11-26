@@ -24,6 +24,8 @@ export interface VariableScopes {
   workspace?: Record<string, string> | undefined;
   project?: Record<string, string> | undefined;
   productVariables?: Record<string, string> | undefined;
+  /** Linked child rows of the current data row by table name: `{{children.SanPham}}` [P-01]. */
+  children?: Record<string, DataRow[]> | undefined;
   /** Named formulas usable as `{{Ten(a, b)}}` [P-03]. */
   formulas?: Readonly<Record<string, NamedFormula>> | undefined;
 }
@@ -237,6 +239,8 @@ export class VariableStore {
       }
       case 'app':
         return ok(appNamespace(s.env, s.product, (v) => this.#expand(v)));
+      case 'children':
+        return ok({ ...(s.children ?? {}) });
       case 'secret':
         return ok({ ...(s.secrets ?? {}) });
       case 'row':

@@ -2,6 +2,8 @@ import { mkdir } from 'node:fs/promises';
 import { basename, join, relative } from 'node:path';
 import {
   type ArtifactRef,
+  childRowsOf,
+  type DataRow,
   type Dataset,
   type Diagnostic,
   type Env,
@@ -125,6 +127,17 @@ interface Parent {
 type Outcome = { result: StepResult; stop: boolean; redo?: boolean };
 
 /** Runs a test case's steps sequentially, then its cleanup steps, streaming events. */
+/** Child rows of the current data row by table name, for `{{children.X}}` [P-01]. */
+function childrenOf(
+  dataset: Dataset | undefined,
+  row: DataRow | undefined,
+): Record<string, DataRow[]> | undefined {
+  if (!dataset?.children?.length || !row) return undefined;
+  return Object.fromEntries(
+    dataset.children.map((c) => [c.name, childRowsOf(dataset, row, c.name) ?? []]),
+  );
+}
+
 export async function runTestCase(request: RunRequest, options: RunOptions): Promise<RunResult> {
   return new Run(request, options).execute();
 }
@@ -163,6 +176,7 @@ class Run {
         suite: request.suiteVariables,
         test: request.testCase.variables,
         row,
+        children: childrenOf(request.dataset, row),
         secrets: request.secrets,
         product: request.testCase.product,
         workspace: request.variables?.workspace,
