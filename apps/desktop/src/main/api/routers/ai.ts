@@ -2,6 +2,7 @@ import { createProvider, isLocal } from '@kiemi/ai';
 import { AI_TASKS, AiSettingsInputSchema } from '@kiemi/schema';
 import { z } from 'zod';
 import { acceptTest, chat } from '../../ai/assistant';
+import { applyFix, diagnose } from '../../ai/diagnose';
 import { gatewayFor } from '../../ai/gateway';
 import { suggestCases } from '../../ai/suggest';
 import { proposeNote, runTool, saveNotes } from '../../ai/tools';
@@ -74,6 +75,45 @@ export const aiRouter = router({
         ...(input.context ? { context: input.context } : {}),
       }),
     ),
+
+  /** Why a step failed and, when it is stale, a proposed fix (nothing is changed) [AI-09, AI-10, FX-12]. */
+  diagnose: publicProcedure
+    .input(
+      z.object({
+        projectId,
+        testCaseId: z.string().min(1),
+        stepId: z.string().min(1),
+        error: z.object({
+          code: z.string(),
+          message: z.string().max(5000),
+          details: z.record(z.string(), z.unknown()).optional(),
+        }),
+        environmentName: z.string().nullish(),
+        pageText: z.string().max(60_000).optional(),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      diagnose(ctx.services, input.projectId, {
+        testCaseId: input.testCaseId,
+        stepId: input.stepId,
+        error: input.error,
+        environmentName: input.environmentName ?? null,
+        pageText: input.pageText,
+      }),
+    ),
+
+  /** The person pressed "apply" on a proposed fix [AI-09, AI-21]. */
+  applyFix: publicProcedure
+    .input(
+      z.object({
+        projectId,
+        testCaseId: z.string().min(1),
+        stepId: z.string().min(1),
+        params: z.record(z.string(), z.unknown()),
+        alsoSameTarget: z.boolean().default(false),
+      }),
+    )
+    .mutation(({ ctx, input }) => applyFix(ctx.services, input.projectId, input)),
 
   /** Cases still missing / extra business cases, as a proposal to review [AI-19, AI-08]. */
   suggest: publicProcedure
