@@ -90,6 +90,8 @@ export const projects = sqliteTable(
     permissionMatrices: json<PermissionMatrix[]>('permission_matrices'),
     /** Requirements / tickets tests are linked to [T-04] (migration 26). */
     requirements: json<Requirement[]>('requirements'),
+    /** Notes for the AI assistant, shared through the project folder [AI-20]. */
+    notes: text('notes'),
     /** One coverage score per day, for the trend [CV-09] (migration 28, this machine only). */
     coverageHistory: json<{ day: string; score: number }[]>('coverage_history'),
   },

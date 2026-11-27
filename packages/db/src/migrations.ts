@@ -525,4 +525,9 @@ ALTER TABLE "ai_settings" ADD COLUMN "price_out" REAL;
 ALTER TABLE "ai_settings" ADD COLUMN "usage" TEXT;
 ALTER TABLE "ai_settings" ADD COLUMN "audit" TEXT;`,
   },
+  {
+    id: 31,
+    name: 'project-notes',
+    sql: `ALTER TABLE "projects" ADD COLUMN "notes" TEXT;`,
+  },
 ];

@@ -60,6 +60,20 @@ export function AiSection() {
     }
   }, [q.isSuccess, info]);
 
+  const notesQ = useQuery({ ...trpc.ai.notes.queryOptions({ projectId }), enabled: !!projectId });
+  const [notes, setNotes] = useState('');
+  useEffect(() => {
+    if (notesQ.isSuccess) setNotes(notesQ.data);
+  }, [notesQ.isSuccess, notesQ.data]);
+  const saveNotes = async () => {
+    try {
+      await trpcClient.ai.saveNotes.mutate({ projectId, notes });
+      await qc.invalidateQueries({ queryKey: trpc.ai.notes.queryKey({ projectId }) });
+      toast.success(tx('ui.actions.saved'));
+    } catch (err) {
+      toast.error(errorMessage(err, tx));
+    }
+  };
   const refresh = () => qc.invalidateQueries({ queryKey: trpc.ai.get.queryKey({ projectId }) });
   const save = async () => {
     try {
@@ -221,6 +235,29 @@ export function AiSection() {
               : tx('ui.ai.lastFailed', { reason: info.lastMessage ?? '' })}
           </span>
         )}
+      </div>
+      <div className="flex flex-col gap-2">
+        <label htmlFor="ai-notes" className="text-xs font-medium">
+          {tx('ui.ai.notes')}
+        </label>
+        <textarea
+          id="ai-notes"
+          className="min-h-24 rounded-md border bg-background p-2 text-sm"
+          value={notes}
+          maxLength={20000}
+          placeholder={tx('ui.ai.notesHint')}
+          onChange={(e) => setNotes(e.target.value)}
+        />
+        <div>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!projectId || notes === (notesQ.data ?? '')}
+            onClick={() => void saveNotes()}
+          >
+            {tx('ui.ai.notesSave')}
+          </Button>
+        </div>
       </div>
     </section>
   );

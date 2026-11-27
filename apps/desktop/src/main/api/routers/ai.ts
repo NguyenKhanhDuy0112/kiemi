@@ -2,6 +2,7 @@ import { createProvider, isLocal } from '@kiemi/ai';
 import { AI_TASKS, AiSettingsInputSchema } from '@kiemi/schema';
 import { z } from 'zod';
 import { gatewayFor } from '../../ai/gateway';
+import { proposeNote, runTool, saveNotes } from '../../ai/tools';
 import { publicProcedure, router } from '../trpc';
 
 const projectId = z.string().min(1);
@@ -48,6 +49,28 @@ export const aiRouter = router({
         estimatedTokens: out.estimatedTokens,
       };
     }),
+
+  /** Notes the assistant reads every session [AI-20]. */
+  notes: publicProcedure
+    .input(z.object({ projectId }))
+    .query(({ ctx, input }) => ctx.services.projects.notes(input.projectId)),
+
+  /** The person typed or accepted these notes: saving is their own approval. */
+  saveNotes: publicProcedure
+    .input(z.object({ projectId, notes: z.string().max(20000) }))
+    .mutation(({ ctx, input }) => {
+      saveNotes(ctx.services, input.projectId, input.notes, true);
+    }),
+
+  /** "Remember that…": the notes as they would be, nothing saved. */
+  proposeNote: publicProcedure
+    .input(z.object({ projectId, text: z.string().min(1).max(2000) }))
+    .query(({ ctx, input }) => proposeNote(ctx.services, input.projectId, input.text)),
+
+  /** Runs a read-only lookup tool (used by the chat panel) [AI-16]. */
+  tool: publicProcedure
+    .input(z.object({ projectId, name: z.string().min(1), args: z.unknown().optional() }))
+    .query(({ ctx, input }) => runTool(ctx.services, input.projectId, input.name, input.args)),
 
   /** What the assistant did lately, newest first [AI-21]. */
   audit: publicProcedure

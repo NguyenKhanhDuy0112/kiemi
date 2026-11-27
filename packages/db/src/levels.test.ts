@@ -208,6 +208,19 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     expect(other.projects.manualCases(projectId)).toEqual(cases);
   });
 
+  it('notes for the AI assistant travel through the project folder [AI-20]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    s.projects.setNotes(projectId, '- Dùng tài khoản qa1\n');
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-notes-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.notes(projectId)).toBe('- Dùng tài khoản qa1\n');
+  });
+
   it('test plans of a project travel through the project folder [T-02]', () => {
     const { services: s, defaultProjectId: projectId } = createMemoryServices();
     const plans = [

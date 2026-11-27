@@ -204,7 +204,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M16-02a** `packages/ai`: che secret/PII, cổng gọi AI (local-only, cache, giới hạn tháng), duyệt qua Zod + diff từng phần, hàng rào hành động + nhật ký [AI-02, AI-03, AI-04, AI-21]
 - [x] **M16-02b** Nối vào main: lưu tổng tháng/cache/nhật ký AI, router `ai.preview|usage`, màn "Xem dữ liệu sẽ gửi", giới hạn tháng + giá trong Cài đặt [AI-02, AI-04, AI-21]
 - [x] **M16-03a** Gói kiến thức sinh từ registry + kiểm tra step AI tạo (chỉ trong danh mục) [AI-15]
-- [ ] **M16-03b** Công cụ tra cứu dự án (chỉ đọc) + ghi chú dự án `notes.md` [AI-16, AI-20]
+- [x] **M16-03b** Công cụ tra cứu dự án (chỉ đọc) + ghi chú dự án `notes.md` [AI-16, AI-20]
 - [ ] **M16-03c** Ngữ cảnh trang đang mở: cây truy cập, form, ảnh (theo AI-02), pickElement/highlight [AI-17]
 - [ ] **M16-04** Panel chat + thiết kế test bằng hội thoại + gợi ý case còn thiếu/nghiệp vụ [AI-13, AI-18, AI-19, AI-08]
 - [ ] **M16-05** Phân loại nguyên nhân fail + tự sửa selector + "Đề xuất sửa" trên màn Chạy [AI-10, AI-09, FX-12]

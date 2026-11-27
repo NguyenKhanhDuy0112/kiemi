@@ -893,6 +893,10 @@ export const enUi = {
     priceOut: 'Price per million output tokens',
     usage: 'Month {{month}}: {{tokens}} tokens, {{calls}} calls',
     usageCost: ' · about {{cost}}',
+    notes: 'Project notes for the assistant',
+    notesHint:
+      'Team conventions, e.g. Use account qa1 on UAT. Saved with the project folder, shared by the team.',
+    notesSave: 'Save notes',
     localOnly: 'Only allow models that run on this computer (nothing leaves it)',
     taskModels: 'Model per task (optional)',
     task: {

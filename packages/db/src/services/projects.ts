@@ -125,6 +125,13 @@ export class ProjectService {
     if (!p.success) throw validation('requirement', p.error.issues);
     return this.repo.update(id, { requirements: p.data });
   }
+  /** Project notes the AI assistant reads every session [AI-20]. */
+  notes(id: string): string {
+    return this.repo.get(id).notes ?? '';
+  }
+  setNotes(id: string, notes: string) {
+    return this.repo.update(id, { notes: notes.slice(0, 20000) });
+  }
   requirements(id: string): Requirement[] {
     return this.repo.get(id).requirements ?? [];
   }

@@ -892,6 +892,10 @@ export const viUi = {
     priceOut: 'Giá mỗi 1 triệu token ra',
     usage: 'Tháng {{month}}: {{tokens}} token, {{calls}} lần gọi',
     usageCost: ' · khoảng {{cost}}',
+    notes: 'Ghi chú dự án cho trợ lý',
+    notesHint:
+      'Quy ước của nhóm, vd: Dùng tài khoản qa1 cho UAT. Lưu cùng thư mục dự án, cả nhóm dùng chung.',
+    notesSave: 'Lưu ghi chú',
     localOnly: 'Chỉ cho dùng model chạy trên máy (không gửi dữ liệu ra ngoài)',
     taskModels: 'Model riêng theo tác vụ (tùy chọn)',
     task: {
