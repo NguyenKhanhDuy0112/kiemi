@@ -26,6 +26,8 @@ export const TestPlanSchema = z.object({
   name: z.string().trim().min(1).max(200),
   /** Release or build the round is for, e.g. "3.2". */
   release: z.string().max(100).default(''),
+  /** Key of the product the round is for; empty = whole project [O-13]. */
+  product: z.string().max(40).default(''),
   items: z.array(PlanItemSchema).default([]),
 });
 export type TestPlan = z.infer<typeof TestPlanSchema>;
@@ -111,4 +113,35 @@ export function syncManual(plan: TestPlan, cases: ManualCase[]): TestPlan {
       return { ...it, status: s === 'untested' ? 'notrun' : s };
     }),
   };
+}
+
+export interface ReleaseRow {
+  product: string;
+  release: string;
+  plans: number;
+  counts: PlanCounts;
+  /** Percent decided (not "not run"). */
+  progress: number;
+}
+
+/**
+ * Report by release [O-13]: rounds of the same product + release are merged.
+ * Rounds without a release are left out (nothing to report on).
+ */
+export function releaseReport(plans: readonly TestPlan[]): ReleaseRow[] {
+  const groups = new Map<string, TestPlan[]>();
+  for (const p of plans) {
+    if (!p.release.trim()) continue;
+    const k = `${p.product}\u0000${p.release.trim()}`;
+    groups.set(k, [...(groups.get(k) ?? []), p]);
+  }
+  return [...groups.entries()]
+    .map(([k, ps]) => {
+      const [product = '', release = ''] = k.split('\u0000');
+      const counts = planCounts(ps.flatMap((p) => p.items));
+      const progress =
+        counts.total === 0 ? 0 : Math.round(((counts.total - counts.notrun) / counts.total) * 100);
+      return { product, release, plans: ps.length, counts, progress };
+    })
+    .sort((a, b) => a.product.localeCompare(b.product) || a.release.localeCompare(b.release));
 }
