@@ -8,6 +8,9 @@ const base = {
   taskModels: {},
   baseUrl: '',
   localOnly: false,
+  limitTokens: null,
+  priceIn: null,
+  priceOut: null,
 };
 
 describe('AiSettingsService', () => {
@@ -44,5 +47,19 @@ describe('AiSettingsService', () => {
     const { services, defaultProjectId: p } = createMemoryServices(fakeCipher(false));
     expect(() => services.aiSettings.save(p, base, 'k')).toThrow(/encryption/);
     expect(services.aiSettings.save(p, base).hasKey).toBe(false);
+  });
+
+  it('keeps the month total (resets on a new month) and the last 200 audit rows', () => {
+    const { services, defaultProjectId: p } = createMemoryServices();
+    const s = services.aiSettings;
+    s.save(p, { ...base, limitTokens: 1000, priceIn: 1, priceOut: 2 });
+    expect(s.get(p)).toMatchObject({ limitTokens: 1000, priceIn: 1, priceOut: 2 });
+    s.saveUsage(p, { month: '2026-11', tokens: 50, cost: 1, calls: 2 });
+    expect(s.usageOf(p, '2026-11').tokens).toBe(50);
+    expect(s.usageOf(p, '2026-12')).toEqual({ month: '2026-12', tokens: 0, cost: 0, calls: 0 });
+    for (let i = 0; i < 205; i++) s.addAudit(p, { at: String(i), action: 'save', allowed: false });
+    const log = s.audit(p);
+    expect(log).toHaveLength(200);
+    expect(log[0]?.at).toBe('204');
   });
 });

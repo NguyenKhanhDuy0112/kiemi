@@ -13,6 +13,11 @@ export const AiSettingsInputSchema = z.object({
   baseUrl: z.string().trim().max(300).default(''),
   /** Project lock: only a model on this computer may be used [AI-02]. */
   localOnly: z.boolean().default(false),
+  /** Monthly limit in tokens; empty = no limit [AI-04]. */
+  limitTokens: z.number().int().min(1).nullable().default(null),
+  /** Price per million tokens in the project's own currency; empty = cost not shown. */
+  priceIn: z.number().min(0).nullable().default(null),
+  priceOut: z.number().min(0).nullable().default(null),
 });
 export type AiSettingsInput = z.infer<typeof AiSettingsInputSchema>;
 

@@ -4,9 +4,28 @@ import { DbError, Repo, type RepoContext, validation } from '../repo';
 import { aiSettings } from '../tables';
 import type { SecretCipher } from './environments';
 
+export interface AiUsageTotal {
+  month: string;
+  tokens: number;
+  cost: number;
+  calls: number;
+}
+
+export interface AiAuditRow {
+  at: string;
+  action: string;
+  allowed: boolean;
+  reason?: string;
+  note?: string;
+}
+
+const AUDIT_KEEP = 200;
+
 /** Settings as the screen sees them: never the key. */
 export interface AiSettingsInfo extends AiSettingsInput {
   hasKey: boolean;
+  /** Total of the month last used. */
+  usage: AiUsageTotal | null;
   lastOk: boolean | null;
   lastMessage: string | null;
   lastAt: Date | null;
@@ -39,6 +58,9 @@ export class AiSettingsService {
       taskModels: r.taskModels ?? {},
       baseUrl: r.baseUrl ?? '',
       localOnly: r.localOnly,
+      limitTokens: r.limitTokens,
+      priceIn: r.priceIn,
+      priceOut: r.priceOut,
     });
   }
 
@@ -49,6 +71,7 @@ export class AiSettingsService {
     return {
       ...this.#input(r),
       hasKey: r.ciphertext !== null,
+      usage: r.usage ?? null,
       lastOk: r.lastOk,
       lastMessage: r.lastMessage,
       lastAt: r.lastAt,
@@ -75,6 +98,9 @@ export class AiSettingsService {
       taskModels: p.data.taskModels,
       baseUrl: p.data.baseUrl || null,
       localOnly: p.data.localOnly,
+      limitTokens: p.data.limitTokens,
+      priceIn: p.data.priceIn,
+      priceOut: p.data.priceOut,
       ...(ciphertext !== undefined ? { ciphertext } : {}),
     };
     const old = this.#row(projectId);
@@ -106,5 +132,26 @@ export class AiSettingsService {
       apiKey = this.#cipher.decrypt(r.ciphertext);
     }
     return { ...this.#input(r), apiKey };
+  }
+
+  /** Total of `month`; zero when the last saved total is another month. */
+  usageOf(projectId: string, month: string): AiUsageTotal {
+    const u = this.#row(projectId)?.usage;
+    return u && u.month === month ? u : { month, tokens: 0, cost: 0, calls: 0 };
+  }
+
+  saveUsage(projectId: string, total: AiUsageTotal): void {
+    const r = this.#row(projectId);
+    if (r) this.repo.update(r.id, { usage: total });
+  }
+
+  /** Newest first; only the last 200 are kept. */
+  audit(projectId: string): AiAuditRow[] {
+    return [...(this.#row(projectId)?.audit ?? [])].reverse();
+  }
+
+  addAudit(projectId: string, row: AiAuditRow): void {
+    const r = this.#row(projectId);
+    if (r) this.repo.update(r.id, { audit: [...(r.audit ?? []), row].slice(-AUDIT_KEEP) });
   }
 }

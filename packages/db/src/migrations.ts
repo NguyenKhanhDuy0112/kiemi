@@ -516,4 +516,13 @@ CREATE INDEX "test_versions_test_idx" ON "test_versions" ("test_case_id");`,
 );
 CREATE UNIQUE INDEX "ai_settings_project_idx" ON "ai_settings" ("project_id");`,
   },
+  {
+    id: 30,
+    name: 'ai-limits-usage',
+    sql: `ALTER TABLE "ai_settings" ADD COLUMN "limit_tokens" INTEGER;
+ALTER TABLE "ai_settings" ADD COLUMN "price_in" REAL;
+ALTER TABLE "ai_settings" ADD COLUMN "price_out" REAL;
+ALTER TABLE "ai_settings" ADD COLUMN "usage" TEXT;
+ALTER TABLE "ai_settings" ADD COLUMN "audit" TEXT;`,
+  },
 ];

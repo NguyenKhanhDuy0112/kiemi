@@ -888,6 +888,11 @@ export const enUi = {
     apiKey: 'API key',
     keyKeep: 'A key is saved — type to replace',
     keyRemove: 'Remove key',
+    limitTokens: 'Monthly token limit (empty = no limit)',
+    priceIn: 'Price per million input tokens (optional, to show cost)',
+    priceOut: 'Price per million output tokens',
+    usage: 'Month {{month}}: {{tokens}} tokens, {{calls}} calls',
+    usageCost: ' · about {{cost}}',
     localOnly: 'Only allow models that run on this computer (nothing leaves it)',
     taskModels: 'Model per task (optional)',
     task: {

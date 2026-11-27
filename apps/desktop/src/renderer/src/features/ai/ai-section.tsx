@@ -22,6 +22,9 @@ const EMPTY: AiSettingsInput = {
   taskModels: {},
   baseUrl: '',
   localOnly: false,
+  limitTokens: null,
+  priceIn: null,
+  priceOut: null,
 };
 
 /** Settings block "Trợ lý AI": provider, model, key per project [AI-01]. */
@@ -46,6 +49,9 @@ export function AiSection() {
               taskModels: info.taskModels,
               baseUrl: info.baseUrl,
               localOnly: info.localOnly,
+              limitTokens: info.limitTokens,
+              priceIn: info.priceIn,
+              priceOut: info.priceOut,
             }
           : EMPTY,
       );
@@ -162,6 +168,29 @@ export function AiSection() {
         />
         {tx('ui.ai.localOnly')}
       </label>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {(['limitTokens', 'priceIn', 'priceOut'] as const).map((f) => (
+          <Input
+            key={f}
+            type="number"
+            min={0}
+            value={s[f] ?? ''}
+            placeholder={tx(`ui.ai.${f}`)}
+            aria-label={tx(`ui.ai.${f}`)}
+            onChange={(e) => patch({ [f]: e.target.value === '' ? null : Number(e.target.value) })}
+          />
+        ))}
+      </div>
+      {info?.usage && (
+        <p className="text-xs text-muted-foreground">
+          {tx('ui.ai.usage', {
+            month: info.usage.month,
+            tokens: info.usage.tokens,
+            calls: info.usage.calls,
+          })}
+          {info.priceIn !== null && tx('ui.ai.usageCost', { cost: info.usage.cost.toFixed(2) })}
+        </p>
+      )}
       <details className="text-sm">
         <summary className="cursor-pointer text-xs text-muted-foreground">
           {tx('ui.ai.taskModels')}

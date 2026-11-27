@@ -887,6 +887,11 @@ export const viUi = {
     apiKey: 'Khóa API',
     keyKeep: 'Đã lưu khóa — nhập để thay',
     keyRemove: 'Xóa khóa',
+    limitTokens: 'Giới hạn token mỗi tháng (bỏ trống = không giới hạn)',
+    priceIn: 'Giá mỗi 1 triệu token vào (tùy chọn, để tính chi phí)',
+    priceOut: 'Giá mỗi 1 triệu token ra',
+    usage: 'Tháng {{month}}: {{tokens}} token, {{calls}} lần gọi',
+    usageCost: ' · khoảng {{cost}}',
     localOnly: 'Chỉ cho dùng model chạy trên máy (không gửi dữ liệu ra ngoài)',
     taskModels: 'Model riêng theo tác vụ (tùy chọn)',
     task: {

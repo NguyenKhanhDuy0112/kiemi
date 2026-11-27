@@ -1,6 +1,7 @@
 import { createProvider, isLocal } from '@kiemi/ai';
-import { AiSettingsInputSchema } from '@kiemi/schema';
+import { AI_TASKS, AiSettingsInputSchema } from '@kiemi/schema';
 import { z } from 'zod';
+import { gatewayFor } from '../../ai/gateway';
 import { publicProcedure, router } from '../trpc';
 
 const projectId = z.string().min(1);
@@ -23,6 +24,35 @@ export const aiRouter = router({
     .mutation(({ ctx, input }) =>
       ctx.services.aiSettings.save(input.projectId, input.settings, input.apiKey),
     ),
+
+  /** What would really be sent for this text: the redacted copy and what was hidden [AI-02]. */
+  preview: publicProcedure
+    .input(
+      z.object({
+        projectId,
+        task: z.enum(AI_TASKS).optional(),
+        system: z.string().max(100_000).optional(),
+        text: z.string().max(200_000),
+      }),
+    )
+    .query(({ ctx, input }) => {
+      const out = gatewayFor(ctx.services, input.projectId).preview({
+        ...(input.task ? { task: input.task } : {}),
+        ...(input.system ? { system: input.system } : {}),
+        messages: [{ role: 'user', content: input.text }],
+      });
+      return {
+        system: out.request.system ?? '',
+        text: out.request.messages.map((m) => m.content).join('\n'),
+        redactions: out.redactions,
+        estimatedTokens: out.estimatedTokens,
+      };
+    }),
+
+  /** What the assistant did lately, newest first [AI-21]. */
+  audit: publicProcedure
+    .input(z.object({ projectId }))
+    .query(({ ctx, input }) => ctx.services.aiSettings.audit(input.projectId)),
 
   /** Asks the model for one word, to prove address, key and model work. */
   test: publicProcedure.input(z.object({ projectId })).mutation(async ({ ctx, input }) => {

@@ -20,7 +20,15 @@ import type {
   TestPlan,
 } from '@kiemi/schema';
 import { AI_PROVIDER_KINDS, NOTIFY_KINDS } from '@kiemi/schema';
-import { blob, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import {
+  blob,
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 
 /**
  * SQLite schema (SPEC Phụ lục 2). Every table has `id` (UUIDv7), `workspaceId`,
@@ -453,6 +461,15 @@ export const aiSettings = sqliteTable(
     taskModels: json<Record<string, string>>('task_models'),
     baseUrl: text('base_url'),
     localOnly: integer('local_only', { mode: 'boolean' }).notNull().default(false),
+    limitTokens: integer('limit_tokens'),
+    priceIn: real('price_in'),
+    priceOut: real('price_out'),
+    /** This month's total and the last actions of the assistant [AI-04, AI-21]. */
+    usage: json<{ month: string; tokens: number; cost: number; calls: number }>('usage'),
+    audit:
+      json<{ at: string; action: string; allowed: boolean; reason?: string; note?: string }[]>(
+        'audit',
+      ),
     ciphertext: blob('ciphertext', { mode: 'buffer' }),
     lastOk: integer('last_ok', { mode: 'boolean' }),
     lastMessage: text('last_message'),
