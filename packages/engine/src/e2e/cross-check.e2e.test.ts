@@ -711,3 +711,83 @@ describe('mock API [X-07]', () => {
     expect(bad(summary(r))).toEqual([]);
   });
 });
+
+describe('e-mail box [X-06]', () => {
+  /** A tiny Mailpit-like server: one mail with a code and a link. */
+  async function mailbox(created: string) {
+    const { createServer } = await import('node:http');
+    const server = createServer((req, res) => {
+      const url = new URL(req.url ?? '/', 'http://x');
+      res.setHeader('content-type', 'application/json');
+      if (url.pathname === '/api/v1/search') {
+        const q = url.searchParams.get('query') ?? '';
+        const mine = q.includes('an@example.com');
+        res.end(
+          JSON.stringify({
+            messages: mine
+              ? [
+                  {
+                    ID: 'm1',
+                    Subject: 'Mã xác thực',
+                    To: [{ Address: 'an@example.com' }],
+                    Created: created,
+                  },
+                ]
+              : [],
+          }),
+        );
+      } else if (url.pathname === '/api/v1/message/m1') {
+        res.end(
+          JSON.stringify({
+            Text: 'Mã của bạn là 482913. Xác nhận: https://app.example.com/confirm?t=abc',
+            HTML: '',
+          }),
+        );
+      } else res.end('{}');
+    });
+    await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+    const port = (server.address() as { port: number }).port;
+    return { url: `http://127.0.0.1:${port}`, close: () => server.close() };
+  }
+
+  it('takes the OTP and the link out of the newest matching mail', async () => {
+    const box = await mailbox(new Date(Date.now() + 500).toISOString());
+    try {
+      const r = await e.run(
+        [
+          step('readMail', {
+            url: box.url,
+            to: 'an@example.com',
+            regex: 'là (\\d{6})',
+            into: 'otp',
+          }),
+          step('readMail', {
+            url: box.url,
+            to: 'an@example.com',
+            regex: 'https?://\\S+/confirm\\S*',
+            into: 'link',
+          }),
+          step('assertVariable', { name: 'otp', value: '482913' }),
+          step('assertVariable', { name: 'link', op: 'contains', value: '/confirm?t=abc' }),
+        ],
+        { request: { options: { defaultStepTimeoutMs: 6000 } } },
+      );
+      expect(bad(summary(r))).toEqual([]);
+    } finally {
+      box.close();
+    }
+  });
+
+  it('says clearly when the mail never comes', async () => {
+    const box = await mailbox(new Date(Date.now() + 500).toISOString());
+    try {
+      const r = await e.run(
+        [step('readMail', { url: box.url, to: 'nobody@example.com', regex: '(\\d+)', into: 'x' })],
+        { request: { options: { defaultStepTimeoutMs: 2500 } } },
+      );
+      expect(r.steps.at(-1)?.error?.message).toMatch(/no mail to nobody@example.com/);
+    } finally {
+      box.close();
+    }
+  });
+});

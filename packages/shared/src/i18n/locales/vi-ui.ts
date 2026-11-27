@@ -1589,6 +1589,10 @@ export const viUi = {
       label: 'Kiểm tra cảnh báo khi rời trang',
       sentence: 'Rời trang có cảnh báo: {{expected}}',
     },
+    readMail: {
+      label: 'Đọc email (OTP / liên kết)',
+      sentence: 'Lấy mã từ email gửi tới {{to}} vào {{into}}',
+    },
     mockApi: { label: 'Giả lập phản hồi API', sentence: 'Giả lập API {{url}}: {{mode}}' },
     printToFile: { label: 'In ra file PDF', sentence: 'In trang ra file PDF, lưu vào {{into}}' },
     sessionGuard: {

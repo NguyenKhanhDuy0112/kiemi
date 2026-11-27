@@ -42,6 +42,7 @@ import { printToFileAction } from './print';
 import { propagateAction } from './propagate';
 import { assertButtonsAction, assertLayersAction, rapidClickAction, timedAction } from './quality';
 import { queryDbAction } from './query-db';
+import { readMailAction } from './read-mail';
 import { saveSessionAction, useSessionAction } from './saved-login';
 import { scrollAction } from './scroll';
 import { selectAction } from './select';
@@ -120,6 +121,7 @@ export const builtinActions: ActionDefinition[] = [
   downloadAction,
   printToFileAction,
   mockApiAction,
+  readMailAction,
   sessionGuardAction,
   generateFileAction,
   callAction,

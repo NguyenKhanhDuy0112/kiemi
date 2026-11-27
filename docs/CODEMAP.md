@@ -48,6 +48,7 @@
 - Xu hướng + điểm độ phủ (T-07, CV-09): `schema/src/dashboard.ts` (`flakyTests`, `slowestTests`), `schema/src/coverage-score.ts`, router `coverage.score` (ghi 1 điểm/ngày vào `projects.coverage_history`, migration 28, chỉ ở máy), UI ở `features/dashboard/dashboard-screen.tsx`
 - Độ phủ phần tử (CV-03): `engine/src/forms/interactive.ts` (`scanInteractive`), lệnh `scanElements` qua `record-core`/`recorder-manager`, router `recorder.scanElements`, `schema/src/element-coverage.ts` (`elementCoverage`, `usedStrategies`), UI `features/test-coverage/elements-panel.tsx`
 - Mock API (X-07): `engine/src/actions/mock-api.ts` (`mockApi`: respond/error/timeout/empty/off, theo ngữ cảnh phiên)
+- Email/OTP (X-06): `engine/src/actions/read-mail.ts` (`readMail`: Mailpit `/api/v1`, Mailtrap + token secret; regex nhóm 1 → biến)
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)

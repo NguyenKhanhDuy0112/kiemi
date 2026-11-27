@@ -1587,6 +1587,10 @@ export const enUi = {
       label: 'Check the leave-page warning',
       sentence: 'Leaving the page warns: {{expected}}',
     },
+    readMail: {
+      label: 'Read an e-mail (OTP / link)',
+      sentence: 'Take a code from the e-mail sent to {{to}} into {{into}}',
+    },
     mockApi: { label: 'Fake an API response', sentence: 'Fake API {{url}}: {{mode}}' },
     printToFile: {
       label: 'Print to a PDF file',
