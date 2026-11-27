@@ -21,7 +21,9 @@ function setup() {
     },
     'k',
   );
-  services.projects.setPages(p, [{ id: 'pg1', name: 'Danh sách', path: '/danh-sach', kind: 'list' }]);
+  services.projects.setPages(p, [
+    { id: 'pg1', name: 'Danh sách', path: '/danh-sach', kind: 'list' },
+  ]);
   services.projects.setRequirements(p, [{ key: 'REQ-1', title: 'Tìm kiếm' }]);
   services.testCases.create({ projectId: p, name: 'Đăng nhập' });
   return { services, p };
