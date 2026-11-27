@@ -15,6 +15,7 @@ export * from './locator';
 export * from './manual-case';
 export * from './migrate';
 export * from './notify';
+export * from './observations';
 export * from './permission-matrix';
 export * from './popup';
 export * from './product';

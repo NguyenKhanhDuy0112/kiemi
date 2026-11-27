@@ -101,6 +101,7 @@ describe('describeRunError [I-04, N-06]', () => {
       'DB_WRITE_BLOCKED',
       'DB_SECRET_MISSING',
       'DB_QUERY_FAILED',
+      'PROPAGATION_FAILED',
       'UNKNOWN_PRODUCT',
       'INVALID_EXPRESSION',
       'CONSOLE_ERROR',

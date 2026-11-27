@@ -188,6 +188,20 @@ export async function handleRequest(
     send(res, 200, { ok: true });
     return true;
   }
+  if (path === '/api/chat' && method === 'GET') {
+    send(res, 200, { messages: store.chat, realtime: store.chatRealtime });
+    return true;
+  }
+  if (path === '/api/chat' && method === 'POST') {
+    const body = JSON.parse((await readBody(req)) || '{}') as {
+      text?: unknown;
+      realtime?: unknown;
+    };
+    if (typeof body.realtime === 'boolean') store.chatRealtime = body.realtime;
+    if (typeof body.text === 'string' && body.text.trim()) store.chat.push(body.text.trim());
+    send(res, 200, { messages: store.chat, realtime: store.chatRealtime });
+    return true;
+  }
   if (path === '/api/promo' && method === 'GET') {
     send(res, 200, store.promo);
     return true;

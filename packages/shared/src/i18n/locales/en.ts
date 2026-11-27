@@ -139,6 +139,10 @@ export const en = {
         message: 'Could not query the database “{{connection}}”: {{reason}}',
         hint: 'Check the server address, user, password, table/column names, and the network/VPN to the server.',
       },
+      PROPAGATION_FAILED: {
+        message: 'The change did not reach {{count}} place(s): {{places}}.',
+        hint: 'Open each failed child step to see what that place shows. The data may not be synced yet — try a longer timeout on the step.',
+      },
       UNKNOWN_VARIABLE: {
         message: 'There is no variable “{{name}}”.',
         hint: 'Check the variable name, or add a “Save value to variable” step before this one.',

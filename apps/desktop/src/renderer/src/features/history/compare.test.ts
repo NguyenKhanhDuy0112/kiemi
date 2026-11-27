@@ -48,3 +48,19 @@ describe('compare two runs [S-05]', () => {
     ]);
   });
 });
+
+describe('compare noted values of two runs [V-06]', () => {
+  it('reports exactly the field that differs, even when every step passed', () => {
+    const uat = {
+      ...kase('passed', { s1: ['1', 'passed'] }),
+      observations: { gia: '100', ten: 'An' },
+    };
+    const staging = {
+      ...kase('passed', { s1: ['1', 'passed'] }),
+      observations: { gia: '120', ten: 'An' },
+    };
+    const [c] = compareRuns(run([uat]), run([staging]));
+    expect(c?.changed).toBe(true);
+    expect(c?.fields).toEqual([{ name: 'gia', a: '100', b: '120', status: 'different' }]);
+  });
+});

@@ -168,6 +168,7 @@ class Run {
   readonly #vars: VariableStore;
   readonly #dialogs = new DialogController();
   readonly #diagnostics: Diagnostic[] = [];
+  readonly #observations: Record<string, string> = {};
   readonly #secretFields = new Map<string, PwLocator[]>();
   readonly #defaultTimeout: number;
   /** Top-level steps before this index are skipped (run from step X). */
@@ -398,6 +399,9 @@ class Run {
       ...(runError ? { error: runError } : {}),
       artifacts: runArtifacts,
       diagnostics: [...this.#diagnostics],
+      observations: Object.fromEntries(
+        Object.entries(this.#observations).map(([k, v]) => [k, this.#mask(v)]),
+      ),
     };
     this.#emit({ type: 'runEnd', runId, result });
     return result;
@@ -418,6 +422,7 @@ class Run {
       pages: this.#pages,
       dialogs: this.#dialogs,
       diagnostics: this.#diagnostics,
+      observations: this.#observations,
       filesDir: req.options?.filesDir,
       url: (value) => {
         if (/^[a-z][a-z0-9+.-]*:/i.test(value) || !baseUrl) return value;
@@ -950,6 +955,20 @@ class Run {
           throw new EngineError('RUN_CANCELLED', 'Run was cancelled', { step: topNo });
         }
         if (failed) throw new StepFailure(failed);
+      },
+      runAllSteps: async (raw) => {
+        const children = raw.map((s) =>
+          StepSchema.parse({ session: step.session, ...(s as object) }),
+        );
+        const before = self.children.length;
+        await this.#runList(children, 'steps', controller.signal, self, self.children, true);
+        if (controller.signal.aborted && runSignal.aborted) {
+          throw new EngineError('RUN_CANCELLED', 'Run was cancelled', { step: topNo });
+        }
+        return self.children
+          .slice(before)
+          .filter((r) => r.error !== undefined)
+          .map((r) => ({ stepId: r.stepId, error: r.error as RunError }));
       },
       markSecret: (l) => {
         const list = this.#secretFields.get(step.session) ?? [];

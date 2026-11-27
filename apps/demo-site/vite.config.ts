@@ -29,6 +29,7 @@ export default defineConfig({
         import: page('import.html'),
         grid: page('grid.html'),
         promo: page('promo.html'),
+        chat: page('chat.html'),
         controls: page('controls.html'),
         portal: page('portal.html'),
         portalFn: page('portal-fn.html'),

@@ -117,12 +117,17 @@ export class DemoStore {
   readonly people: Person[] = seedPeople();
   /** Summer promotion: price while it runs, normal price after `endsOn` (local date) [Y-01, V-02]. */
   promo = { ...DEFAULT_PROMO };
+  /** Chat of `chat.html`; `realtime=false` makes the page stop updating by itself [V-04]. */
+  chat: string[] = [];
+  chatRealtime = true;
   /** Deliberate permission bugs ("role|function") for the portal [Q-09]. */
   portalLeaks = new Set<string>();
 
   reset(): void {
     this.imported = [];
     this.promo = { ...DEFAULT_PROMO };
+    this.chat = [];
+    this.chatRealtime = true;
     this.portalLeaks.clear();
     this.requests = [];
     this.products = seedProducts();

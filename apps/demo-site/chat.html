@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Trò chuyện nhóm — Kiemi Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Trò chuyện nhóm</h1>
+      <p class="muted">
+        Tin nhắn mới hiện ở mọi tab trong chưa đến 1 giây mà không tải lại trang. Có thể tắt cập nhật tức thì
+        (<code>POST /api/chat {"realtime": false}</code>) để tab khác chỉ thấy tin sau khi tải lại.
+      </p>
+      <section class="card" aria-label="Tin nhắn">
+        <ul id="messages" data-testid="messages"></ul>
+        <p id="live-state" data-testid="live-state"></p>
+      </section>
+      <section class="card" aria-label="Gửi tin">
+        <div class="field">
+          <label for="msg">Tin nhắn</label>
+          <input id="msg" type="text" />
+        </div>
+        <button type="button" class="btn primary" id="send">Gửi</button>
+      </section>
+    </main>
+    <script type="module" src="/src/chat.ts"></script>
+  </body>
+</html>

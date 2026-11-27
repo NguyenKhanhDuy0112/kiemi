@@ -317,6 +317,8 @@ export const enUi = {
     compareTitle: 'Compare 2 runs',
     step: 'Step',
     changed: 'Different',
+    fieldsDiffer: '{{count}} noted value(s) differ',
+    missing: '(missing)',
     onlyChanges: 'Only show differences',
     noChanges: 'Both runs have the same results.',
     notRun: '—',
@@ -1506,6 +1508,19 @@ export const enUi = {
     assertSame: {
       label: 'Compare two places',
       sentence: 'Compare {{left}} with {{right}}',
+    },
+    observe: { label: 'Note a value to compare', sentence: 'Note “{{name}}” = {{value}}' },
+    markLive: {
+      label: 'Mark the page to detect reloads',
+      sentence: 'Mark the page (must not reload)',
+    },
+    assertLive: {
+      label: 'Check live update (no reload)',
+      sentence: '{{target}} updates by itself, no reload',
+    },
+    propagate: {
+      label: 'Check the change reached every place',
+      sentence: 'Check the change reached these places',
     },
     clock: {
       label: 'Fake the time',

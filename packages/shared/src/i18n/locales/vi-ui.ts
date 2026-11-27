@@ -317,6 +317,8 @@ export const viUi = {
     compareTitle: 'So sánh 2 lần chạy',
     step: 'Bước',
     changed: 'Khác nhau',
+    fieldsDiffer: '{{count}} giá trị ghi nhận khác nhau',
+    missing: '(không có)',
     onlyChanges: 'Chỉ hiện chỗ khác nhau',
     noChanges: 'Hai lần chạy cho kết quả giống nhau.',
     notRun: '—',
@@ -1505,6 +1507,19 @@ export const viUi = {
     assertSame: {
       label: 'So sánh giữa 2 nơi',
       sentence: 'So sánh {{left}} với {{right}}',
+    },
+    observe: { label: 'Ghi nhận giá trị để so sánh', sentence: 'Ghi nhận “{{name}}” = {{value}}' },
+    markLive: {
+      label: 'Đánh dấu trang để kiểm tra không tải lại',
+      sentence: 'Đánh dấu trang (không được tải lại)',
+    },
+    assertLive: {
+      label: 'Kiểm tra cập nhật tức thì (không tải lại)',
+      sentence: '{{target}} tự cập nhật, không tải lại trang',
+    },
+    propagate: {
+      label: 'Kiểm tra thay đổi lan tới nhiều nơi',
+      sentence: 'Kiểm tra thay đổi đã lan tới các nơi sau',
     },
     clock: {
       label: 'Giả lập thời gian',

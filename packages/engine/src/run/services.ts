@@ -93,6 +93,8 @@ export interface RunServices {
   readonly pages: SessionPages;
   readonly dialogs: DialogController;
   readonly diagnostics: readonly Diagnostic[];
+  /** Values noted by `observe`, returned in the run result [V-06]. */
+  readonly observations: Record<string, string>;
   /** Base folder for relative upload paths [A-11]. */
   readonly filesDir: string | undefined;
   /** Resolves a URL against the env's baseUrl [A-01]. */

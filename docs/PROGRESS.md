@@ -7,9 +7,11 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M15** (nhánh `milestone/m15-v12-remaining`): M15-03 → M15-12 (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
+**M15** (nhánh `milestone/m15-v12-remaining`): M15-04 → M15-12 (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
 
 ## Lưu ý cho task sau
+- Flake: bộ e2e engine chạy song song hay đỏ ngẫu nhiên 1–4 test (STEP_TIMEOUT/'skipped' do máy tải, mỗi lần một test khác nhau); chạy lẻ file thì xanh. Cân nhắc giảm song song (`poolOptions`) ở task riêng.
+- M15-03 xong: V-04 = `markLive` (đặt cờ `window.__kiemiLive`, tải lại sẽ mất) + `assertLive` (nếu cờ mất → 'page was reloaded', không thử lại); V-06 = `observe {name,value}` ghi vào `RunResult.observations`, màn So sánh (Lịch sử) liệt kê giá trị khác nhau giữa 2 lần chạy (vd UAT vs Staging do chạy ma trận M15-01a); V-07 = container `propagate` chạy mọi bước con kể cả khi có bước lỗi, lỗi `PROPAGATION_FAILED` liệt kê id bước con lỗi (chưa có nhãn 'nơi' riêng — dùng tên bước). Chưa làm: tự động so sánh theo cặp môi trường trong hộp thoại ma trận (phải mở 2 lần chạy ở Lịch sử).
 - M15-02 xong: sửa ô dữ liệu khi run chờ — bộ gỡ lỗi dùng chung cho cả run nên chỉnh sửa dòng khóa theo `runCaseId` (= `RunRequest.runId`). `saveRow` ghi vào bảng của test (`dataset.source=table`) hoặc dataset đã lưu (dòng riêng của môi trường nếu có); chưa hỗ trợ bảng con (`children`) và dataset theo suite có ghi đè khác. Sau khi lưu test, phiên bản đổi → lần 'Lưu và thử lại' kế có thể cảnh báo xung đột phiên bản (đã tự refetch).
 - M15-01d xong: `TestPlan.product` (KHÓA sản phẩm, không phải id — id đổi giữa máy) + `releaseReport(plans)` (gộp đợt cùng sản phẩm+release, bỏ đợt không có release); bảng ở cuối màn Đợt test. Chưa có xuất Excel riêng cho báo cáo release (đợt nào cũng xuất được).
 - M15-01c xong: mẫu dự án = thư mục + test RỖNG (chỉ tên) + 1 suite + FormSpec thường gặp; thêm loại mới = thêm vào `PROJECT_TEMPLATES` + khóa `ui.templates.<key>` vi/en. `cloneProject` = bundle zip + chép cài đặt cấp dự án (popup, form, công thức, trang, ma trận quyền, case thủ công); KHÔNG chép đợt test (trỏ id cũ) và sản phẩm khác mặc định.

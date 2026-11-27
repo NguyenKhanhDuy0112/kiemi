@@ -345,6 +345,8 @@ export const runCases = sqliteTable(
     startedAt: integer('started_at', { mode: 'timestamp_ms' }),
     durationMs: integer('duration_ms'),
     error: json<{ code: string; message: string; details?: Record<string, unknown> }>('error'),
+    /** Values noted by `observe`, to compare runs [V-06] (migration 24). */
+    observations: json<Record<string, string>>('observations'),
   },
   (t) => [index('run_cases_run_idx').on(t.runId)],
 );

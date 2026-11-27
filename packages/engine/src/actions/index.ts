@@ -17,11 +17,14 @@ import { gotoAction } from './goto';
 import { gridFilterAction, gridRowAction } from './grid';
 import { hoverAction } from './hover';
 import { ifAction } from './if';
+import { markLiveAction } from './live';
 import { loopAction } from './loop';
 import { navigateAction } from './navigate';
+import { observeAction } from './observe';
 import { pickDateAction, pickDateRangeAction } from './pick-date';
 import { pickOptionAction } from './pick-option';
 import { pressAction } from './press';
+import { propagateAction } from './propagate';
 import { queryDbAction } from './query-db';
 import { saveSessionAction, useSessionAction } from './saved-login';
 import { scrollAction } from './scroll';
@@ -71,6 +74,9 @@ export const builtinActions: ActionDefinition[] = [
   clearDataAction,
   queryDbAction,
   clockAction,
+  markLiveAction,
+  observeAction,
+  propagateAction,
   gridRowAction,
   gridFilterAction,
   waitAction,

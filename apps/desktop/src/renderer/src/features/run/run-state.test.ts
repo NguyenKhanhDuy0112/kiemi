@@ -110,6 +110,7 @@ describe('live run state [M4-02]', () => {
           cleanup: [],
           artifacts: [{ kind: 'video', path: 'case-1/video/a.webm' }],
           diagnostics: [],
+          observations: {},
         },
       }),
     );

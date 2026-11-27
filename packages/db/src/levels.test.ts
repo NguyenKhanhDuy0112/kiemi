@@ -215,6 +215,7 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
         id: 'pl1',
         name: 'Đợt 1',
         release: '3.2',
+        product: 'web',
         items: [
           {
             id: 'i1',

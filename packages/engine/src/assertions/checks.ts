@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { readRows } from '../actions/_table';
+import { LIVE_FLAG } from '../actions/live';
 import type { ActionContext } from '../define-action';
 import { EngineError } from '../errors';
 import { countMatches } from '../locator/resolve';
@@ -790,6 +791,53 @@ export const variableCheck = defineCheck({
   },
 });
 
+/**
+ * A page that was marked with `markLive` shows the new value by itself, without
+ * being reloaded (realtime: chat, notifications, shared lists) [V-04].
+ */
+export const liveCheck = defineCheck({
+  name: 'live',
+  params: z.object({
+    target,
+    op: TextOpSchema.default('equals'),
+    value: z.unknown().optional(),
+    session: z.string().min(1).optional(),
+    tab: z.string().min(1).optional(),
+    ...TextMatchOptions,
+  }),
+  async check(p, ctx) {
+    const at = { ...(p.session ? { session: p.session } : {}), tab: p.tab };
+    const { locator } = await ctx.resolve(p.target, {
+      ...once,
+      state: 'attached',
+      at,
+    });
+    const seen = await locator.evaluate((el, flag) => {
+      const h = el as HTMLElement;
+      const text =
+        h instanceof HTMLInputElement || h instanceof HTMLTextAreaElement
+          ? h.value
+          : (h.innerText ?? h.textContent ?? '');
+      return { marked: (window as unknown as Record<string, unknown>)[flag] === true, text };
+    }, LIVE_FLAG);
+    if (!seen.marked) {
+      return {
+        pass: false,
+        final: true,
+        actual: 'the page was reloaded (or not marked with "Mark page")',
+        expected: 'no reload',
+        details: { places: [at] },
+      };
+    }
+    return {
+      pass: compareText(seen.text, p.op, p.value, p),
+      actual: seen.text,
+      expected: p.value,
+      details: { places: [at] },
+    };
+  },
+});
+
 export const CHECKS: readonly CheckDef[] = [
   visibleCheck,
   stateCheck,
@@ -811,6 +859,7 @@ export const CHECKS: readonly CheckDef[] = [
   rowTotalCheck,
   expectedCheck,
   sameCheck,
+  liveCheck,
 ] as CheckDef[];
 
 export const CHECKS_BY_NAME: ReadonlyMap<string, CheckDef> = new Map(
