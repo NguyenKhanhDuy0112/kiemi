@@ -40,6 +40,7 @@
 - Kiểm tra trang (M15-05): `engine/src/actions/page-audit.ts` (`assertSeo`, `assertI18n`, `assertLayout`); demo `audit.html?bad=seo,i18n,layout&lang=en`
 - Field nâng cao (M15-06): `engine/src/actions/field-ui.ts` (`stripClientValidation`, `assertFieldUi`, `assertTabOrder`, `assertLeaveWarning`); demo `server-form.html?bug=server|noleave`
 - Quét site + bảo mật (M15-07): `engine/src/actions/site-audit.ts` (`crawl`, `securityScan`); demo có lỗ cố ý: `/api/profile/<user>` (IDOR), `/echo?q=` (XSS phản hồi), cookie `session_hint` (không HttpOnly), trang `crawl-start.html`/`crawl-bad.html`
+- Dữ liệu (M15-08): `engine/src/vars/business-days.ts` (WORKDAYS/WORKDAY/ISWORKDAY/ENDOFMONTH|QUARTER|YEAR/DAYSBETWEEN/MONTHSBETWEEN/AGE/SENIORITY[MONTHS], ngày lễ qua biến `holidays` hoặc đối số cuối), `schema/src/combinations.ts` (đầy đủ/pairwise) + hộp thoại `features/editor/combinations-dialog.tsx`
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)

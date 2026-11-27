@@ -1,4 +1,5 @@
 export * from './bad-data';
+export * from './combinations';
 export * from './coverage';
 export * from './dashboard';
 export * from './dataset';

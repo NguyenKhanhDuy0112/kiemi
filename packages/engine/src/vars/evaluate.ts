@@ -1,5 +1,6 @@
 import { EngineError } from '../errors';
 import { AppValue } from './app';
+import { BUSINESS_FUNCTIONS } from './business-days';
 import { addDuration, formatDate, parseDate } from './dates';
 import { type Duration, type Node, nodeText, parseExpression } from './expression';
 import { FAKE, GENERATORS, randomInt, randomString } from './generators';
@@ -110,8 +111,22 @@ const FUNCTIONS: Record<string, (args: unknown[], env: EvalEnv) => unknown> = {
 
 const MAX_FORMULA_DEPTH = 8;
 
+/** Business-day functions read the `holidays` variable of the run [P-07]. */
+const BUSINESS: Record<string, (args: unknown[], env: EvalEnv) => unknown> = Object.fromEntries(
+  Object.entries(BUSINESS_FUNCTIONS).map(([k, fn]) => [
+    k,
+    (args: unknown[], env: EvalEnv) => {
+      const hit = env.lookup('holidays');
+      return fn(args, { now: env.now, holidays: hit.found ? stringify(hit.value) : '' });
+    },
+  ]),
+);
+
 const FUNCTION_TABLE = new Map<string, (args: unknown[], env: EvalEnv) => unknown>(
-  Object.entries({ ...FUNCTIONS, ...SHEET_FUNCTIONS }).map(([k, v]) => [k.toLowerCase(), v]),
+  Object.entries({ ...FUNCTIONS, ...SHEET_FUNCTIONS, ...BUSINESS }).map(([k, v]) => [
+    k.toLowerCase(),
+    v,
+  ]),
 );
 
 /** Evaluates one node; with `env.trace` every operation reports its result [P-03]. */
