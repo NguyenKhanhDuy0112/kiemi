@@ -12,5 +12,7 @@ export default defineProject({
     testTimeout: CI ? 180_000 : 60_000,
     hookTimeout: CI ? 180_000 : 60_000,
     retry: CI ? 2 : 0,
+    // Every e2e file starts its own site and browser: fewer at once keeps step timeouts honest.
+    maxWorkers: 3,
   },
 });

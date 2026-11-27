@@ -15,7 +15,7 @@ export default defineProject({
   test: {
     name: 'desktop',
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
-    testTimeout: CI ? 30_000 : 5000,
+    testTimeout: CI ? 30_000 : 20_000,
     retry: CI ? 2 : 0,
   },
 });

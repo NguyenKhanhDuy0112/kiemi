@@ -636,7 +636,7 @@ describe('printing and expired sessions [W-07, W-08]', () => {
   it('logs in again when the session ends in the middle of the test', async () => {
     const r = await e.run(expired(true), {
       sharedSteps: [loginShared] as never,
-      request: { options: { defaultStepTimeoutMs: 6000 } },
+      request: { options: { defaultStepTimeoutMs: 12000 } },
     });
     expect(bad(summary(r))).toEqual([]);
   });

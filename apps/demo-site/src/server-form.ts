@@ -48,7 +48,7 @@ form.addEventListener('submit', (e) => {
       return;
     }
     dirty = false;
-    sendBtn.disabled = false;
+    if (!guard) sendBtn.disabled = false;
     $('#server-result').textContent = 'Đã lưu đơn';
     await paint();
   });
