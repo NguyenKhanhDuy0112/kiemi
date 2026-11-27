@@ -188,6 +188,33 @@ export async function handleRequest(
     send(res, 200, { ok: true });
     return true;
   }
+  if (path === '/api/server-form' && method === 'GET') {
+    send(res, 200, { orders: store.orders });
+    return true;
+  }
+  if (path === '/api/server-form' && method === 'POST') {
+    const body = JSON.parse((await readBody(req)) || '{}') as { code?: unknown; email?: unknown };
+    const code = String(body.code ?? '');
+    const email = String(body.email ?? '');
+    // `x-skip-validation` simulates a server that trusts the browser.
+    if (req.headers['x-skip-validation'] !== '1') {
+      if (!code.trim()) {
+        send(res, 422, { error: 'Mã đơn là bắt buộc' });
+        return true;
+      }
+      if (code.length > 6) {
+        send(res, 422, { error: 'Mã đơn tối đa 6 ký tự' });
+        return true;
+      }
+      if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        send(res, 422, { error: 'Email không hợp lệ' });
+        return true;
+      }
+    }
+    store.orders.push(code);
+    send(res, 200, { orders: store.orders });
+    return true;
+  }
   if (path === '/api/chat' && method === 'GET') {
     send(res, 200, { messages: store.chat, realtime: store.chatRealtime });
     return true;

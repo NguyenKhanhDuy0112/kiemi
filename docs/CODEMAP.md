@@ -38,6 +38,7 @@
 - Kiểm tra chéo (M15-03): `engine/src/actions/{live,observe,propagate}.ts` (`markLive`+check `live`=`assertLive`, `observe`, `propagate` dùng `ctx.runAllSteps`), `RunResult.observations` → cột `run_cases.observations` (migration 24) → so sánh ở `history/compare*.ts` (`schema/src/observations.ts`); demo `chat.html`
 - Môi trường trình duyệt (M15-04): `engine/src/actions/browser-env.ts` (`network`, `permission`, `clipboard`, `assertRequest`); nhật ký request ở `Runner.#requests` → `RunServices.requests`
 - Kiểm tra trang (M15-05): `engine/src/actions/page-audit.ts` (`assertSeo`, `assertI18n`, `assertLayout`); demo `audit.html?bad=seo,i18n,layout&lang=en`
+- Field nâng cao (M15-06): `engine/src/actions/field-ui.ts` (`stripClientValidation`, `assertFieldUi`, `assertTabOrder`, `assertLeaveWarning`); demo `server-form.html?bug=server|noleave`
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)

@@ -17,6 +17,12 @@ import { dialogAction } from './dialog';
 import { downloadAction } from './download';
 import { extractAction } from './extract';
 import { extractTableAction } from './extract-table';
+import {
+  assertFieldUiAction,
+  assertLeaveWarningAction,
+  assertTabOrderAction,
+  stripClientValidationAction,
+} from './field-ui';
 import { fillAction } from './fill';
 import { generateFileAction } from './generate-file';
 import { gotoAction } from './goto';
@@ -86,6 +92,10 @@ export const builtinActions: ActionDefinition[] = [
   permissionAction,
   clipboardAction,
   assertRequestAction,
+  stripClientValidationAction,
+  assertFieldUiAction,
+  assertTabOrderAction,
+  assertLeaveWarningAction,
   assertSeoAction,
   assertI18nAction,
   assertLayoutAction,

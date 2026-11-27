@@ -120,6 +120,8 @@ export class DemoStore {
   /** Chat of `chat.html`; `realtime=false` makes the page stop updating by itself [V-04]. */
   chat: string[] = [];
   chatRealtime = true;
+  /** Orders of `server-form.html` [R-06]. */
+  orders: string[] = [];
   /** Deliberate permission bugs ("role|function") for the portal [Q-09]. */
   portalLeaks = new Set<string>();
 
@@ -128,6 +130,7 @@ export class DemoStore {
     this.promo = { ...DEFAULT_PROMO };
     this.chat = [];
     this.chatRealtime = true;
+    this.orders = [];
     this.portalLeaks.clear();
     this.requests = [];
     this.products = seedProducts();

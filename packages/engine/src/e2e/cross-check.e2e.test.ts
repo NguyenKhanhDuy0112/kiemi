@@ -277,3 +277,90 @@ describe('page audits [Y-06, Y-07, Y-09]', () => {
     expect(all).toMatch(/text cut off/);
   });
 });
+
+describe('form behaviour [R-06, R-08, R-13]', () => {
+  const sendOrder = { role: 'button', name: 'Gửi đơn' } as const;
+  const tooLong = [
+    step('stripClientValidation', {}),
+    step('fill', { target: { css: '#code' }, value: 'DONHANG-QUA-DAI' }),
+    step('click', { target: sendOrder }),
+  ];
+
+  it('a server that validates rejects what the browser would have blocked', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/server-form.html' }),
+        ...tooLong,
+        step('assertText', { target: { css: '#server-error' }, value: 'Mã đơn tối đa 6 ký tự' }),
+        step('assertVisible', { target: { css: '#orders li' }, state: 'notExist' }),
+      ],
+      quick,
+    );
+    expect(bad(summary(r))).toEqual([]);
+  });
+
+  it('finds a server that trusts the browser', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/server-form.html?bug=server' }),
+        ...tooLong,
+        step('assertText', { target: { css: '#server-error' }, value: 'Mã đơn tối đa 6 ký tự' }),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 1500 } } },
+    );
+    expect(r.steps.at(-1)?.status).toBe('failed');
+  });
+
+  it('checks the field UI, the Tab order and the leave warning', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/server-form.html' }),
+        step('assertFieldUi', {
+          target: { css: '#code' },
+          label: 'Mã đơn',
+          placeholder: 'VD: DH0001',
+          required: true,
+          maxLength: 6,
+        }),
+        step('assertFieldUi', {
+          target: { css: '#note' },
+          readOnly: true,
+          defaultValue: 'Giao giờ hành chính',
+        }),
+        step('assertTabOrder', {
+          fields: [{ css: '#code' }, { css: '#email' }, { css: '#note' }, { css: '#send' }],
+        }),
+        step('assertLeaveWarning', { expected: false }),
+        step('fill', { target: { css: '#code' }, value: 'DH1' }),
+        step('assertLeaveWarning', { expected: true }),
+      ],
+      quick,
+    );
+    expect(bad(summary(r))).toEqual([]);
+  });
+
+  it('reports every wrong UI detail, and a missing leave warning', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/server-form.html?bug=noleave' }),
+        step('fill', { target: { css: '#code' }, value: 'DH1' }),
+        step('assertLeaveWarning', { expected: true }),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 1500 } } },
+    );
+    expect(r.steps.at(-1)?.error?.message).toContain('does not warn');
+    const r2 = await e.run(
+      [
+        step('goto', { url: '/server-form.html' }),
+        step('assertFieldUi', {
+          target: { css: '#code' },
+          label: 'Tên',
+          placeholder: 'x',
+          required: false,
+        }),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 1500 } } },
+    );
+    expect(r2.steps.at(-1)?.error?.details?.problems).toHaveLength(3);
+  });
+});

@@ -1508,6 +1508,22 @@ export const viUi = {
       label: 'So sánh giữa 2 nơi',
       sentence: 'So sánh {{left}} với {{right}}',
     },
+    stripClientValidation: {
+      label: 'Bỏ kiểm tra của trình duyệt',
+      sentence: 'Bỏ kiểm tra phía trình duyệt để thử máy chủ',
+    },
+    assertFieldUi: {
+      label: 'Kiểm tra giao diện của ô',
+      sentence: 'Kiểm tra giao diện của {{target}}',
+    },
+    assertTabOrder: {
+      label: 'Kiểm tra thứ tự phím Tab',
+      sentence: 'Phím Tab đi qua các ô đúng thứ tự',
+    },
+    assertLeaveWarning: {
+      label: 'Kiểm tra cảnh báo khi rời trang',
+      sentence: 'Rời trang có cảnh báo: {{expected}}',
+    },
     assertSeo: { label: 'Kiểm tra SEO / meta', sentence: 'Kiểm tra SEO của trang' },
     assertI18n: {
       label: 'Kiểm tra bản dịch của trang',

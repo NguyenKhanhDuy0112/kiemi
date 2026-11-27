@@ -1509,6 +1509,19 @@ export const enUi = {
       label: 'Compare two places',
       sentence: 'Compare {{left}} with {{right}}',
     },
+    stripClientValidation: {
+      label: 'Remove the browser checks',
+      sentence: 'Remove the browser checks to test the server',
+    },
+    assertFieldUi: { label: 'Check the UI of a field', sentence: 'Check the UI of {{target}}' },
+    assertTabOrder: {
+      label: 'Check the Tab order',
+      sentence: 'Tab goes through the fields in order',
+    },
+    assertLeaveWarning: {
+      label: 'Check the leave-page warning',
+      sentence: 'Leaving the page warns: {{expected}}',
+    },
     assertSeo: { label: 'Check SEO / meta', sentence: 'Check the SEO of the page' },
     assertI18n: {
       label: 'Check the translation of the page',

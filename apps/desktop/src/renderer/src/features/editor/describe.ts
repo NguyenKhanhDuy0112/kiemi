@@ -119,6 +119,7 @@ export const SENTENCE_PARAMS = [
   'mode',
   'permissions',
   'locale',
+  'expected',
   'widths',
 ] as const;
 
