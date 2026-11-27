@@ -196,7 +196,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M15-11d** Độ phủ phần tử tương tác, tô màu trên ảnh trang [CV-03]
 - [ ] **M15-12a** Tạo issue Jira/Redmine/Azure DevOps/GitLab/GitHub từ test lỗi [X-02]
 - [ ] **M15-12b** Email/OTP trong test [X-06]
-- [ ] **M15-12c** Mock API [X-07]
+- [x] **M15-12c** Mock API [X-07]
 
 ## M16 — Trợ lý Kiemi (AI, tùy chọn)
 - [ ] **M16-01** ADR + `packages/ai` (main process): adapter Claude/OpenAI-compatible/Ollama, API key trong Secret, bật/tắt theo dự án [AI-01]

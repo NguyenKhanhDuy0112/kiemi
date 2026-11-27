@@ -31,6 +31,7 @@ import { hoverAction } from './hover';
 import { ifAction } from './if';
 import { markLiveAction } from './live';
 import { loopAction } from './loop';
+import { mockApiAction } from './mock-api';
 import { navigateAction } from './navigate';
 import { observeAction } from './observe';
 import { assertI18nAction, assertLayoutAction, assertSeoAction } from './page-audit';
@@ -118,6 +119,7 @@ export const builtinActions: ActionDefinition[] = [
   extractTableAction,
   downloadAction,
   printToFileAction,
+  mockApiAction,
   sessionGuardAction,
   generateFileAction,
   callAction,

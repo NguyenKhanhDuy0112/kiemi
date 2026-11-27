@@ -1587,6 +1587,7 @@ export const enUi = {
       label: 'Check the leave-page warning',
       sentence: 'Leaving the page warns: {{expected}}',
     },
+    mockApi: { label: 'Fake an API response', sentence: 'Fake API {{url}}: {{mode}}' },
     printToFile: {
       label: 'Print to a PDF file',
       sentence: 'Print the page to a PDF file saved in {{into}}',

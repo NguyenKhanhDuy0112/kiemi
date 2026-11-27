@@ -1589,6 +1589,7 @@ export const viUi = {
       label: 'Kiểm tra cảnh báo khi rời trang',
       sentence: 'Rời trang có cảnh báo: {{expected}}',
     },
+    mockApi: { label: 'Giả lập phản hồi API', sentence: 'Giả lập API {{url}}: {{mode}}' },
     printToFile: { label: 'In ra file PDF', sentence: 'In trang ra file PDF, lưu vào {{into}}' },
     sessionGuard: {
       label: 'Tự đăng nhập lại khi hết phiên',

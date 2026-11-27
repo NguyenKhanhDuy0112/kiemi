@@ -667,3 +667,47 @@ describe('interactive element scan [CV-03]', () => {
     }
   });
 });
+
+describe('mock API [X-07]', () => {
+  const sendOrder = { role: 'button', name: 'Gửi đơn' } as const;
+  const fillAndSend = [
+    step('fill', { target: { css: '#code' }, value: 'DH1' }),
+    step('click', { target: sendOrder }),
+  ];
+
+  it('a faked server error shows the page error; turning the mock off lets it save', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/server-form.html' }),
+        step('mockApi', { url: '/api/server-form', method: 'POST', mode: 'error', status: 503 }),
+        ...fillAndSend,
+        step('assertText', { target: { css: '#server-error' }, value: 'Lỗi giả lập' }),
+        step('mockApi', { url: '/api/server-form', method: 'POST', mode: 'off' }),
+        step('click', { target: sendOrder }),
+        step('assertText', { target: { css: '#server-result' }, value: 'Đã lưu đơn' }),
+      ],
+      quick,
+    );
+    expect(bad(summary(r))).toEqual([]);
+  });
+
+  it('a faked empty answer and a slow one', async () => {
+    const r = await e.run(
+      [
+        step('mockApi', {
+          url: '/api/server-form',
+          method: 'GET',
+          mode: 'respond',
+          body: { orders: ['MẪU-1'] },
+        }),
+        step('goto', { url: '/server-form.html' }),
+        step('assertText', { target: { css: '#orders' }, value: 'MẪU-1' }),
+        step('mockApi', { url: '/api/server-form', method: 'GET', mode: 'empty', delayMs: 300 }),
+        step('navigate', { to: 'reload' }),
+        step('assertVisible', { target: { css: '#orders li' }, state: 'notExist' }),
+      ],
+      quick,
+    );
+    expect(bad(summary(r))).toEqual([]);
+  });
+});
