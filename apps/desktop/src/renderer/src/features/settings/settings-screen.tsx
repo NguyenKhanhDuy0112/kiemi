@@ -19,6 +19,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, GraduationCap, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { AiSection } from '../ai/ai-section';
 import { NotifySection } from '../notify/notify-section';
 import { useOpenSamples, useSaveSettings } from '../onboarding/onboarding';
 import { UpdateSection } from '../update/update-section';
@@ -195,6 +196,7 @@ export function SettingsScreen() {
         </div>
       </section>
       <NotifySection />
+      <AiSection />
       <UpdateSection />
       <GuideSection />
     </div>

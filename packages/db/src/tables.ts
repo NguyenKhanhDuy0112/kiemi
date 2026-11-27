@@ -19,7 +19,7 @@ import type {
   TestCase,
   TestPlan,
 } from '@kiemi/schema';
-import { NOTIFY_KINDS } from '@kiemi/schema';
+import { AI_PROVIDER_KINDS, NOTIFY_KINDS } from '@kiemi/schema';
 import { blob, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 /**
@@ -441,6 +441,26 @@ export const notifyChannels = sqliteTable(
   (t) => [index('notify_channels_project_idx').on(t.projectId)],
 );
 
+/** AI assistant settings, one row per project; the API key is encrypted [AI-01, ADR 0024]. */
+export const aiSettings = sqliteTable(
+  'ai_settings',
+  {
+    ...base,
+    projectId: text('project_id').notNull(),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+    kind: text('kind', { enum: AI_PROVIDER_KINDS }).notNull().default('claude'),
+    model: text('model').notNull(),
+    taskModels: json<Record<string, string>>('task_models'),
+    baseUrl: text('base_url'),
+    localOnly: integer('local_only', { mode: 'boolean' }).notNull().default(false),
+    ciphertext: blob('ciphertext', { mode: 'buffer' }),
+    lastOk: integer('last_ok', { mode: 'boolean' }),
+    lastMessage: text('last_message'),
+    lastAt: integer('last_at', { mode: 'timestamp_ms' }),
+  },
+  (t) => [uniqueIndex('ai_settings_project_idx').on(t.projectId)],
+);
+
 /** Saved login sessions (cookies + localStorage), reused by later tests until they expire [F-02]. */
 export const savedLogins = sqliteTable(
   'saved_logins',
@@ -506,6 +526,7 @@ export const ALL_TABLES = {
   settings,
   savedLogins,
   notifyChannels,
+  aiSettings,
   testVersions,
   sharedResources,
 } as const;

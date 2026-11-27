@@ -21,6 +21,7 @@ describe('database & migrations [M2-01]', () => {
     ).map((r) => r.name);
     expect(names.sort()).toEqual(
       [
+        'ai_settings',
         'artifacts',
         'datasets',
         'elements',

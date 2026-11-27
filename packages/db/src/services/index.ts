@@ -1,4 +1,5 @@
 import type { RepoContext } from '../repo';
+import { AiSettingsService } from './ai-settings';
 import { DatasetService } from './datasets';
 import { ElementService } from './elements';
 import { EnvironmentService, type SecretCipher } from './environments';
@@ -13,6 +14,7 @@ import { SharedStepService } from './shared-steps';
 import { SuiteService } from './suites';
 import { TestCaseService } from './test-cases';
 
+export * from './ai-settings';
 export * from './datasets';
 export * from './elements';
 export * from './environments';
@@ -44,6 +46,7 @@ export interface Services {
   readonly runs: RunService;
   readonly savedLogins: SavedLoginService;
   readonly notifyChannels: NotifyChannelService;
+  readonly aiSettings: AiSettingsService;
 }
 
 /** All data services of one workspace. */
@@ -64,5 +67,6 @@ export function createServices(ctx: RepoContext, cipher: SecretCipher): Services
     runs: new RunService(ctx),
     savedLogins: new SavedLoginService(ctx, cipher),
     notifyChannels: new NotifyChannelService(ctx, cipher),
+    aiSettings: new AiSettingsService(ctx, cipher),
   };
 }
