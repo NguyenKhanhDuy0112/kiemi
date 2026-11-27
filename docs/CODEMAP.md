@@ -36,6 +36,7 @@
 - Mẫu dự án (R-15) + nhân bản (O-12): `db/src/templates.ts` (`PROJECT_TEMPLATES`, `createProjectFromTemplate`, `cloneProject`), tRPC `projects.templates|createFromTemplate|clone`, menu ở `app-sidebar.tsx`
 - Sửa dữ liệu khi chờ (FX-10): `edit.row {runCaseId, values}` → `DebugController.editRow/rowEdit` → `VariableStore.setRow`; `RunManager.rowOf/saveRow` (ghi lại bảng của test hoặc dataset đã lưu); UI `features/run/fix-row-panel.tsx`
 - Kiểm tra chéo (M15-03): `engine/src/actions/{live,observe,propagate}.ts` (`markLive`+check `live`=`assertLive`, `observe`, `propagate` dùng `ctx.runAllSteps`), `RunResult.observations` → cột `run_cases.observations` (migration 24) → so sánh ở `history/compare*.ts` (`schema/src/observations.ts`); demo `chat.html`
+- Môi trường trình duyệt (M15-04): `engine/src/actions/browser-env.ts` (`network`, `permission`, `clipboard`, `assertRequest`); nhật ký request ở `Runner.#requests` → `RunServices.requests`
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)

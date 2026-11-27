@@ -95,6 +95,8 @@ export interface RunServices {
   readonly diagnostics: readonly Diagnostic[];
   /** Values noted by `observe`, returned in the run result [V-06]. */
   readonly observations: Record<string, string>;
+  /** Requests the pages sent, newest last, for `assertRequest` [Y-05]. */
+  readonly requests: SentRequest[];
   /** Base folder for relative upload paths [A-11]. */
   readonly filesDir: string | undefined;
   /** Resolves a URL against the env's baseUrl [A-01]. */
@@ -104,4 +106,14 @@ export interface RunServices {
   readonly db: DbClient | undefined;
   /** Clock of the run (injectable in tests). */
   now(): Date;
+}
+
+/** A request seen by a page [Y-05]. */
+export interface SentRequest {
+  session: string;
+  method: string;
+  url: string;
+  /** Request body as text (cut at 20 000 characters). */
+  body: string;
+  at: number;
 }

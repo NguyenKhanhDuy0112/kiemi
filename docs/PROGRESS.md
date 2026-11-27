@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M15** (nhánh `milestone/m15-v12-remaining`): M15-04 → M15-12 (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
+**M15** (nhánh `milestone/m15-v12-remaining`): M15-05 → M15-12 (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
 
 ## Lưu ý cho task sau
+- M15-04 xong: `network` (offline qua `context.setOffline`, chậm qua CDP `Network.emulateNetworkConditions` — chỉ Chromium, áp cho trang hiện tại), `permission` (grant = Playwright; deny/reset qua CDP `Browser.setPermission`, chưa kiểm chứng tác dụng của deny bằng e2e), `clipboard` (tự cấp quyền đọc/ghi), `assertRequest` (log request mỗi run tối đa 5000, body cắt 20k ký tự; chưa che bí mật trong body log). Thêm tham số mới vào câu mô tả → thêm vào `SENTENCE_PARAMS`.
 - Flake: bộ e2e engine chạy song song hay đỏ ngẫu nhiên 1–4 test (STEP_TIMEOUT/'skipped' do máy tải, mỗi lần một test khác nhau); chạy lẻ file thì xanh. Cân nhắc giảm song song (`poolOptions`) ở task riêng.
 - M15-03 xong: V-04 = `markLive` (đặt cờ `window.__kiemiLive`, tải lại sẽ mất) + `assertLive` (nếu cờ mất → 'page was reloaded', không thử lại); V-06 = `observe {name,value}` ghi vào `RunResult.observations`, màn So sánh (Lịch sử) liệt kê giá trị khác nhau giữa 2 lần chạy (vd UAT vs Staging do chạy ma trận M15-01a); V-07 = container `propagate` chạy mọi bước con kể cả khi có bước lỗi, lỗi `PROPAGATION_FAILED` liệt kê id bước con lỗi (chưa có nhãn 'nơi' riêng — dùng tên bước). Chưa làm: tự động so sánh theo cặp môi trường trong hộp thoại ma trận (phải mở 2 lần chạy ở Lịch sử).
 - M15-02 xong: sửa ô dữ liệu khi run chờ — bộ gỡ lỗi dùng chung cho cả run nên chỉnh sửa dòng khóa theo `runCaseId` (= `RunRequest.runId`). `saveRow` ghi vào bảng của test (`dataset.source=table`) hoặc dataset đã lưu (dòng riêng của môi trường nếu có); chưa hỗ trợ bảng con (`children`) và dataset theo suite có ghi đè khác. Sau khi lưu test, phiên bản đổi → lần 'Lưu và thử lại' kế có thể cảnh báo xung đột phiên bản (đã tự refetch).

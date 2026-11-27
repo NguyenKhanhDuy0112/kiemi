@@ -1509,6 +1509,16 @@ export const enUi = {
       label: 'Compare two places',
       sentence: 'Compare {{left}} with {{right}}',
     },
+    network: { label: 'Simulate the network', sentence: 'Network: {{mode}}' },
+    permission: {
+      label: 'Grant / deny browser permissions',
+      sentence: 'Browser permission: {{op}} {{permissions}}',
+    },
+    clipboard: { label: 'Clipboard', sentence: 'Clipboard: {{op}} {{value}}' },
+    assertRequest: {
+      label: 'Check a network request',
+      sentence: 'The page sent {{method}} {{url}}',
+    },
     observe: { label: 'Note a value to compare', sentence: 'Note “{{name}}” = {{value}}' },
     markLive: {
       label: 'Mark the page to detect reloads',

@@ -1508,6 +1508,13 @@ export const viUi = {
       label: 'So sánh giữa 2 nơi',
       sentence: 'So sánh {{left}} với {{right}}',
     },
+    network: { label: 'Giả lập mạng', sentence: 'Mạng: {{mode}}' },
+    permission: {
+      label: 'Cấp / từ chối quyền trình duyệt',
+      sentence: 'Quyền trình duyệt: {{op}} {{permissions}}',
+    },
+    clipboard: { label: 'Clipboard (bộ nhớ tạm)', sentence: 'Clipboard: {{op}} {{value}}' },
+    assertRequest: { label: 'Kiểm tra request mạng', sentence: 'Trang đã gửi {{method}} {{url}}' },
     observe: { label: 'Ghi nhận giá trị để so sánh', sentence: 'Ghi nhận “{{name}}” = {{value}}' },
     markLive: {
       label: 'Đánh dấu trang để kiểm tra không tải lại',

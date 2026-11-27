@@ -38,7 +38,7 @@ import type { LiveSessions, RunDebugger } from './run/debug';
 import { closePopups } from './run/popups';
 import { findWriteSteps } from './run/protection';
 import type { SavedLogin } from './run/services';
-import { DialogController, type RunServices } from './run/services';
+import { DialogController, type RunServices, type SentRequest } from './run/services';
 import { toLocator } from './run/target';
 import { mainAppUrl } from './vars/app';
 import { maskSecrets, VariableStore } from './vars/store';
@@ -169,6 +169,7 @@ class Run {
   readonly #dialogs = new DialogController();
   readonly #diagnostics: Diagnostic[] = [];
   readonly #observations: Record<string, string> = {};
+  readonly #requests: SentRequest[] = [];
   readonly #secretFields = new Map<string, PwLocator[]>();
   readonly #defaultTimeout: number;
   /** Top-level steps before this index are skipped (run from step X). */
@@ -272,6 +273,16 @@ class Run {
     page.on('pageerror', (err) =>
       push({ kind: 'pageError', session, message: err.message, url: page.url() }),
     );
+    page.on('request', (req) => {
+      if (this.#requests.length >= 5000) this.#requests.shift();
+      this.#requests.push({
+        session,
+        method: req.method(),
+        url: req.url(),
+        body: (req.postData() ?? '').slice(0, 20_000),
+        at: Date.now(),
+      });
+    });
     page.on('response', (res) => {
       const status = res.status();
       // The browser asks for /favicon.ico on its own; a missing icon is not a page error.
@@ -423,6 +434,7 @@ class Run {
       dialogs: this.#dialogs,
       diagnostics: this.#diagnostics,
       observations: this.#observations,
+      requests: this.#requests,
       filesDir: req.options?.filesDir,
       url: (value) => {
         if (/^[a-z][a-z0-9+.-]*:/i.test(value) || !baseUrl) return value;

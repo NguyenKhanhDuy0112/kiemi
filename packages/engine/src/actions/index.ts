@@ -1,6 +1,12 @@
 import { assertionActions } from '../assertions/actions';
 import { type ActionDefinition, ActionRegistry } from '../define-action';
 import { apiAction } from './api';
+import {
+  assertRequestAction,
+  clipboardAction,
+  networkAction,
+  permissionAction,
+} from './browser-env';
 import { callAction } from './call';
 import { checkAction } from './check';
 import { clearAction } from './clear';
@@ -75,6 +81,10 @@ export const builtinActions: ActionDefinition[] = [
   queryDbAction,
   clockAction,
   markLiveAction,
+  networkAction,
+  permissionAction,
+  clipboardAction,
+  assertRequestAction,
   observeAction,
   propagateAction,
   gridRowAction,

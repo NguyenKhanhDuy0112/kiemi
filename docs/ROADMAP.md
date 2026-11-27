@@ -183,7 +183,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M15-01d** Phiên bản sản phẩm: test plan gắn release, báo cáo theo release [O-13]
 - [x] **M15-02** Sửa dữ liệu tại chỗ khi data-driven [FX-10]
 - [x] **M15-03** Kiểm tra chéo: realtime không tải lại, so sánh 2 môi trường, điểm kiểm tra lan truyền [V-04, V-06, V-07]
-- [ ] **M15-04** Trình duyệt: giả lập mạng, quyền, clipboard, request mạng [Y-02, Y-03, Y-04, Y-05]
+- [x] **M15-04** Trình duyệt: giả lập mạng, quyền, clipboard, request mạng [Y-02, Y-03, Y-04, Y-05]
 - [ ] **M15-05** SEO/meta, đa ngôn ngữ web cần test, vỡ bố cục [Y-06, Y-07, Y-09]
 - [ ] **M15-06** Field nâng cao: validate phía server, UI của field, hành vi Back/Refresh [R-06, R-08, R-13]
 - [ ] **M15-07** Crawl toàn site + bảo mật cơ bản không phá hoại (IDOR, XSS phản hồi, cookie) [R-11, R-12]
