@@ -6,6 +6,7 @@ import {
   planCounts,
   planHeadline,
   planProgress,
+  releaseReport,
   syncManual,
   type TestPlan,
 } from '@kiemi/schema';
@@ -127,7 +128,54 @@ export function PlansScreen() {
           )}
         </div>
       </div>
+      <ReleaseTable plans={plans} />
     </div>
+  );
+}
+
+/** Report by release: rounds of one product + release added up [O-13]. */
+function ReleaseTable({ plans }: { plans: TestPlan[] }) {
+  const tx = useTx();
+  const projectId = useAppStore((s) => s.projectId) ?? '';
+  const products = useQuery(trpc.products.list.queryOptions({ projectId }));
+  const rows = releaseReport(plans);
+  if (rows.length === 0) return null;
+  const nameOf = (key: string) =>
+    key
+      ? ((products.data ?? []).find((p) => p.key === key)?.name ?? key)
+      : tx('ui.plans.allProducts');
+  return (
+    <section data-testid="release-report">
+      <h2 className="mb-1 text-sm font-medium">{tx('ui.plans.releaseReport')}</h2>
+      <table className="w-full text-sm">
+        <thead className="text-left text-xs text-muted-foreground">
+          <tr>
+            <th>{tx('ui.plans.product')}</th>
+            <th>{tx('ui.plans.release')}</th>
+            <th>{tx('ui.plans.rounds')}</th>
+            <th>{tx('ui.plans.status.pass')}</th>
+            <th>{tx('ui.plans.status.fail')}</th>
+            <th>{tx('ui.plans.status.blocked')}</th>
+            <th>{tx('ui.plans.status.notrun')}</th>
+            <th>%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={`${r.product}|${r.release}`}>
+              <td>{nameOf(r.product)}</td>
+              <td>{r.release}</td>
+              <td>{r.plans}</td>
+              <td>{r.counts.pass}</td>
+              <td>{r.counts.fail}</td>
+              <td>{r.counts.blocked}</td>
+              <td>{r.counts.notrun}</td>
+              <td>{r.progress}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 }
 
@@ -146,6 +194,7 @@ function PlanEditor({
   const projectId = useAppStore((s) => s.projectId) ?? '';
   const tests = useQuery(trpc.testCases.list.queryOptions({ projectId }));
   const runs = useQuery(trpc.runs.history.queryOptions({ projectId, limit: 20 }));
+  const products = useQuery(trpc.products.list.queryOptions({ projectId }));
   const names = new Map((tests.data ?? []).map((t) => [t.id, t.name]));
   const [picker, setPicker] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
@@ -212,6 +261,19 @@ function PlanEditor({
           aria-label={tx('ui.plans.release')}
           onChange={(e) => onChange({ ...plan, release: e.target.value })}
         />
+        <select
+          className="h-9 w-44 rounded-md border bg-background px-2 text-sm"
+          value={plan.product}
+          aria-label={tx('ui.plans.product')}
+          onChange={(e) => onChange({ ...plan, product: e.target.value })}
+        >
+          <option value="">{tx('ui.plans.allProducts')}</option>
+          {(products.data ?? []).map((p) => (
+            <option key={p.id} value={p.key}>
+              {p.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <section className="rounded-md border p-3" aria-label={tx('ui.plans.dashboard')}>

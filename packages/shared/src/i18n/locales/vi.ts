@@ -142,6 +142,10 @@ export const vi = {
         message: 'Không hỏi được cơ sở dữ liệu “{{connection}}”: {{reason}}',
         hint: 'Kiểm tra địa chỉ máy chủ, tên đăng nhập, mật khẩu, tên bảng/cột, và mạng/VPN tới máy chủ.',
       },
+      PROPAGATION_FAILED: {
+        message: 'Thay đổi chưa lan tới {{count}} nơi: {{places}}.',
+        hint: 'Mở từng bước con báo lỗi để xem nơi đó đang hiện giá trị gì. Có thể dữ liệu chưa đồng bộ — thử tăng thời gian chờ của bước.',
+      },
       UNKNOWN_VARIABLE: {
         message: 'Chưa có biến “{{name}}”.',
         hint: 'Kiểm tra tên biến, hoặc thêm bước “Lưu giá trị vào biến” trước bước này.',

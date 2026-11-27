@@ -1,4 +1,4 @@
-import type { Step } from '@kiemi/schema';
+import type { RunError, Step } from '@kiemi/schema';
 import type { BrowserContext, Page, Locator as PwLocator } from 'playwright-core';
 import type { z } from 'zod';
 import { EngineError } from './errors';
@@ -46,6 +46,8 @@ export interface ActionContext {
   ): Promise<ResolvedLocator>;
   /** Runs nested steps (if/else, loops, shared steps) as children of this step. */
   runSteps(steps: readonly unknown[], frame?: Record<string, unknown>): Promise<void>;
+  /** Runs every nested step even when one fails; returns the failures [V-07]. */
+  runAllSteps(steps: readonly unknown[]): Promise<{ stepId: string; error: RunError }[]>;
   /** Marks a field that holds a secret so screenshots mask it [E-08]. */
   markSecret(locator: PwLocator): void;
 }

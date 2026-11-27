@@ -94,7 +94,7 @@ const MAX_DEPTH = 5;
  * Namespaces: `app`, `app.<product>`, `app.<product>.x` [O-02], `env.x`, `secret.x` [E-08], `row.x`, `param.x` (shared step args), `loop.x`.
  */
 export class VariableStore {
-  readonly #scopes: VariableScopes;
+  #scopes: VariableScopes;
   readonly #runtime = new Map<string, unknown>();
   readonly #frames: Record<string, unknown>[] = [];
   readonly #now: () => Date;
@@ -103,6 +103,11 @@ export class VariableStore {
   constructor(scopes: VariableScopes = {}, now: () => Date = () => new Date()) {
     this.#scopes = scopes;
     this.#now = now;
+  }
+
+  /** Replaces the data row (`{{row.x}}`) while the run waits on a failed step [FX-10]. */
+  setRow(row: DataRow): void {
+    this.#scopes = { ...this.#scopes, row };
   }
 
   /** Saves a runtime value (e.g. extracted from the page) [E-04]. */

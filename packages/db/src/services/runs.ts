@@ -111,8 +111,14 @@ export class RunService {
   }
 
   /** Stores the engine's final result of one test case (+ its run-level artifacts). */
-  finishCase(id: string, result: Pick<RunResult, 'status' | 'durationMs' | 'error'>) {
+  finishCase(
+    id: string,
+    result: Pick<RunResult, 'status' | 'durationMs' | 'error'> &
+      Partial<Pick<RunResult, 'observations'>>,
+  ) {
     return this.cases.update(id, {
+      observations:
+        result.observations && Object.keys(result.observations).length ? result.observations : null,
       status: result.status,
       durationMs: Math.round(result.durationMs),
       error: storedError(result.error),

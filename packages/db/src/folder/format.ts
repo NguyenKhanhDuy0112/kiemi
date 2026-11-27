@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import {
+  ClientCertsSchema,
   DatasetChildSchema,
   DbConnectionsSchema,
   EnvColorSchema,
@@ -22,6 +23,8 @@ import {
   PopupRulesSchema,
   ProductSchema,
   ProxySchema,
+  type Requirement,
+  RequirementsSchema,
   SharedStepSchema,
   SshSettingsSchema,
   type TestCase,
@@ -86,6 +89,8 @@ export const ProjectFileSchema = z.object({
   testPlans: TestPlansSchema.default([]),
   /** Permission matrices [Q-09]. */
   permissionMatrices: PermissionMatricesSchema.default([]),
+  /** Requirements / tickets [T-04]. */
+  requirements: RequirementsSchema.default([]),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -118,6 +123,7 @@ export const EnvironmentEntrySchema = z.object({
   locale: z.enum(['vi', 'en']).nullish(),
   httpAuth: HttpAuthSchema.nullish(),
   dbConnections: DbConnectionsSchema.nullish(),
+  clientCerts: ClientCertsSchema.nullish(),
   /** Read only (files written before M9-05) → the first product's cell. */
   baseUrl: z.string().nullish(),
   proxy: ProxySchema.nullish(),
@@ -202,6 +208,7 @@ export interface ProjectSnapshot {
     manualCases: ManualCase[];
     testPlans: TestPlan[];
     permissionMatrices: PermissionMatrix[];
+    requirements: Requirement[];
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];

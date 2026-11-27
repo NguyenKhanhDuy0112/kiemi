@@ -43,6 +43,8 @@ export const ENGINE_ERROR_CODES = [
   'DB_WRITE_BLOCKED',
   'DB_SECRET_MISSING',
   'DB_QUERY_FAILED',
+  /** A change did not reach every place a propagation step checks [V-07]. */
+  'PROPAGATION_FAILED',
   /** The test is limited to other environments (`environments.only/except`) [O-06]. */
   'ENV_SKIPPED',
   'ACTION_FAILED',

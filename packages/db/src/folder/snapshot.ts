@@ -22,6 +22,7 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       manualCases: p.manualCases ?? [],
       testPlans: p.testPlans ?? [],
       permissionMatrices: p.permissionMatrices ?? [],
+      requirements: p.requirements ?? [],
     },
     products: services.products.list(projectId).map((x) => ({
       id: x.id,
@@ -53,6 +54,7 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       locale: e.locale ?? null,
       httpAuth: e.httpAuth ?? null,
       dbConnections: e.dbConnections ?? null,
+      clientCerts: e.clientCerts ?? null,
       cells: services.environments.cells(e.id).map((c) => ({
         productId: c.productId,
         url: c.url,
@@ -172,7 +174,8 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
       !same(project.formulas ?? {}, s.project.formulas ?? {}) ||
       !same(project.manualCases ?? [], s.project.manualCases ?? []) ||
       !same(project.testPlans ?? [], s.project.testPlans ?? []) ||
-      !same(project.permissionMatrices ?? [], s.project.permissionMatrices ?? [])
+      !same(project.permissionMatrices ?? [], s.project.permissionMatrices ?? []) ||
+      !same(project.requirements ?? [], s.project.requirements ?? [])
     )
       services.projects.repo.update(projectId, {
         name: s.project.name,
@@ -186,6 +189,7 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
         manualCases: s.project.manualCases ?? [],
         testPlans: s.project.testPlans ?? [],
         permissionMatrices: s.project.permissionMatrices ?? [],
+        requirements: s.project.requirements ?? [],
       });
 
     /** Generic reconcile of one table. `values` = columns from the file. */
@@ -301,6 +305,7 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
           locale: e.locale ?? null,
           httpAuth: e.httpAuth ?? null,
           dbConnections: e.dbConnections ?? null,
+          clientCerts: e.clientCerts ?? null,
           sortOrder: e.sortOrder,
           secretNames: [...new Set(e.secretNames)].sort(),
         },

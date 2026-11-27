@@ -15,9 +15,10 @@ import { useAppStore } from '@renderer/lib/store';
 import { trpc } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FileUp, Plus, Trash2 } from 'lucide-react';
+import { FileUp, Plus, Trash2, Wand2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { CombinationsDialog } from './combinations-dialog';
 import { DatasetTree } from './dataset-tree-view';
 import { childLists, type EnvMode, nextEnvLimit, sessionUsage } from './doc-model';
 import { useEditorStore } from './editor-store';
@@ -53,6 +54,7 @@ export function DataTab() {
   const importFile = useMutation(trpc.datasets.importFile.mutationOptions());
   const fileRef = useRef<HTMLInputElement>(null);
   const [linked, setLinked] = useState(false);
+  const [combos, setCombos] = useState(false);
   if (!doc) return null;
   const source = doc.dataset;
   const mode = source?.source === 'table' ? 'table' : source?.source === 'saved' ? 'saved' : 'none';
@@ -109,6 +111,15 @@ export function DataTab() {
           <SelectItem value="table">{tx('ui.data.table')}</SelectItem>
         </SelectContent>
       </Select>
+
+      <Button variant="outline" size="sm" className="self-start" onClick={() => setCombos(true)}>
+        <Wand2 /> {tx('ui.data.combosOpen')}
+      </Button>
+      <CombinationsDialog
+        open={combos}
+        onClose={() => setCombos(false)}
+        onUse={(columns, rows) => setTable(columns, rows)}
+      />
 
       <input
         ref={fileRef}

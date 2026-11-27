@@ -117,12 +117,20 @@ export class DemoStore {
   readonly people: Person[] = seedPeople();
   /** Summer promotion: price while it runs, normal price after `endsOn` (local date) [Y-01, V-02]. */
   promo = { ...DEFAULT_PROMO };
+  /** Chat of `chat.html`; `realtime=false` makes the page stop updating by itself [V-04]. */
+  chat: string[] = [];
+  chatRealtime = true;
+  /** Orders of `server-form.html` [R-06]. */
+  orders: string[] = [];
   /** Deliberate permission bugs ("role|function") for the portal [Q-09]. */
   portalLeaks = new Set<string>();
 
   reset(): void {
     this.imported = [];
     this.promo = { ...DEFAULT_PROMO };
+    this.chat = [];
+    this.chatRealtime = true;
+    this.orders = [];
     this.portalLeaks.clear();
     this.requests = [];
     this.products = seedProducts();
@@ -140,8 +148,17 @@ export class DemoStore {
     return { token, user };
   }
 
+  /** Ends every login at once, like a session timeout [W-08]. */
+  expireSessions(): void {
+    this.sessions.clear();
+  }
+
   logout(token: string): void {
     this.sessions.delete(token);
+  }
+
+  userByName(username: string): User | null {
+    return USERS.find((u) => u.username === username) ?? null;
   }
 
   userByToken(token: string | undefined): User | null {

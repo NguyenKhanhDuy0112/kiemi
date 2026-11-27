@@ -34,6 +34,8 @@ export interface LiveCase {
   error?: RunError | undefined;
   /** Videos / traces of the case. */
   artifacts: ArtifactRef[];
+  /** Values noted by `observe`, to compare runs [V-06]. */
+  observations?: Record<string, string> | undefined;
 }
 
 /** What the Run / Result screen shows [S-03, S-04]. */
@@ -209,6 +211,7 @@ export function fromDetail(d: RunDetail): LiveRun {
         durationMs: c.durationMs ?? undefined,
         error: c.error ?? undefined,
         artifacts: c.artifacts.map((a) => ({ kind: a.kind, path: a.path })),
+        observations: c.observations ?? undefined,
       };
     }),
   };

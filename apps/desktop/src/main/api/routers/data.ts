@@ -1,5 +1,7 @@
 import {
   CellInputSchema,
+  cloneProject,
+  createProjectFromTemplate,
   DatasetInputSchema,
   ElementInputSchema,
   EnvironmentInputSchema,
@@ -10,6 +12,7 @@ import {
   importBundle,
   importTestCase,
   NewTestCaseSchema,
+  PROJECT_TEMPLATES,
   ProductInputSchema,
   ProjectInputSchema,
   SharedStepInputSchema,
@@ -27,6 +30,7 @@ import {
   PageDeclsSchema,
   PermissionMatricesSchema,
   PopupRulesSchema,
+  RequirementsSchema,
   TestPlansSchema,
 } from '@kiemi/schema';
 import { z } from 'zod';
@@ -69,6 +73,11 @@ export const projectsRouter = router({
     .input(z.object({ id, cases: ManualCasesSchema }))
     .mutation(({ ctx, input }) => ctx.services.projects.setManualCases(input.id, input.cases)),
   /** Test rounds per release [T-02]. */
+  setRequirements: publicProcedure
+    .input(z.object({ id, requirements: RequirementsSchema }))
+    .mutation(({ ctx, input }) =>
+      ctx.services.projects.setRequirements(input.id, input.requirements),
+    ),
   setTestPlans: publicProcedure
     .input(z.object({ id, plans: TestPlansSchema }))
     .mutation(({ ctx, input }) => ctx.services.projects.setTestPlans(input.id, input.plans)),
@@ -88,6 +97,20 @@ export const projectsRouter = router({
   create: publicProcedure
     .input(ProjectInputSchema)
     .mutation(({ ctx, input }) => ctx.services.projects.create(input)),
+  /** Project types with a ready checklist [R-15]. */
+  templates: publicProcedure.query(() => PROJECT_TEMPLATES.map(({ key, name }) => ({ key, name }))),
+  createFromTemplate: publicProcedure
+    .input(z.object({ key: z.string().min(1), name: z.string().trim().min(1).max(200) }))
+    .mutation(({ ctx, input }) => {
+      const { projectId } = createProjectFromTemplate(ctx.services, input.key, input.name);
+      return ctx.services.projects.get(projectId);
+    }),
+  /** Copy of a project with its tests and settings [O-12]. */
+  clone: publicProcedure
+    .input(z.object({ id, name: z.string().trim().min(1).max(200) }))
+    .mutation(({ ctx, input }) =>
+      ctx.services.projects.get(cloneProject(ctx.services, input.id, input.name)),
+    ),
   update: publicProcedure
     .input(z.object({ id, version, patch: ProjectInputSchema.partial() }))
     .mutation(({ ctx, input }) =>
@@ -253,6 +276,16 @@ export const testCasesRouter = router({
     .mutation(({ ctx, input }) =>
       ctx.services.testCases.save(input.id, input.content, input.version),
     ),
+  /** Earlier saved versions, newest first [T-05]. */
+  history: publicProcedure
+    .input(z.object({ id }))
+    .query(({ ctx, input }) => ctx.services.testCases.history(input.id)),
+  versionContent: publicProcedure
+    .input(z.object({ versionId: id }))
+    .query(({ ctx, input }) => ctx.services.testCases.versionContent(input.versionId)),
+  restoreVersion: publicProcedure
+    .input(z.object({ id, versionId: id }))
+    .mutation(({ ctx, input }) => ctx.services.testCases.restore(input.id, input.versionId)),
   rename: publicProcedure
     .input(z.object({ id, name: z.string(), version }))
     .mutation(({ ctx, input }) =>

@@ -215,6 +215,7 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
         id: 'pl1',
         name: 'Đợt 1',
         release: '3.2',
+        product: 'web',
         items: [
           {
             id: 'i1',
@@ -238,6 +239,21 @@ describe('variable levels and data per environment [O-04, O-05]', () => {
     const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
     openProjectFolder(other, dir);
     expect(other.projects.testPlans(projectId)).toEqual(plans);
+  });
+
+  it('requirements of a project travel through the project folder [T-04]', () => {
+    const { services: s, defaultProjectId: projectId } = createMemoryServices();
+    const reqs = [{ key: 'HR-1', title: 'Tạo đơn', url: 'https://x.example/HR-1' }];
+    s.projects.setRequirements(projectId, reqs);
+    expect(() => s.projects.setRequirements(projectId, [{ key: 'a b' }])).toThrow();
+    const dir = mkdtempSync(join(tmpdir(), 'kiemi-reqs-'));
+    dirs.push(dir);
+    attachProjectFolder(s, projectId, dir);
+    const db = openDatabase({ path: ':memory:' });
+    const seed = ensureDefaultWorkspace(db);
+    const other = createServices({ db, workspaceId: seed.workspaceId }, fakeCipher());
+    openProjectFolder(other, dir);
+    expect(other.projects.requirements(projectId)).toEqual(reqs);
   });
 
   it('permission matrices of a project travel through the project folder [Q-09]', () => {

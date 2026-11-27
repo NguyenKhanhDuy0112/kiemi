@@ -13,6 +13,8 @@ import {
   type PermissionMatrix,
   type PopupRule,
   PopupRulesSchema,
+  type Requirement,
+  RequirementsSchema,
   type TestPlan,
   TestPlansSchema,
   VariableNameSchema,
@@ -107,6 +109,25 @@ export class ProjectService {
     return this.repo.get(id).manualCases ?? [];
   }
   /** Test rounds per release [T-02]. */
+  coverageHistory(id: string): { day: string; score: number }[] {
+    return this.repo.get(id).coverageHistory ?? [];
+  }
+  /** Sets today's coverage score (one point per day, last 180 days) [CV-09]. */
+  recordCoverageScore(id: string, day: string, score: number): { day: string; score: number }[] {
+    const rest = this.coverageHistory(id).filter((p) => p.day !== day);
+    const next = [...rest, { day, score }].sort((a, b) => (a.day < b.day ? -1 : 1)).slice(-180);
+    this.repo.update(id, { coverageHistory: next });
+    return next;
+  }
+  /** Requirements / tickets of the project [T-04]. */
+  setRequirements(id: string, list: unknown) {
+    const p = RequirementsSchema.safeParse(list);
+    if (!p.success) throw validation('requirement', p.error.issues);
+    return this.repo.update(id, { requirements: p.data });
+  }
+  requirements(id: string): Requirement[] {
+    return this.repo.get(id).requirements ?? [];
+  }
   setTestPlans(id: string, plans: unknown) {
     const p = TestPlansSchema.safeParse(plans);
     if (!p.success) throw validation('test plans', p.error.issues);

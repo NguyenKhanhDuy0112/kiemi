@@ -10,7 +10,7 @@ import {
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { resolveInside } from '../../results/artifact-path';
-import { StartRunInputSchema } from '../../run/start-input';
+import { StartMatrixInputSchema, StartRunInputSchema } from '../../run/start-input';
 import { publicProcedure, router } from '../trpc';
 
 const runId = z.object({ runId: z.string().min(1) });
@@ -20,6 +20,11 @@ export const runsRouter = router({
   start: publicProcedure
     .input(StartRunInputSchema)
     .mutation(({ ctx, input }) => ctx.runs.start(input)),
+
+  /** Matrix run: suite × environments × browsers [O-09]. */
+  startMatrix: publicProcedure
+    .input(StartMatrixInputSchema)
+    .mutation(({ ctx, input }) => ctx.runs.startMatrix(input)),
 
   cancel: publicProcedure
     .input(runId)
@@ -43,6 +48,9 @@ export const runsRouter = router({
             step: z.custom<Step>((v) => StepSchema.safeParse(v).success).optional(),
             elements: z.record(ElementRefSchema, ElementSchema).optional(),
             popupRules: PopupRulesSchema.optional(),
+            row: z
+              .object({ runCaseId: z.string().min(1), values: z.record(z.string(), z.string()) })
+              .optional(),
             insert: z
               .object({
                 stepId: z.string().min(1),
@@ -59,6 +67,22 @@ export const runsRouter = router({
       }),
     )
     .mutation(({ ctx, input }) => ({ ok: ctx.runs.control(input.runId, input.command) })),
+
+  /** Data row of a waiting case, to fix a cell [FX-10]. */
+  rowOf: publicProcedure
+    .input(runId.extend({ runCaseId: z.string().min(1) }))
+    .query(({ ctx, input }) => ctx.runs.rowOf(input.runId, input.runCaseId)),
+
+  saveRow: publicProcedure
+    .input(
+      runId.extend({
+        runCaseId: z.string().min(1),
+        values: z.record(z.string(), z.string()),
+      }),
+    )
+    .mutation(({ ctx, input }) => ({
+      ok: ctx.runs.saveRow(input.runId, input.runCaseId, input.values),
+    })),
 
   /** Click an element on the page of the paused run [FX-03]. */
   livePick: publicProcedure

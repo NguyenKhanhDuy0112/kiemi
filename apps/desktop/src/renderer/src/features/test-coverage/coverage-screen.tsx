@@ -18,6 +18,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Gauge, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { ElementsPanel } from './elements-panel';
+import { RequirementsPanel } from './requirements-panel';
 
 /** "Độ phủ": declared pages vs tests, checklist per page kind, labels by technique / quality [CV-01, CV-02, CV-04]. */
 export function CoverageScreen() {
@@ -57,6 +59,8 @@ export function CoverageScreen() {
         </h1>
         <p className="text-sm text-muted-foreground">{tx('ui.coverage.hint')}</p>
       </header>
+      <RequirementsPanel />
+      <ElementsPanel />
 
       <section className="rounded-lg border p-4">
         <h2 className="mb-2 text-sm font-semibold">{tx('ui.coverage.pages')}</h2>

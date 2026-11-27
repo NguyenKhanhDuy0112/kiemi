@@ -22,6 +22,7 @@ import type { Browser, Page, Locator as PwLocator } from 'playwright-core';
 import type { z } from 'zod';
 import {
   type BrowserKind,
+  clientCertsFor,
   ensureFfmpeg,
   httpAuthFor,
   proxyFor,
@@ -38,7 +39,7 @@ import type { LiveSessions, RunDebugger } from './run/debug';
 import { closePopups } from './run/popups';
 import { findWriteSteps } from './run/protection';
 import type { SavedLogin } from './run/services';
-import { DialogController, type RunServices } from './run/services';
+import { DialogController, isLoginUrl, type RunServices, type SentRequest } from './run/services';
 import { toLocator } from './run/target';
 import { mainAppUrl } from './vars/app';
 import { maskSecrets, VariableStore } from './vars/store';
@@ -133,6 +134,7 @@ function placesOf(error: RunError | undefined): Place[] {
 
 /** How many times a failing step is retried after closing a popup [W-09]. */
 const MAX_POPUP_RETRIES = 2;
+const MAX_RELOGINS = 2;
 
 interface Parent {
   step: Step;
@@ -168,6 +170,11 @@ class Run {
   readonly #vars: VariableStore;
   readonly #dialogs = new DialogController();
   readonly #diagnostics: Diagnostic[] = [];
+  readonly #observations: Record<string, string> = {};
+  readonly #requests: SentRequest[] = [];
+  readonly #guard: RunServices['guard'] = {};
+  /** Last address of each session that was not the login page, to come back after a re-login. */
+  readonly #lastUrl = new Map<string, string>();
   readonly #secretFields = new Map<string, PwLocator[]>();
   readonly #defaultTimeout: number;
   /** Top-level steps before this index are skipped (run from step X). */
@@ -232,6 +239,12 @@ class Run {
     return this.#maskDeep(error) as RunError;
   }
 
+  /** A data cell fixed while the run waited: later steps (and the retry) see the new values [FX-10]. */
+  #applyRowEdit(): void {
+    const row = this.#opts.debugger?.rowEdit?.(this.#req.runId);
+    if (row) this.#vars.setRow(row);
+  }
+
   #log(level: LogLevel, message: string, stepId?: string): void {
     const at = this.#now().toISOString();
     const runId = this.#req.runId;
@@ -265,6 +278,22 @@ class Run {
     page.on('pageerror', (err) =>
       push({ kind: 'pageError', session, message: err.message, url: page.url() }),
     );
+    page.on('framenavigated', (frame) => {
+      if (frame !== page.mainFrame()) return;
+      const url = frame.url();
+      const g = this.#guard.current;
+      if (/^https?:/.test(url) && !(g && isLoginUrl(g, url))) this.#lastUrl.set(session, url);
+    });
+    page.on('request', (req) => {
+      if (this.#requests.length >= 5000) this.#requests.shift();
+      this.#requests.push({
+        session,
+        method: req.method(),
+        url: req.url(),
+        body: (req.postData() ?? '').slice(0, 20_000),
+        at: Date.now(),
+      });
+    });
     page.on('response', (res) => {
       const status = res.status();
       // The browser asks for /favicon.ico on its own; a missing icon is not a page error.
@@ -336,6 +365,7 @@ class Run {
         ...(this.#req.options?.viewport ? { viewport: this.#req.options.viewport } : {}),
         proxy: proxyFor(this.#req.env, this.#req.secrets),
         httpCredentials: httpAuthFor(this.#req.env, this.#req.secrets),
+        clientCertificates: clientCertsFor(this.#req.env, this.#req.secrets),
         videoDir: video && artifactsOpt ? join(artifactsOpt.dir, 'video') : undefined,
         traceDir: artifactsOpt?.trace ? artifactsOpt.dir : undefined,
         onPage: (session, page) => this.#onPage(session, page),
@@ -392,6 +422,9 @@ class Run {
       ...(runError ? { error: runError } : {}),
       artifacts: runArtifacts,
       diagnostics: [...this.#diagnostics],
+      observations: Object.fromEntries(
+        Object.entries(this.#observations).map(([k, v]) => [k, this.#mask(v)]),
+      ),
     };
     this.#emit({ type: 'runEnd', runId, result });
     return result;
@@ -412,6 +445,9 @@ class Run {
       pages: this.#pages,
       dialogs: this.#dialogs,
       diagnostics: this.#diagnostics,
+      observations: this.#observations,
+      requests: this.#requests,
+      guard: this.#guard,
       filesDir: req.options?.filesDir,
       url: (value) => {
         if (/^[a-z][a-z0-9+.-]*:/i.test(value) || !baseUrl) return value;
@@ -534,6 +570,7 @@ class Run {
   ): Promise<Outcome> {
     // Edited while the run waited on an earlier step [FX-02].
     step = this.#opts.debugger?.stepEdit?.(step.id) ?? step;
+    this.#applyRowEdit();
     if (!step.enabled) return { result: this.#skipped(step), stop: false };
     if (signal.aborted) {
       return {
@@ -590,6 +627,7 @@ class Run {
     /** Debugger said "continue": the failure stays on record, the run goes on [FX-05]. */
     let keepGoing = false;
     let popupRounds = 0;
+    let sessionRounds = 0;
 
     for (;;) {
       // Popups that appeared since the last step: close them first [W-09].
@@ -618,6 +656,17 @@ class Run {
         popupRounds++;
         if (await this.#handlePopups(step.session, signal)) continue;
       }
+      // The session may have expired: log in again and carry on [W-08].
+      if (
+        error &&
+        !cancelled &&
+        !container &&
+        sessionRounds < MAX_RELOGINS &&
+        this.#guard.current
+      ) {
+        sessionRounds++;
+        if (await this.#handleExpiry(step, index, phase, signal, stepNo)) continue;
+      }
       const dbg = this.#opts.debugger;
       if (!error || cancelled || container || !dbg?.afterFail) break;
       // Failed with the browser still open: wait for the tester's decision [FX-01].
@@ -636,6 +685,7 @@ class Run {
         if (dbg.hasInserted?.(step.id, 'before'))
           return { result: this.#skipped(step), stop: false, redo: true };
         step = dbg.stepEdit?.(step.id) ?? step;
+        this.#applyRowEdit();
         continue;
       }
       if (decision === 'skip') {
@@ -721,6 +771,42 @@ class Run {
       });
     }
     await this.#pages.setActivePage(session, tab);
+  }
+
+  /**
+   * On the login page after a failure: run the shared login step, go back to the
+   * page the test was on, and report true so the step is tried again [W-08].
+   */
+  async #handleExpiry(
+    step: Step,
+    index: number,
+    phase: StepPhase,
+    signal: AbortSignal,
+    stepNo: string,
+  ): Promise<boolean> {
+    const rule = this.#guard.current;
+    if (!rule || !this.#pages.isOpen(step.session)) return false;
+    const page = await this.#pages.page(step.session);
+    if (!isLoginUrl(rule, page.url())) return false;
+    this.#log('warn', 'The session ended: logging in again', step.id);
+    const login = StepSchema.parse({
+      id: `relogin-${step.id}`,
+      action: 'call',
+      params: { shared: rule.shared, args: rule.args },
+      session: step.session,
+    });
+    const outcome = await this.#runOne(login, index, phase, signal, undefined, `${stepNo}↻`);
+    this.#emit({
+      type: 'stepEnd',
+      runId: this.#req.runId,
+      phase,
+      index,
+      result: outcome.result,
+    });
+    if (outcome.result.error) return false;
+    const back = this.#lastUrl.get(step.session);
+    if (back) await page.goto(back, { waitUntil: 'load', timeout: 30_000 }).catch(() => undefined);
+    return true;
   }
 
   /** Applies the project's popup rules to the session's page; true when one was closed. */
@@ -942,6 +1028,20 @@ class Run {
           throw new EngineError('RUN_CANCELLED', 'Run was cancelled', { step: topNo });
         }
         if (failed) throw new StepFailure(failed);
+      },
+      runAllSteps: async (raw) => {
+        const children = raw.map((s) =>
+          StepSchema.parse({ session: step.session, ...(s as object) }),
+        );
+        const before = self.children.length;
+        await this.#runList(children, 'steps', controller.signal, self, self.children, true);
+        if (controller.signal.aborted && runSignal.aborted) {
+          throw new EngineError('RUN_CANCELLED', 'Run was cancelled', { step: topNo });
+        }
+        return self.children
+          .slice(before)
+          .filter((r) => r.error !== undefined)
+          .map((r) => ({ stepId: r.stepId, error: r.error as RunError }));
       },
       markSecret: (l) => {
         const list = this.#secretFields.get(step.session) ?? [];

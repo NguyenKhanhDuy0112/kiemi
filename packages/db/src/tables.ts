@@ -1,4 +1,5 @@
 import type {
+  ClientCert,
   DbConnection,
   FormSpec,
   Formulas,
@@ -11,12 +12,14 @@ import type {
   PermissionMatrix,
   PopupRule,
   ProxySettings,
+  Requirement,
   SharedStep,
   SshSettings,
   Step,
   TestCase,
   TestPlan,
 } from '@kiemi/schema';
+import { NOTIFY_KINDS } from '@kiemi/schema';
 import { blob, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 /**
@@ -77,6 +80,10 @@ export const projects = sqliteTable(
     testPlans: json<TestPlan[]>('test_plans'),
     /** Role × function permission matrices [Q-09] (migration 21). */
     permissionMatrices: json<PermissionMatrix[]>('permission_matrices'),
+    /** Requirements / tickets tests are linked to [T-04] (migration 26). */
+    requirements: json<Requirement[]>('requirements'),
+    /** One coverage score per day, for the trend [CV-09] (migration 28, this machine only). */
+    coverageHistory: json<{ day: string; score: number }[]>('coverage_history'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );
@@ -229,6 +236,8 @@ export const environments = sqliteTable(
     httpAuth: json<HttpAuth>('http_auth'),
     /** Databases tests can query on this environment [X-05] (migration 23). */
     dbConnections: json<DbConnection[]>('db_connections'),
+    /** Client certificates for mutual-TLS sites [W-02] (migration 25). */
+    clientCerts: json<ClientCert[]>('client_certs'),
   },
   (t) => [index('environments_project_idx').on(t.projectId)],
 );
@@ -345,6 +354,8 @@ export const runCases = sqliteTable(
     startedAt: integer('started_at', { mode: 'timestamp_ms' }),
     durationMs: integer('duration_ms'),
     error: json<{ code: string; message: string; details?: Record<string, unknown> }>('error'),
+    /** Values noted by `observe`, to compare runs [V-06] (migration 24). */
+    observations: json<Record<string, string>>('observations'),
   },
   (t) => [index('run_cases_run_idx').on(t.runId)],
 );
@@ -393,13 +404,27 @@ export const settings = sqliteTable(
 );
 
 /** Where run results are announced: Slack, Teams, Google Chat, Telegram, email [X-03]. */
+/** Earlier saved versions of a test, newest last kept up to a limit [T-05] (migration 27). */
+export const testVersions = sqliteTable(
+  'test_versions',
+  {
+    ...base,
+    testCaseId: text('test_case_id').notNull(),
+    /** `version` the test row had when this content was the current one. */
+    savedVersion: integer('saved_version').notNull(),
+    name: text('name').notNull(),
+    content: json<TestCase>('content').notNull(),
+  },
+  (t) => [index('test_versions_test_idx').on(t.testCaseId)],
+);
+
 export const notifyChannels = sqliteTable(
   'notify_channels',
   {
     ...base,
     projectId: text('project_id').notNull(),
     name: text('name').notNull(),
-    kind: text('kind', { enum: ['slack', 'teams', 'gchat', 'telegram', 'email'] }).notNull(),
+    kind: text('kind', { enum: NOTIFY_KINDS }).notNull(),
     enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
     sendWhen: text('send_when', { enum: ['always', 'failed'] })
       .notNull()
@@ -481,5 +506,6 @@ export const ALL_TABLES = {
   settings,
   savedLogins,
   notifyChannels,
+  testVersions,
   sharedResources,
 } as const;

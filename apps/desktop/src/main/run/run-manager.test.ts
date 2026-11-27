@@ -168,6 +168,27 @@ describe('RunManager [M4-01, N-05]', () => {
     ]);
   });
 
+  it('fixes a data cell of a waiting case and keeps it in the test [FX-10]', async () => {
+    const { services, caller, testId } = setup(
+      [{ id: 's1', action: 'pause', params: { ms: 400 } }],
+      {
+        dataset: { source: 'table', columns: ['name'], rows: [{ name: 'An' }, { name: 'Bình' }] },
+      },
+    );
+    const { runId } = await caller.runs.start({ target: { kind: 'test', testCaseId: testId } });
+    const [first] = services.runs.listCases(runId);
+    if (!first) throw new Error('no case');
+    expect(await caller.runs.rowOf({ runId, runCaseId: first.id })).toMatchObject({
+      columns: ['name'],
+      row: { name: 'An' },
+      rowIndex: 0,
+    });
+    await caller.runs.saveRow({ runId, runCaseId: first.id, values: { name: 'Cường' } });
+    const src = services.testCases.get(testId).content.dataset;
+    expect(src?.source === 'table' && src.rows).toEqual([{ name: 'Cường' }, { name: 'Bình' }]);
+    await caller.runs.cancel({ runId });
+  });
+
   it('stops on cancel, still running cleanup', async () => {
     const { caller, testId } = setup([{ id: 's1', action: 'pause', params: { ms: 5000 } }], {
       cleanup: [{ id: 'c1', action: 'note', params: { value: 'cleanup' } }],
@@ -390,6 +411,41 @@ describe('RunManager [M4-01, N-05]', () => {
     expect(finalStatus(await collect(runs.events(runId)))).toBe('passed');
     expect(seen).toEqual(['a']);
     expect(services.runs.get(runId).target).toEqual({ kind: 'tag', tag: 'smoke', name: 'smoke' });
+  });
+
+  it('runs one run per environment × browser, and asks first for a protected one [O-09]', async () => {
+    const { services, runs, testId } = setup([
+      { id: 's1', action: 'note', params: { value: 'm' } },
+    ]);
+    const projectId = services.testCases.get(testId).projectId;
+    const dev = services.environments.create({ projectId, name: 'DEV', type: 'dev' });
+    const uat = services.environments.create({ projectId, name: 'UAT', type: 'uat' });
+    const prod = services.environments.create({ projectId, name: 'Prod', type: 'production' });
+    const target = { kind: 'test' as const, testCaseId: testId };
+    const before = services.runs.list(projectId).length;
+    expect(() =>
+      runs.startMatrix({
+        target,
+        environmentIds: [dev.id, prod.id],
+        browsers: ['chrome'],
+      }),
+    ).toThrowError(/protected/);
+    // Nothing started half-way.
+    expect(services.runs.list(projectId).length).toBe(before);
+
+    const { cells } = runs.startMatrix({
+      target,
+      environmentIds: [dev.id, uat.id],
+      browsers: ['msedge', 'chrome'],
+    });
+    expect(cells.map((c) => `${c.environmentId === dev.id ? 'dev' : 'uat'}-${c.browser}`)).toEqual([
+      'dev-msedge',
+      'dev-chrome',
+      'uat-msedge',
+      'uat-chrome',
+    ]);
+    for (const c of cells) expect(finalStatus(await collect(runs.events(c.runId)))).toBe('passed');
+    expect(seen).toHaveLength(4);
   });
 
   it('pauses at a breakpoint, steps and resumes on command', async () => {

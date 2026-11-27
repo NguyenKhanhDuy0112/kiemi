@@ -57,6 +57,27 @@ export const HttpAuthSchema = z.object({
 });
 export type HttpAuth = z.infer<typeof HttpAuthSchema>;
 
+/**
+ * Client certificate the browser presents to a site that asks for one (mutual TLS)
+ * [W-02]. Files stay where they are; the passphrase is a secret NAME.
+ */
+export const ClientCertSchema = z
+  .object({
+    /** Site that asks for the certificate: `https://bank.example.com`. */
+    origin: z.string().regex(/^https:\/\/[^\s/]+$/, 'Origin must look like https://host[:port]'),
+    /** PEM certificate and key, or one PFX/PKCS#12 file. */
+    certPath: z.string().min(1).max(1000).optional(),
+    keyPath: z.string().min(1).max(1000).optional(),
+    pfxPath: z.string().min(1).max(1000).optional(),
+    passphraseSecret: VariableNameSchema.optional(),
+  })
+  .refine((c) => c.pfxPath !== undefined || (c.certPath !== undefined && c.keyPath !== undefined), {
+    message: 'Give a PFX file, or both a certificate and a key',
+    path: ['pfxPath'],
+  });
+export type ClientCert = z.infer<typeof ClientCertSchema>;
+export const ClientCertsSchema = z.array(ClientCertSchema);
+
 /** Kinds of database a test can look into [X-05]. */
 export const DB_KINDS = ['postgres', 'mysql', 'mssql', 'sqlite'] as const;
 export const DbKindSchema = z.enum(DB_KINDS);
@@ -212,6 +233,8 @@ export const EnvSchema = z.object({
   httpAuth: HttpAuthSchema.optional(),
   /** Databases the `queryDb` step can read on this env [X-05]. */
   dbConnections: DbConnectionsSchema.optional(),
+  /** Client certificates for sites that ask for one [W-02]. */
+  clientCerts: ClientCertsSchema.optional(),
   /** Proxy used by every session of runs in this env [G-06]. */
   proxy: ProxySchema.optional(),
   /** SSH tunnel opened by the desktop app for runs in this env [G-07]. */

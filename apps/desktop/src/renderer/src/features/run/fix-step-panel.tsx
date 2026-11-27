@@ -31,6 +31,7 @@ import { StepForm } from '../editor/props-panel';
 import { expectationUpdate, mismatchOf } from './bug-report';
 import { copyBugReport } from './copy-bug';
 import { FixLog } from './fix-log';
+import { FixRowPanel } from './fix-row-panel';
 import { classifyFailure, type QuickFixActions, QuickFixes } from './quick-fixes';
 import { useRunFixes } from './run-fixes';
 import { useRunStore } from './run-store';
@@ -72,6 +73,7 @@ function InsertMenu({ label, onPick }: { label: string; onPick: (type: string) =
 
 export function FixStepPanel({
   runId,
+  runCaseId,
   testCaseId,
   doc,
   version,
@@ -83,6 +85,7 @@ export function FixStepPanel({
   error,
 }: {
   runId: string;
+  runCaseId: string;
   testCaseId: string;
   doc: TestCase;
   version: number;
@@ -383,6 +386,7 @@ export function FixStepPanel({
         )}
         <InsertMenu label={tx('ui.run.insertAfter')} onPick={(t) => addStep(t, 'after')} />
       </div>
+      <FixRowPanel runId={runId} runCaseId={runCaseId} />
       {others.length > 0 && savedElement && (
         <fieldset className="flex flex-col gap-1.5 border-t px-4 py-3 text-xs">
           <legend className="sr-only">

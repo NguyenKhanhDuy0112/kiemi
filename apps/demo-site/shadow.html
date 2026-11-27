@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Web component (Shadow DOM) — Kiemi Demo</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Web component</h1>
+      <p class="muted">Ô nhập và nút nằm trong Shadow DOM (open); cái thứ hai nằm lồng trong cái đầu.</p>
+      <kiemi-card id="card" title="Phiếu đăng ký"></kiemi-card>
+      <p>Kết quả: <strong id="shadow-result" data-testid="shadow-result">—</strong></p>
+    </main>
+    <script type="module" src="/src/shadow.ts"></script>
+  </body>
+</html>

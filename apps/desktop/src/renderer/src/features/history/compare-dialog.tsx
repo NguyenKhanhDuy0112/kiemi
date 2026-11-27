@@ -81,6 +81,23 @@ export function CompareDialog({ a, b, onClose }: { a: string; b: string; onClose
                     <span aria-hidden>→</span>
                     {c.b ? <RunStatusBadge status={c.b} /> : tx('ui.history.notRun')}
                   </h3>
+                  {c.fields.length > 0 && (
+                    <table className="w-full border-b text-sm" data-testid="compare-fields">
+                      <caption className="px-3 py-1 text-left text-xs font-medium text-muted-foreground">
+                        {tx('ui.history.fieldsDiffer', { count: c.fields.length })}
+                      </caption>
+                      <tbody>
+                        {c.fields.map((f) => (
+                          <tr key={f.name} className="bg-warning/10">
+                            <td className="px-3 py-1 font-medium">{f.name}</td>
+                            <td className="px-3 py-1">{f.a ?? tx('ui.history.missing')}</td>
+                            <td aria-hidden>→</td>
+                            <td className="px-3 py-1">{f.b ?? tx('ui.history.missing')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                   <ul>
                     {steps.map((s) => {
                       const step = doc ? findStep(doc, s.stepId) : undefined;

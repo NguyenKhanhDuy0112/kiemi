@@ -1,6 +1,7 @@
 import type {
   DownloadProgress,
   EngineEvent,
+  InteractiveScan,
   LaunchSettingsInput,
   RunRequest,
   SavedLogin,
@@ -26,6 +27,8 @@ export interface EditCommand {
   elements?: TestCase['elements'] | undefined;
   /** Steps to run next to `stepId` in this run only. */
   insert?: { stepId: string; where: 'before' | 'after'; steps: Step[] } | undefined;
+  /** The data row of the case, a cell fixed while waiting [FX-10]. */
+  row?: { runCaseId: string; values: Record<string, string> } | undefined;
   /** The project's popup rules, changed while waiting [FX-06]. */
   popupRules?: PopupRule[] | undefined;
 }
@@ -55,6 +58,7 @@ export type RecordCommand =
   | { kind: 'pick'; requestId: string }
   | { kind: 'highlight'; requestId: string; locator: Locator }
   | { kind: 'scanForms'; requestId: string }
+  | { kind: 'scanElements'; requestId: string }
   | { kind: 'suggestion'; id: string; accept: boolean };
 
 /**
@@ -129,5 +133,6 @@ export type WorkerToHost =
   | { type: 'pickResult'; requestId: string; locator: Locator | null }
   | { type: 'highlightResult'; requestId: string; result: HighlightResult }
   | { type: 'scanResult'; requestId: string; forms: ScannedForm[] }
+  | { type: 'scanElementsResult'; requestId: string; scan: InteractiveScan | null }
   /** Recording ended; the browser is closed. */
   | { type: 'recordDone'; steps: Step[] };

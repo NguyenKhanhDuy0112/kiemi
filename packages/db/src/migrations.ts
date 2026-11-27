@@ -455,4 +455,41 @@ CREATE INDEX "notify_channels_project_idx" ON "notify_channels" ("project_id");`
     name: 'environment-db-connections',
     sql: `ALTER TABLE "environments" ADD COLUMN "db_connections" TEXT;`,
   },
+  {
+    id: 24,
+    name: 'run-case-observations',
+    sql: `ALTER TABLE "run_cases" ADD COLUMN "observations" TEXT;`,
+  },
+  {
+    id: 25,
+    name: 'environment-client-certs',
+    sql: `ALTER TABLE "environments" ADD COLUMN "client_certs" TEXT;`,
+  },
+  {
+    id: 26,
+    name: 'project-requirements',
+    sql: `ALTER TABLE "projects" ADD COLUMN "requirements" TEXT;`,
+  },
+  {
+    id: 27,
+    name: 'test-versions',
+    sql: `CREATE TABLE "test_versions" (
+  "id" TEXT PRIMARY KEY,
+  "workspace_id" TEXT NOT NULL,
+  "created_at" INTEGER NOT NULL,
+  "updated_at" INTEGER NOT NULL,
+  "deleted_at" INTEGER,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "test_case_id" TEXT NOT NULL,
+  "saved_version" INTEGER NOT NULL,
+  "name" TEXT NOT NULL,
+  "content" TEXT NOT NULL
+);
+CREATE INDEX "test_versions_test_idx" ON "test_versions" ("test_case_id");`,
+  },
+  {
+    id: 28,
+    name: 'project-coverage-history',
+    sql: `ALTER TABLE "projects" ADD COLUMN "coverage_history" TEXT;`,
+  },
 ];

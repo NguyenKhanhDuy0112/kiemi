@@ -42,6 +42,8 @@ export interface RunDebugger {
   popupRulesEdit?(): PopupRule[] | undefined;
   /** Elements edited while the run waited (re-picked) [FX-03]. */
   elementsEdit?(): TestCase['elements'] | undefined;
+  /** Data row edited while the run waited [FX-10]. */
+  rowEdit?(caseId: string): Record<string, string> | undefined;
 }
 
 export type FailDecision = 'retry' | 'skip' | 'continue' | 'stop';
@@ -73,6 +75,7 @@ export class DebugController implements RunDebugger {
   readonly #stepEdits = new Map<string, Step>();
   readonly #inserts = new Map<string, Step[]>();
   #elementEdits: TestCase['elements'] | undefined;
+  readonly #rowEdits = new Map<string, Record<string, string>>();
   #popupRules: PopupRule[] | undefined;
   readonly #listener: DebugListener;
 
@@ -119,6 +122,15 @@ export class DebugController implements RunDebugger {
 
   editElements(elements: TestCase['elements']): void {
     this.#elementEdits = elements;
+  }
+
+  /** The tester fixed a cell of the data row while paused [FX-10]. */
+  editRow(caseId: string, row: Record<string, string>): void {
+    this.#rowEdits.set(caseId, row);
+  }
+
+  rowEdit(caseId: string): Record<string, string> | undefined {
+    return this.#rowEdits.get(caseId);
   }
 
   /** Adds steps to run right before / after `stepId` in this run [FX-04]. */

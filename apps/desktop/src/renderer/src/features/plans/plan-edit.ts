@@ -2,7 +2,13 @@ import type { ManualCase, PlanItem, PlanStatus, TestPlan } from '@kiemi/schema';
 
 const uid = (): string => crypto.randomUUID();
 
-export const newPlan = (name: string): TestPlan => ({ id: uid(), name, release: '', items: [] });
+export const newPlan = (name: string): TestPlan => ({
+  id: uid(),
+  name,
+  release: '',
+  product: '',
+  items: [],
+});
 
 /** Adds tests / manual cases to the round, skipping ones already in it. */
 export function addItems(

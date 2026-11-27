@@ -1,4 +1,10 @@
-import { NOTIFY_KINDS, type NotifyConfig, type NotifyKind } from '@kiemi/schema';
+import {
+  isTracker,
+  NOTIFY_KINDS,
+  type NotifyConfig,
+  type NotifyKind,
+  trackerProblem,
+} from '@kiemi/schema';
 
 export { NOTIFY_KINDS };
 
@@ -23,6 +29,9 @@ export const emptyConfig = (): NotifyConfig => ({
   username: '',
   from: '',
   to: '',
+  baseUrl: '',
+  project: '',
+  issueType: '',
 });
 
 export const newDraft = (kind: NotifyKind = 'slack'): NotifyDraft => ({
@@ -36,14 +45,24 @@ export const newDraft = (kind: NotifyKind = 'slack'): NotifyDraft => ({
 });
 
 /** Which fields the form shows for a kind. */
-export const fieldsOf = (kind: NotifyKind): ('chatId' | 'smtp')[] =>
-  kind === 'telegram' ? ['chatId'] : kind === 'email' ? ['smtp'] : [];
+export const fieldsOf = (kind: NotifyKind): ('chatId' | 'smtp' | 'tracker')[] =>
+  kind === 'telegram'
+    ? ['chatId']
+    : kind === 'email'
+      ? ['smtp']
+      : isTracker(kind)
+        ? ['tracker']
+        : [];
 
 /** Plain reason the draft cannot be saved yet, or `null`. Keys are in `ui.notify.problem.*`. */
 export function draftProblem(d: NotifyDraft): string | null {
   if (!d.name.trim()) return 'name';
   if (d.kind !== 'email' && !d.secret && !d.hasSecret) return 'secret';
   if (d.kind === 'telegram' && !d.config.chatId.trim()) return 'chatId';
+  if (isTracker(d.kind)) {
+    const p = trackerProblem(d.kind, d.config);
+    if (p) return p;
+  }
   if (d.kind === 'email') {
     if (!d.config.host.trim()) return 'host';
     if (!d.config.from.trim() || !d.config.to.trim()) return 'addresses';

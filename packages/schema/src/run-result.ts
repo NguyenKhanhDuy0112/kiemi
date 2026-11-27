@@ -66,5 +66,7 @@ export const RunResultSchema = z.object({
   artifacts: z.array(ArtifactRefSchema).default([]),
   /** Console errors and failed requests seen during the run [F-04]. */
   diagnostics: z.array(DiagnosticSchema).default([]),
+  /** Values the test noted with `observe`, to compare runs on two environments [V-06]. */
+  observations: z.record(z.string(), z.string()).default({}),
 });
 export type RunResult = z.infer<typeof RunResultSchema>;

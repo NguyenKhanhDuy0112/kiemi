@@ -5,6 +5,7 @@ import {
   countsByAssignee,
   planHeadline,
   planProgress,
+  releaseReport,
   syncManual,
   type TestPlan,
   TestPlanSchema,
@@ -58,5 +59,34 @@ describe('test plans [T-02]', () => {
   });
   it('rejects duplicate plan ids', () => {
     expect(TestPlansSchema.safeParse([plan(), plan()]).success).toBe(false);
+  });
+});
+
+describe('releaseReport [O-13]', () => {
+  const item = (id: string, status: 'pass' | 'fail' | 'notrun') => ({
+    id,
+    kind: 'auto' as const,
+    refId: id,
+    name: id,
+    assignee: '',
+    status,
+    note: '',
+  });
+  it('adds up rounds of the same product and release, skipping rounds without a release', () => {
+    const rows = releaseReport([
+      {
+        id: 'a',
+        name: 'A',
+        release: '3.2',
+        product: 'web',
+        items: [item('1', 'pass'), item('2', 'fail')],
+      },
+      { id: 'b', name: 'B', release: '3.2', product: 'web', items: [item('3', 'notrun')] },
+      { id: 'c', name: 'C', release: '3.2', product: 'api', items: [item('4', 'pass')] },
+      { id: 'd', name: 'D', release: '', product: 'web', items: [item('5', 'pass')] },
+    ]);
+    expect(
+      rows.map((r) => `${r.product}:${r.release}:${r.plans}:${r.counts.total}:${r.progress}`),
+    ).toEqual(['api:3.2:1:1:100', 'web:3.2:2:3:67']);
   });
 });

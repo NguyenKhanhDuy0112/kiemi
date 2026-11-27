@@ -1,3 +1,4 @@
+import { compareObservations, type ObservationDiff } from '@kiemi/schema';
 import type { LiveCase, LiveCaseStatus, LiveRun, LiveStepStatus } from '../run/run-state';
 
 export interface CompareStep {
@@ -17,6 +18,8 @@ export interface CompareCase {
   b?: LiveCaseStatus | undefined;
   changed: boolean;
   steps: CompareStep[];
+  /** Noted values that differ between the two runs (UAT vs Staging) [V-06]. */
+  fields: ObservationDiff[];
 }
 
 const caseKey = (c: LiveCase) => `${c.testCaseId}#${c.rowIndex ?? ''}`;
@@ -56,6 +59,9 @@ export function compareRuns(a: LiveRun, b: LiveRun): CompareCase[] {
         };
       })
       .sort((p, q) => byStepNo(p.stepNo, q.stepNo));
+    const fields = compareObservations(x?.observations ?? {}, y?.observations ?? {}).filter(
+      (f) => f.status !== 'same',
+    );
     return {
       key,
       testCaseId: base.testCaseId,
@@ -63,8 +69,9 @@ export function compareRuns(a: LiveRun, b: LiveRun): CompareCase[] {
       rowIndex: base.rowIndex,
       a: x?.status,
       b: y?.status,
-      changed: x?.status !== y?.status || steps.some((s) => s.changed),
+      changed: x?.status !== y?.status || steps.some((s) => s.changed) || fields.length > 0,
       steps,
+      fields,
     };
   });
 }

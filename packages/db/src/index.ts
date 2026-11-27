@@ -12,4 +12,5 @@ export * from './repo';
 export * from './services';
 export type { DatasetSourceInfo, RunTarget } from './tables';
 export * as tables from './tables';
+export * from './templates';
 export * from './testing';
