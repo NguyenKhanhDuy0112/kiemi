@@ -32,6 +32,7 @@
 - Query DB (X-05, ADR 0023): `engine/src/db/` (`client.ts` cổng `DbClient`, `sql-safety.ts` `checkSql`/`bindPlaceholders`), action `actions/query-db.ts`, `Env.dbConnections` (schema/env.ts, cột `environments.db_connections`)
 - Driver CSDL: `apps/desktop/src/main/db-query/` (`index.ts` `createDbClient` nạp lười, `sqlite|postgres|mysql|mssql.ts`), nối ở `run/worker-core.ts` (`WorkerDeps.db`); màn kết nối `features/environments/db-connections.tsx`, router `dbQuery.test`
 - demo-site DB: `server/db.ts` (`DemoDb` ghi đơn nghỉ vào SQLite thật; `DemoSite.dbPath`/`SampleSite.dbPath`), mẫu L-03 #6 trong `main/samples/samples.ts` (kết nối `donNghi`)
+- Dashboard theo cấp (O-10): `schema/src/dashboard.ts` (`statsOf`/`groupStats`), router `routers/dashboard.ts` (workspace→dự án→sản phẩm→môi trường), UI `features/dashboard/`
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)

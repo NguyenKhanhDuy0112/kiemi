@@ -9,6 +9,7 @@ import {
 
 export type View =
   | 'tests'
+  | 'dashboard'
   | 'history'
   | 'environments'
   | 'forms'

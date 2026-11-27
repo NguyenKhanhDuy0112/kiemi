@@ -1,5 +1,6 @@
 export * from './bad-data';
 export * from './coverage';
+export * from './dashboard';
 export * from './dataset';
 export * from './design-labels';
 export * from './env';

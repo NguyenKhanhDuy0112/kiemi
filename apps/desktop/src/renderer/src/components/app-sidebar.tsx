@@ -37,6 +37,7 @@ import {
   Gauge,
   Globe,
   History,
+  LayoutDashboard,
   ListChecks,
   Pin,
   PinOff,
@@ -51,6 +52,7 @@ import { toast } from 'sonner';
 
 const NAV: { view: View; icon: typeof FileText }[] = [
   { view: 'tests', icon: FileText },
+  { view: 'dashboard', icon: LayoutDashboard },
   { view: 'history', icon: History },
   { view: 'environments', icon: Globe },
   { view: 'forms', icon: ClipboardList },

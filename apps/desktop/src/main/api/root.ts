@@ -1,5 +1,6 @@
 import { appRouter } from './routers/app';
 import { coverageRouter } from './routers/coverage';
+import { dashboardRouter } from './routers/dashboard';
 import {
   datasetsRouter,
   elementsRouter,
@@ -45,6 +46,7 @@ export const rootRouter = router({
   recorder: recorderRouter,
   forms: formsRouter,
   coverage: coverageRouter,
+  dashboard: dashboardRouter,
   formulas: formulasRouter,
   manual: manualRouter,
   permissions: permissionsRouter,

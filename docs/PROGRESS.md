@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M15** (nhánh `milestone/m15-v12-remaining`): M15-01b → M15-12 (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
+**M15** (nhánh `milestone/m15-v12-remaining`): M15-01c → M15-12 (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
 
 ## Lưu ý cho task sau
+- M15-01b xong: `dashboard.overview({projectId?, productId?})` trả `level` + `groups` + `failing`; sản phẩm của 1 case lấy từ test (run không có productId). Xu hướng = tỉ lệ đạt theo ngày (14 ngày), 'đang lỗi' = kết quả mới nhất của test là failed/error. Màn `features/dashboard/` (view `dashboard`). O-13 (báo cáo theo release) có thể dùng lại `statsOf`.
 - M15-01a xong: `RunOptions.browser` (ghi đè trình duyệt 1 lần chạy), `RunManager.startMatrix` → mỗi ô môi trường×trình duyệt là 1 run riêng (kiểm môi trường được bảo vệ trước khi chạy ô nào), tRPC `runs.startMatrix`; UI `features/run/matrix-dialog.tsx` (mở từ Tùy chọn chạy của suite/tag) + `matrix.ts` thuần. Bảng chỉ sống khi hộp thoại mở (run vẫn nằm ở Lịch sử, chưa lưu nhóm ma trận vào DB); các ô chạy song song nên nặng máy khi nhiều ô.
 - Kiểm tra app thật M14 (script ngoài repo, `_electron.launch --user-data-dir`): sửa lỗi tìm được — câu mô tả bước 'Hỏi CSDL' hiện `{{connection}}` thô vì thiếu `connection`/`sql` trong `SENTENCE_PARAMS` (describe.ts). Khi thêm action mới có chuỗi 'sentence', thêm tên tham số vào danh sách đó.
 - M14-08c xong: `startDemoSite().dbPath` / `startSampleSite({dbPath}).dbPath` (SQLite thật, đồng bộ sau mọi thay đổi đơn nghỉ; app dùng `userData/sample-site.db`). Mẫu #6 chỉ cài khi có `dbPath` (`installSamples(services, url, dbPath)`, `ApiContext.sampleSiteDb`); `syncSampleEnvironment(…, dbPath)` đổi đường dẫn khi khác. Mẫu #6 so khớp bằng `SELECT … WHERE code=? AND owner=? AND status=?` + `expectRows:1` (không cần đường dẫn biến).
