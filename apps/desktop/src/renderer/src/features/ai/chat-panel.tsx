@@ -151,6 +151,24 @@ export function ChatPanel() {
     }
   };
 
+  const suggest = async (mode: 'missing' | 'business') => {
+    if (busy) return;
+    setPreview(null);
+    setMsgs((m) => [...m, { role: 'user', text: tx(`ui.ai.chat.suggest.${mode}`) }]);
+    setBusy(true);
+    try {
+      const r = await trpcClient.ai.suggest.mutate({ projectId, mode });
+      setMsgs((m) => [
+        ...m,
+        { role: 'assistant', text: r.reply, proposal: r.proposal, problems: r.problems },
+      ]);
+    } catch (err) {
+      toast.error(errorMessage(err, tx));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const finish = (i: number) =>
     setMsgs((m) => m.map((x, j) => (j === i ? { ...x, done: true } : x)));
 
@@ -336,6 +354,19 @@ export function ChatPanel() {
                 if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void send();
               }}
             />
+            <div className="flex flex-wrap gap-2">
+              {(['missing', 'business'] as const).map((mode) => (
+                <Button
+                  key={mode}
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => void suggest(mode)}
+                >
+                  {tx(`ui.ai.chat.suggest.${mode}`)}
+                </Button>
+              ))}
+            </div>
             <div className="flex gap-2">
               <Button
                 size="sm"

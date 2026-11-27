@@ -3,6 +3,7 @@ import { AI_TASKS, AiSettingsInputSchema } from '@kiemi/schema';
 import { z } from 'zod';
 import { acceptTest, chat } from '../../ai/assistant';
 import { gatewayFor } from '../../ai/gateway';
+import { suggestCases } from '../../ai/suggest';
 import { proposeNote, runTool, saveNotes } from '../../ai/tools';
 import { publicProcedure, router } from '../trpc';
 
@@ -72,6 +73,19 @@ export const aiRouter = router({
         ...(input.task ? { task: input.task } : {}),
         ...(input.context ? { context: input.context } : {}),
       }),
+    ),
+
+  /** Cases still missing / extra business cases, as a proposal to review [AI-19, AI-08]. */
+  suggest: publicProcedure
+    .input(
+      z.object({
+        projectId,
+        mode: z.enum(['missing', 'business']),
+        context: z.string().max(60_000).optional(),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      suggestCases(ctx.services, input.projectId, input.mode, input.context),
     ),
 
   /** The person accepted a test proposal: creates the test (checked again) [AI-03]. */

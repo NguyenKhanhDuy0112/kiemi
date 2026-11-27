@@ -85,7 +85,7 @@ export const coverageRouter = router({
 });
 
 /** Coverage of the project's pages by its tests, and the number of tests. */
-function coverageOf(s: Services, projectId: string) {
+export function coverageOf(s: Services, projectId: string) {
   const products = s.products.list(projectId);
   const keyOf = new Map(products.map((p) => [p.id, p.key]));
   const tests: CoverageTest[] = s.testCases.list(projectId).map((t) => ({

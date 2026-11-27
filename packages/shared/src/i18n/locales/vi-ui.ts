@@ -937,6 +937,7 @@ export const viUi = {
       caseTable: 'Bảng case ({{count}})',
       testSaved: 'Đã lưu test "{{name}}".',
       noteSaved: 'Đã lưu vào ghi chú dự án.',
+      suggest: { missing: 'Gợi ý case còn thiếu', business: 'Gợi ý case nghiệp vụ' },
       open: 'Mở trợ lý',
     },
   },

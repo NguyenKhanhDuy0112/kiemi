@@ -938,6 +938,7 @@ export const enUi = {
       caseTable: 'Case table ({{count}})',
       testSaved: 'Saved test "{{name}}".',
       noteSaved: 'Saved to project notes.',
+      suggest: { missing: 'Suggest missing cases', business: 'Suggest business cases' },
       open: 'Open assistant',
     },
   },
