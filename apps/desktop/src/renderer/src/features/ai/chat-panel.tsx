@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Eye, Loader2, Send, Sparkles, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { fileToBase64 } from '../editor/editor-tabs';
 
 type Chat = Awaited<ReturnType<typeof trpcClient.ai.chat.mutate>>;
 type Proposal = NonNullable<Chat['proposal']>;
@@ -167,6 +168,40 @@ export function ChatPanel() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const say = async (label: string, run: () => Promise<Chat | { text: string }>) => {
+    if (busy) return;
+    setPreview(null);
+    setMsgs((m) => [...m, { role: 'user', text: label }]);
+    setBusy(true);
+    try {
+      const r = await run();
+      setMsgs((m) => [
+        ...m,
+        'reply' in r
+          ? { role: 'assistant', text: r.reply, proposal: r.proposal, problems: r.problems }
+          : { role: 'assistant', text: r.text || tx('ui.ai.chat.noRun') },
+      ]);
+    } catch (err) {
+      toast.error(errorMessage(err, tx));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const describe = () => {
+    const text = input.trim();
+    if (!text) return;
+    setInput('');
+    void say(text, () => trpcClient.ai.describe.mutate({ projectId, text }));
+  };
+
+  const fromFile = async (file: File) => {
+    const data = await fileToBase64(file);
+    void say(tx('ui.ai.chat.docLabel', { name: file.name }), () =>
+      trpcClient.ai.fromDocument.mutate({ projectId, name: file.name, data }),
+    );
   };
 
   const finish = (i: number) =>
@@ -366,6 +401,36 @@ export function ChatPanel() {
                   {tx(`ui.ai.chat.suggest.${mode}`)}
                 </Button>
               ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="ghost" disabled={busy || !input.trim()} onClick={describe}>
+                {tx('ui.ai.chat.describe')}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={busy}
+                onClick={() =>
+                  void say(tx('ui.ai.chat.summarize'), () =>
+                    trpcClient.ai.summarizeRun.mutate({ projectId }),
+                  )
+                }
+              >
+                {tx('ui.ai.chat.summarize')}
+              </Button>
+              <label className="inline-flex h-8 cursor-pointer items-center rounded-md px-3 text-sm hover:bg-accent">
+                {tx('ui.ai.chat.fromDoc')}
+                <input
+                  type="file"
+                  className="sr-only"
+                  accept=".xlsx,.pdf,.csv,.txt,.md"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = '';
+                    if (f) void fromFile(f);
+                  }}
+                />
+              </label>
             </div>
             <div className="flex gap-2">
               <Button

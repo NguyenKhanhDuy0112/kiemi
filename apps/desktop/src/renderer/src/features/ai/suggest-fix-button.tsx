@@ -33,6 +33,8 @@ export function SuggestFixButton({
   const [result, setResult] = useState<Diagnosis | null>(null);
   const [also, setAlso] = useState(true);
   const [applied, setApplied] = useState(false);
+  const [bug, setBug] = useState<string | null>(null);
+  const [writing, setWriting] = useState(false);
 
   if (settings.data?.enabled !== true) return null;
 
@@ -57,6 +59,25 @@ export function SuggestFixButton({
       toast.error(errorMessage(err, tx));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const writeBug = async () => {
+    setWriting(true);
+    try {
+      setBug(
+        await trpcClient.ai.bugReport.mutate({
+          projectId,
+          testCaseId,
+          stepId,
+          error: { code: error.code, message: error.message },
+          environmentName: environmentName ?? null,
+        }),
+      );
+    } catch (err) {
+      toast.error(errorMessage(err, tx));
+    } finally {
+      setWriting(false);
     }
   };
 
@@ -88,6 +109,33 @@ export function SuggestFixButton({
       >
         {busy ? <Loader2 className="animate-spin" /> : <Sparkles />} {tx('ui.ai.fix.button')}
       </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-6 w-fit px-2 text-xs"
+        disabled={writing}
+        onClick={() => void writeBug()}
+      >
+        {writing ? <Loader2 className="animate-spin" /> : <Sparkles />} {tx('ui.ai.fix.writeBug')}
+      </Button>
+      {bug && (
+        <div className="flex flex-col gap-1 rounded-md border bg-muted/30 p-2 text-xs">
+          <pre className="max-h-48 overflow-auto whitespace-pre-wrap">{bug}</pre>
+          <div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                void navigator.clipboard
+                  .writeText(bug)
+                  .then(() => toast.success(tx('ui.bug.copied')))
+              }
+            >
+              {tx('ui.ai.fix.copyBug')}
+            </Button>
+          </div>
+        </div>
+      )}
       {result && (
         <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-2 text-xs">
           <p>

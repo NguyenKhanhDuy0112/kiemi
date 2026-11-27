@@ -211,7 +211,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M16-04c** Gợi ý case còn thiếu / nghiệp vụ bổ sung (độ phủ, lịch sử fail, yêu cầu chưa có test) [AI-19, AI-08]
 - [x] **M16-05a** Chẩn đoán lỗi (5 nhóm) + đề xuất sửa dạng diff + áp dụng (kể cả các bước cùng phần tử), router `ai.diagnose|applyFix` [AI-10, AI-09]
 - [x] **M16-05b** Nút 'Đề xuất sửa' trên màn kết quả/bước lỗi: giải thích + diff + 1 nút áp dụng [FX-12]
-- [ ] **M16-06** Mô tả tiếng Việt → step, tài liệu → test, viết bug & tóm tắt đợt test [AI-05, AI-06, AI-11]
+- [x] **M16-06** Mô tả tiếng Việt → step, tài liệu → test, viết bug & tóm tắt lần chạy [AI-05, AI-06, AI-11]
 
 ## Sau v1.2 (v1.x)
 N-14 (ký code Windows + notarize macOS, khi có chứng chỉ).

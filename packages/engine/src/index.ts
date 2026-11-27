@@ -7,6 +7,7 @@ export * from './db/sql-safety';
 export * from './define-action';
 export * from './errors';
 export * from './events';
+export { readPdfText } from './files/read';
 export * from './flow/condition';
 export * from './forms';
 export * from './knowledge';

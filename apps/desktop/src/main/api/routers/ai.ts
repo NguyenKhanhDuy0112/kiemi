@@ -6,6 +6,13 @@ import { applyFix, diagnose } from '../../ai/diagnose';
 import { gatewayFor } from '../../ai/gateway';
 import { suggestCases } from '../../ai/suggest';
 import { proposeNote, runTool, saveNotes } from '../../ai/tools';
+import {
+  casesFromDocument,
+  describeToSteps,
+  documentText,
+  summarizeRun,
+  writeBugReport,
+} from '../../ai/write';
 import { publicProcedure, router } from '../trpc';
 
 const projectId = z.string().min(1);
@@ -114,6 +121,61 @@ export const aiRouter = router({
       }),
     )
     .mutation(({ ctx, input }) => applyFix(ctx.services, input.projectId, input)),
+
+  /** Sentences → a test proposal for the page open in the browser [AI-05]. */
+  describe: publicProcedure
+    .input(
+      z.object({
+        projectId,
+        text: z.string().min(1).max(10_000),
+        pageText: z.string().max(60_000).optional(),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      describeToSteps(ctx.services, input.projectId, input.text, input.pageText),
+    ),
+
+  /** A document (.xlsx, .pdf, .csv, .txt, .md as base64) → cases to review [AI-06]. */
+  fromDocument: publicProcedure
+    .input(
+      z.object({ projectId, name: z.string().min(1).max(300), data: z.string().max(30_000_000) }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const text = await documentText(
+        input.name,
+        new Uint8Array(Buffer.from(input.data, 'base64')),
+      );
+      return casesFromDocument(ctx.services, input.projectId, input.name, text);
+    }),
+
+  /** Bug report for a failed step [AI-11]. */
+  bugReport: publicProcedure
+    .input(
+      z.object({
+        projectId,
+        testCaseId: z.string().min(1),
+        stepId: z.string().min(1),
+        error: z.object({ code: z.string(), message: z.string().max(5000) }),
+        environmentName: z.string().nullish(),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      writeBugReport(ctx.services, input.projectId, {
+        testCaseId: input.testCaseId,
+        stepId: input.stepId,
+        error: input.error,
+        environmentName: input.environmentName ?? null,
+      }),
+    ),
+
+  /** Summary of a run (the latest one when `runId` is omitted) [AI-11]. */
+  summarizeRun: publicProcedure
+    .input(z.object({ projectId, runId: z.string().min(1).optional() }))
+    .mutation(({ ctx, input }) => {
+      const id = input.runId ?? ctx.services.runs.history(input.projectId, { limit: 1 })[0]?.id;
+      if (!id) return { text: '' };
+      return summarizeRun(ctx.services, input.projectId, id).then((text) => ({ text }));
+    }),
 
   /** Cases still missing / extra business cases, as a proposal to review [AI-19, AI-08]. */
   suggest: publicProcedure
