@@ -1508,6 +1508,15 @@ export const viUi = {
       label: 'So sánh giữa 2 nơi',
       sentence: 'So sánh {{left}} với {{right}}',
     },
+    assertSeo: { label: 'Kiểm tra SEO / meta', sentence: 'Kiểm tra SEO của trang' },
+    assertI18n: {
+      label: 'Kiểm tra bản dịch của trang',
+      sentence: 'Kiểm tra trang đã dịch đủ ({{locale}})',
+    },
+    assertLayout: {
+      label: 'Kiểm tra vỡ bố cục',
+      sentence: 'Kiểm tra bố cục ở các độ rộng {{widths}}',
+    },
     network: { label: 'Giả lập mạng', sentence: 'Mạng: {{mode}}' },
     permission: {
       label: 'Cấp / từ chối quyền trình duyệt',

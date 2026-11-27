@@ -27,6 +27,7 @@ import { markLiveAction } from './live';
 import { loopAction } from './loop';
 import { navigateAction } from './navigate';
 import { observeAction } from './observe';
+import { assertI18nAction, assertLayoutAction, assertSeoAction } from './page-audit';
 import { pickDateAction, pickDateRangeAction } from './pick-date';
 import { pickOptionAction } from './pick-option';
 import { pressAction } from './press';
@@ -85,6 +86,9 @@ export const builtinActions: ActionDefinition[] = [
   permissionAction,
   clipboardAction,
   assertRequestAction,
+  assertSeoAction,
+  assertI18nAction,
+  assertLayoutAction,
   observeAction,
   propagateAction,
   gridRowAction,

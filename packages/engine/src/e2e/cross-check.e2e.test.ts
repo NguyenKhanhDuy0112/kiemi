@@ -218,3 +218,62 @@ describe('browser environment [Y-02, Y-03, Y-04, Y-05]', () => {
     expect(s[6]).toBe('7 failed ASSERTION_FAILED');
   });
 });
+
+describe('page audits [Y-06, Y-07, Y-09]', () => {
+  const fails = async (steps: ReturnType<typeof step>[]) => {
+    const r = await e.run(steps, quick);
+    const last = r.steps.at(-1);
+    return {
+      code: last?.error?.code,
+      problems: (last?.error?.details?.problems ?? []) as string[],
+    };
+  };
+
+  it('a good page has no SEO, translation or layout problems', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/audit.html' }),
+        step('assertSeo', {}),
+        step('assertI18n', { locale: 'vi', forbidden: ['Submit'] }),
+        step('assertLayout', {}),
+      ],
+      quick,
+    );
+    expect(bad(summary(r))).toEqual([]);
+  });
+
+  it('lists every SEO problem', async () => {
+    const { code, problems } = await fails([
+      step('goto', { url: '/audit.html?bad=seo' }),
+      step('assertSeo', {}),
+    ]);
+    expect(code).toBe('ASSERTION_FAILED');
+    expect(problems.join('|')).toMatch(/description/);
+    expect(problems.join('|')).toMatch(/2 <h1>/);
+    expect(problems.join('|')).toMatch(/without alt/);
+  });
+
+  it('finds untranslated text and wrong number/date formats', async () => {
+    const { problems } = await fails([
+      step('goto', { url: '/audit.html?bad=i18n' }),
+      step('assertI18n', {}),
+    ]);
+    const all = problems.join('|');
+    expect(all).toMatch(/unfilled template/);
+    expect(all).toMatch(/leaked value/);
+    expect(all).toMatch(/untranslated key/);
+    expect(all).toMatch(/date not in dd\/MM\/yyyy/);
+    expect(all).toMatch(/thousands separator/);
+  });
+
+  it('finds overflow, overlap and cut-off text, and restores the window size', async () => {
+    const { problems } = await fails([
+      step('goto', { url: '/audit.html?bad=layout' }),
+      step('assertLayout', {}),
+    ]);
+    const all = problems.join('|');
+    expect(all).toMatch(/375px: horizontal scroll/);
+    expect(all).toMatch(/overlaps/);
+    expect(all).toMatch(/text cut off/);
+  });
+});

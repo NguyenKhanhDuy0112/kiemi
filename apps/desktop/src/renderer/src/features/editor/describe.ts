@@ -118,6 +118,8 @@ export const SENTENCE_PARAMS = [
   'sql',
   'mode',
   'permissions',
+  'locale',
+  'widths',
 ] as const;
 
 /** A step as plain text (reports, select boxes): `Bấm vào nút “Lưu”`. */

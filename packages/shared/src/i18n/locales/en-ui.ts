@@ -1509,6 +1509,12 @@ export const enUi = {
       label: 'Compare two places',
       sentence: 'Compare {{left}} with {{right}}',
     },
+    assertSeo: { label: 'Check SEO / meta', sentence: 'Check the SEO of the page' },
+    assertI18n: {
+      label: 'Check the translation of the page',
+      sentence: 'Check the page is fully translated ({{locale}})',
+    },
+    assertLayout: { label: 'Check the layout', sentence: 'Check the layout at widths {{widths}}' },
     network: { label: 'Simulate the network', sentence: 'Network: {{mode}}' },
     permission: {
       label: 'Grant / deny browser permissions',
