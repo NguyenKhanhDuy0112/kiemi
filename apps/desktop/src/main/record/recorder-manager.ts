@@ -2,6 +2,7 @@ import type { Services } from '@kiemi/db';
 import {
   type InteractiveScan,
   mainAppUrl,
+  type PageContext,
   type RunRequest,
   type SavedLogin,
   type ScannedForm,
@@ -293,6 +294,18 @@ export class RecorderManager {
     return done;
   }
 
+  /** The page open in the browser as the assistant may see it [AI-17]. */
+  pageContext(recordingId: string): Promise<PageContext | null> {
+    const a = this.#get(recordingId);
+    if (!a) return Promise.resolve(null);
+    const requestId = uuidv7();
+    const done = new Promise<PageContext | null>((resolve) =>
+      a.waiting.set(requestId, (v) => resolve(v as PageContext | null)),
+    );
+    this.#send(a, { kind: 'pageContext', requestId });
+    return done;
+  }
+
   /** Interactive elements + screenshot of the page open in the browser [CV-03]. */
   scanElements(recordingId: string): Promise<InteractiveScan | null> {
     const a = this.#get(recordingId);
@@ -452,6 +465,10 @@ export class RecorderManager {
         return;
       case 'scanResult':
         a.waiting.get(m.requestId)?.(m.forms);
+        a.waiting.delete(m.requestId);
+        return;
+      case 'pageContextResult':
+        a.waiting.get(m.requestId)?.(m.context);
         a.waiting.delete(m.requestId);
         return;
       case 'scanElementsResult':

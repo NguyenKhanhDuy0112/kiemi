@@ -3,6 +3,7 @@ import type {
   EngineEvent,
   InteractiveScan,
   LaunchSettingsInput,
+  PageContext,
   RunRequest,
   SavedLogin,
   ScannedForm,
@@ -59,6 +60,7 @@ export type RecordCommand =
   | { kind: 'highlight'; requestId: string; locator: Locator }
   | { kind: 'scanForms'; requestId: string }
   | { kind: 'scanElements'; requestId: string }
+  | { kind: 'pageContext'; requestId: string }
   | { kind: 'suggestion'; id: string; accept: boolean };
 
 /**
@@ -133,6 +135,7 @@ export type WorkerToHost =
   | { type: 'pickResult'; requestId: string; locator: Locator | null }
   | { type: 'highlightResult'; requestId: string; result: HighlightResult }
   | { type: 'scanResult'; requestId: string; forms: ScannedForm[] }
+  | { type: 'pageContextResult'; requestId: string; context: PageContext | null }
   | { type: 'scanElementsResult'; requestId: string; scan: InteractiveScan | null }
   /** Recording ended; the browser is closed. */
   | { type: 'recordDone'; steps: Step[] };

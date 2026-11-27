@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M16** (nhánh `milestone/m16-ai-assistant`): M16-03c → M16-06. M15 đã merge (PR #8). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
+**M16** (nhánh `milestone/m16-ai-assistant`): M16-04 → M16-06. M15 đã merge (PR #8). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
 
 ## Lưu ý cho task sau
+- M16-03c xong: `engine/src/forms/page-context.ts` (`capturePageContext` = URL, tiêu đề, cây truy cập `ariaSnapshot` đã bỏ chữ người dùng gõ, form + quy tắc, KHÔNG gửi giá trị ô; `pageContextText`). Lệnh `pageContext` ở recorder (record-core → manager → `recorder.pageContext`). `pickElement`/`highlight` dùng lại `recorder.pick|highlight` có sẵn. Chưa có ảnh trang (adapter chưa hỗ trợ ảnh; thêm cùng cờ 'không gửi ảnh' khi cần). Chỉ có khi đang mở trình duyệt ghi (recording).
 - M16-03b xong: `main/ai/tools.ts` — `AI_TOOLS` (listTests, getTest, searchElements, getFieldSpec, getEnv chỉ tên secret, getRunHistory, getRequirements, getProjectNotes), `runTool`, `toolsText`; router `ai.tool|notes|saveNotes|proposeNote`. Ghi chú = cột `projects.notes` (migration 31) đi trong `project.json` (không phải file `.kiemi/notes.md` riêng như SPEC viết). `saveNotes` qua `guardAndLog` (cần approved). Ô sửa ghi chú ở Cài đặt → Trợ lý AI; 'Nhớ rằng…' trong chat làm ở M16-04.
 - M16-03a xong: `engine/src/knowledge.ts` — `buildKnowledge(registry, label)` đọc registry mỗi lần (thêm action là AI biết), `knowledgeText` cho system prompt, `checkSteps(registry, steps)` từ chối action lạ/params sai (bỏ qua giá trị có `{{biến}}`; kiểm cả step lồng). Chưa nhúng `QC-COVERAGE.md`/hướng dẫn dài (chỉ `STEP_GUIDE` ngắn); nhãn action truyền từ main (i18n vi).
 - M16-02b xong: tính năng AI gọi `gatewayFor(services, projectId)` (`main/ai/gateway.ts`: che secret của mọi môi trường + PII, tổng tháng lưu ở `ai_settings.usage`, cache trong bộ nhớ theo phiên app) và `guardAndLog(...)` cho mọi hành động ghi (nhật ký `ai.audit`, giữ 200 dòng). Router `ai.preview` đã có, màn 'Xem dữ liệu sẽ gửi' gắn vào panel chat ở M16-04. Giới hạn tính theo token; giá tiền tự nhập. Chưa làm: tùy chọn 'không gửi ảnh/DOM' (khi có đính kèm ở M16-03/04).

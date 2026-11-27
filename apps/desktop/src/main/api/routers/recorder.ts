@@ -1,5 +1,5 @@
 import { FIELD_SPEC_TEMPLATE, formFromTable, readExcel, writeExcel } from '@kiemi/db';
-import { formSpecsFromSchema, inferForm } from '@kiemi/engine';
+import { formSpecsFromSchema, inferForm, pageContextText } from '@kiemi/engine';
 import { elementCoverage, LocatorSchema, usedStrategies } from '@kiemi/schema';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -55,6 +55,12 @@ export const recorderRouter = router({
     return scans
       .filter((s) => s.controls.length > 0)
       .map((s, i) => inferForm(s, `form-${stamp}-${i + 1}`));
+  }),
+
+  /** Text description of the page now open, for the assistant; goes through the gateway before sending [AI-17]. */
+  pageContext: publicProcedure.input(recordingId).query(async ({ ctx, input }) => {
+    const c = await manager(ctx).pageContext(input.recordingId);
+    return c ? pageContextText(c) : null;
   }),
 
   /** Interactive elements of the page now open, marked by whether any test of the project uses them [CV-03]. */
