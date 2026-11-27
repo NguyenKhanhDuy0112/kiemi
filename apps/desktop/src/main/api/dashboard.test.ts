@@ -91,3 +91,36 @@ describe('requirement coverage router [T-04, CV-05]', () => {
     expect(cov.coveredPercent).toBe(50);
   });
 });
+
+describe('trends and coverage score router [T-07, CV-09]', () => {
+  it('lists flaky and slowest tests and keeps one score point per day', async () => {
+    const { services, defaultProjectId: p } = createMemoryServices();
+    const t = services.testCases.create({ projectId: p, name: 'Chập chờn' });
+    for (const [i, st] of ['passed', 'failed', 'passed', 'failed'].entries()) {
+      const run = services.runs.create({
+        projectId: p,
+        artifactDir: '/r',
+        target: { kind: 'test', testCaseId: t.id, name: 'x' },
+      });
+      const c = services.runs.addCase({ runId: run.id, testCaseId: t.id });
+      services.runs.finishCase(c.id, { status: st as 'passed', durationMs: 1000 * (i + 1) });
+      services.runs.finish(run.id, st as 'passed');
+    }
+    const caller = createCaller({
+      appVersion: '1',
+      platform: 'darwin',
+      services,
+      defaultProjectId: p,
+      runs: createTestRunManager(services),
+    });
+    const o = await caller.dashboard.overview({ projectId: p });
+    expect(o.flaky.map((f) => f.name)).toEqual(['Chập chờn']);
+    expect(o.slowest[0]?.avgMs).toBe(2500);
+
+    services.projects.setPages(p, [{ id: 'pg', name: 'Home', path: '/', kind: 'other' }]);
+    const a = await caller.coverage.score({ projectId: p });
+    expect(a.score.pages).toBe(0);
+    const b = await caller.coverage.score({ projectId: p });
+    expect(b.history).toHaveLength(1);
+  });
+});

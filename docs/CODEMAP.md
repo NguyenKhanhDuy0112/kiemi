@@ -45,6 +45,7 @@
 - Web thực tế 2 (M15-10): client cert `Env.clientCerts` (cột `environments.client_certs`, migration 25, `clientCertsFor` ở `engine/browser/proxy.ts`, UI `features/environments/client-certs.tsx`); `actions/print.ts` (`printToFile`); `actions/session-guard.ts` + `Runner.#handleExpiry` (tự đăng nhập lại); Shadow DOM chạy bằng bộ chọn có sẵn (demo `shadow.html`)
 - Yêu cầu/ticket (T-04, CV-05): `schema/src/requirements.ts` (`requirementCoverage`, thẻ `req:<mã>`), cột `projects.requirements` (migration 26) + project.json, router `coverage.requirements`, UI `features/test-coverage/requirements-panel.tsx`
 - Lịch sử phiên bản test (T-05): bảng `test_versions` (migration 27, tối đa 30/test, ghi ở `TestCaseService.save`), `history|versionContent|restore`, tRPC `testCases.history|versionContent|restoreVersion`, `schema/src/test-diff.ts` (`diffTests`), UI `features/editor/history-dialog.tsx`
+- Xu hướng + điểm độ phủ (T-07, CV-09): `schema/src/dashboard.ts` (`flakyTests`, `slowestTests`), `schema/src/coverage-score.ts`, router `coverage.score` (ghi 1 điểm/ngày vào `projects.coverage_history`, migration 28, chỉ ở máy), UI ở `features/dashboard/dashboard-screen.tsx`
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)

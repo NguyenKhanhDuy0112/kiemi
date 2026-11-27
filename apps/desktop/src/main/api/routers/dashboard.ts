@@ -1,5 +1,5 @@
 import type { Services } from '@kiemi/db';
-import { type DashRow, groupStats, statsOf } from '@kiemi/schema';
+import { type DashRow, flakyTests, groupStats, slowestTests, statsOf } from '@kiemi/schema';
 import { z } from 'zod';
 import { publicProcedure, router } from '../trpc';
 
@@ -19,6 +19,7 @@ export function dashRows(s: Services, projectIds: string[]): DashRow[] {
           testCaseId: c.testCaseId,
           status: c.status,
           at,
+          ...(c.durationMs === null ? {} : { durationMs: c.durationMs }),
         });
       }
     }
@@ -50,11 +51,26 @@ export const dashboardRouter = router({
             name: names.get(g.key) ?? g.key,
           })),
           failing: [] as { id: string; name: string }[],
+          flaky: [] as { id: string; name: string; flips: number }[],
+          slowest: [] as { id: string; name: string; avgMs: number }[],
         };
       }
       const all = dashRows(s, [input.projectId]);
       const tests = new Map(s.testCases.list(input.projectId).map((t) => [t.id, t.name]));
       const failing = (ids: string[]) => ids.map((id) => ({ id, name: tests.get(id) ?? id }));
+      /** Flaky and slowest tests among these rows [T-07]. */
+      const trends = (rows: DashRow[]) => ({
+        flaky: flakyTests(rows).map((f) => ({
+          id: f.testCaseId,
+          name: tests.get(f.testCaseId) ?? f.testCaseId,
+          flips: f.flips,
+        })),
+        slowest: slowestTests(rows).map((x) => ({
+          id: x.testCaseId,
+          name: tests.get(x.testCaseId) ?? x.testCaseId,
+          avgMs: x.avgMs,
+        })),
+      });
       if (input.productId === undefined) {
         const names = new Map(s.products.list(input.projectId).map((p) => [p.id, p.name]));
         const total = statsOf(all);
@@ -66,6 +82,7 @@ export const dashboardRouter = router({
             name: names.get(g.key) ?? '',
           })),
           failing: failing(total.failingTests),
+          ...trends(all),
         };
       }
       const rows = all.filter((r) => (r.productId ?? '') === input.productId);
@@ -79,6 +96,7 @@ export const dashboardRouter = router({
           name: names.get(g.key) ?? '',
         })),
         failing: failing(total.failingTests),
+        ...trends(rows),
       };
     }),
 });

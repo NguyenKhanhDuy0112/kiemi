@@ -148,6 +148,37 @@ export function DashboardScreen() {
           </section>
 
           {d.level !== 'workspace' && (
+            <section className="grid gap-4 md:grid-cols-2" data-testid="dashboard-trends">
+              <div>
+                <h2 className="mb-2 text-sm font-medium">{tx('ui.dashboard.flaky')}</h2>
+                {d.flaky.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{tx('ui.dashboard.noFlaky')}</p>
+                ) : (
+                  <ul className="list-disc pl-5 text-sm">
+                    {d.flaky.map((f) => (
+                      <li key={f.id}>
+                        {f.name} · {tx('ui.dashboard.flips', { count: f.flips })}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <h2 className="mb-2 text-sm font-medium">{tx('ui.dashboard.slowest')}</h2>
+                <ul className="list-disc pl-5 text-sm">
+                  {d.slowest.map((x) => (
+                    <li key={x.id}>
+                      {x.name} · {(x.avgMs / 1000).toFixed(1)} s
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          {d.level !== 'workspace' && projectId && <ScoreCard projectId={projectId} />}
+
+          {d.level !== 'workspace' && (
             <section>
               <h2 className="mb-2 text-sm font-medium">{tx('ui.dashboard.failing')}</h2>
               {d.failing.length === 0 ? (
@@ -213,5 +244,33 @@ function GroupRow({
         </Button>
       )}
     </li>
+  );
+}
+
+/** Combined coverage score and its trend over the days [CV-09]. */
+function ScoreCard({ projectId }: { projectId: string }) {
+  const tx = useTx();
+  const q = useQuery(trpc.coverage.score.queryOptions({ projectId }));
+  if (!q.data || q.data.score.total === null) return null;
+  const { score, history } = q.data;
+  const part = (label: string, v: number | null) =>
+    v === null ? null : (
+      <span className="text-xs text-muted-foreground">
+        {label}: {v}%
+      </span>
+    );
+  return (
+    <section className="rounded-md border p-3" data-testid="coverage-score">
+      <h2 className="text-sm font-medium">{tx('ui.dashboard.score')}</h2>
+      <div className="flex flex-wrap items-end gap-4">
+        <div className="text-3xl font-semibold">{score.total}%</div>
+        <div className="flex flex-col">
+          {part(tx('ui.dashboard.scorePages'), score.pages)}
+          {part(tx('ui.dashboard.scoreChecklist'), score.checklist)}
+          {part(tx('ui.dashboard.scoreLabels'), score.labels)}
+        </div>
+        <Trend points={history.map((h) => ({ day: h.day, passRate: h.score / 100, total: 1 }))} />
+      </div>
+    </section>
   );
 }

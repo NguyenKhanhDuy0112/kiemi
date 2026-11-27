@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M15** (nhánh `milestone/m15-v12-remaining`): M15-11c → M15-12c (M15-11 và M15-12 đã chia nhỏ trong ROADMAP vì mỗi cái >8 file) (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
+**M15** (nhánh `milestone/m15-v12-remaining`): M15-11d → M15-12c (M15-11 và M15-12 đã chia nhỏ trong ROADMAP vì mỗi cái >8 file) (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
 
 ## Lưu ý cho task sau
+- M15-11c xong: chập chờn = ≥2 lần đổi đạt↔lỗi trong 10 kết quả gần nhất của test; chậm nhất = thời gian trung bình case. Điểm tổng hợp = trung bình (trang có test, mục checklist đã phủ, test có nhãn kỹ thuật) — chưa gồm độ phủ yêu cầu/phần tử; điểm chỉ ghi khi mở Tổng quan (không có lịch ghi nền). M15-11d (CV-03) có thể cộng thêm thành phần thứ 4 vào `coverageScore`.
 - M15-11b xong: chỉ `save()` lưu bản cũ (không phải create/duplicate/import); khôi phục = `save` nội dung cũ nên bản hiện tại tự vào lịch sử. Lịch sử KHÔNG đi vào thư mục dự án/project.json (chỉ ở máy). So sánh đối chiếu bước theo `id` (kể cả bước lồng); so sánh với bản HIỆN TẠI đang mở, chưa so 2 bản cũ với nhau.
 - M15-11a xong: yêu cầu lưu ở `projects.requirements`, test gắn bằng thẻ `req:<mã>` (không phân biệt hoa thường); kết quả = lần chạy gần nhất trong 300 run mới nhất. Chưa có nút gắn yêu cầu ngay trong màn soạn test (dùng ô thẻ) và chưa kéo yêu cầu từ Jira (M15-12a). Dashboard/điểm tổng hợp (M15-11c) có thể dùng `coveredPercent`/`passingPercent`.
 - M15-10 xong: W-05 không cần code mới (locator Playwright xuyên Shadow DOM mở, kể cả lồng; shadow đóng thì không được). W-02: chưa có e2e mutual-TLS thật (chỉ test hàm + DB); file chứng chỉ để nguyên đường dẫn trên máy. W-07: `printToFile` dùng `page.pdf()` → chỉ chạy được khi trình duyệt headless. W-08: `sessionGuard` chỉ hành động SAU KHI một bước lỗi và trang đang là trang đăng nhập; quay lại địa chỉ cuối không phải trang đăng nhập rồi thử lại bước (tối đa 2 lần); bước đăng nhập lại hiện ở báo cáo với nhãn `N↻`.

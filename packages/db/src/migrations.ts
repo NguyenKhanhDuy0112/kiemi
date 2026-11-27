@@ -487,4 +487,9 @@ CREATE INDEX "notify_channels_project_idx" ON "notify_channels" ("project_id");`
 );
 CREATE INDEX "test_versions_test_idx" ON "test_versions" ("test_case_id");`,
   },
+  {
+    id: 28,
+    name: 'project-coverage-history',
+    sql: `ALTER TABLE "projects" ADD COLUMN "coverage_history" TEXT;`,
+  },
 ];

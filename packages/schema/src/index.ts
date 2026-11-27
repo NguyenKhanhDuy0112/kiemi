@@ -1,6 +1,7 @@
 export * from './bad-data';
 export * from './combinations';
 export * from './coverage';
+export * from './coverage-score';
 export * from './dashboard';
 export * from './dataset';
 export * from './design-labels';

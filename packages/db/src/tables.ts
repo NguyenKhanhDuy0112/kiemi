@@ -81,6 +81,8 @@ export const projects = sqliteTable(
     permissionMatrices: json<PermissionMatrix[]>('permission_matrices'),
     /** Requirements / tickets tests are linked to [T-04] (migration 26). */
     requirements: json<Requirement[]>('requirements'),
+    /** One coverage score per day, for the trend [CV-09] (migration 28, this machine only). */
+    coverageHistory: json<{ day: string; score: number }[]>('coverage_history'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );

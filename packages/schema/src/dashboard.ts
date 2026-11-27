@@ -12,6 +12,8 @@ export interface DashRow {
   status: string;
   /** Run start (epoch ms). */
   at: number;
+  /** How long the case took, when known [T-07]. */
+  durationMs?: number | undefined;
 }
 
 export interface DashTrendPoint {
@@ -100,4 +102,56 @@ export function groupStats(
   return [...groups.entries()]
     .map(([key, g]) => ({ key, stats: statsOf(g) }))
     .sort((a, b) => (a.stats.passRate ?? 2) - (b.stats.passRate ?? 2));
+}
+
+export interface FlakyTest {
+  testCaseId: string;
+  /** Pass ↔ fail changes in the last results. */
+  flips: number;
+  results: number;
+}
+
+const WINDOW = 10;
+
+/**
+ * Tests that pass and fail without a change in between: at least 2 flips
+ * between pass and fail in their last 10 results [T-07].
+ */
+export function flakyTests(rows: readonly DashRow[], minFlips = 2): FlakyTest[] {
+  const byTest = new Map<string, DashRow[]>();
+  for (const r of rows) {
+    if (!counted(r.status)) continue;
+    byTest.set(r.testCaseId, [...(byTest.get(r.testCaseId) ?? []), r]);
+  }
+  const out: FlakyTest[] = [];
+  for (const [testCaseId, list] of byTest) {
+    const last = list.sort((a, b) => a.at - b.at).slice(-WINDOW);
+    let flips = 0;
+    for (let i = 1; i < last.length; i++)
+      if (isFail((last[i] as DashRow).status) !== isFail((last[i - 1] as DashRow).status)) flips++;
+    if (flips >= minFlips) out.push({ testCaseId, flips, results: last.length });
+  }
+  return out.sort((a, b) => b.flips - a.flips);
+}
+
+export interface SlowTest {
+  testCaseId: string;
+  avgMs: number;
+  runs: number;
+}
+
+/** The `limit` tests with the longest average duration [T-07]. */
+export function slowestTests(rows: readonly DashRow[], limit = 5): SlowTest[] {
+  const sum = new Map<string, { total: number; n: number }>();
+  for (const r of rows) {
+    if (r.durationMs === undefined || !counted(r.status)) continue;
+    const s = sum.get(r.testCaseId) ?? { total: 0, n: 0 };
+    s.total += r.durationMs;
+    s.n++;
+    sum.set(r.testCaseId, s);
+  }
+  return [...sum]
+    .map(([testCaseId, s]) => ({ testCaseId, avgMs: Math.round(s.total / s.n), runs: s.n }))
+    .sort((a, b) => b.avgMs - a.avgMs)
+    .slice(0, limit);
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type DashRow, groupStats, statsOf } from './dashboard';
+import { type DashRow, flakyTests, groupStats, slowestTests, statsOf } from './dashboard';
 
 const row = (o: Partial<DashRow>): DashRow => ({
   runId: 'r1',
@@ -46,5 +46,33 @@ describe('dashboard stats [O-10]', () => {
       (r) => r.environmentId,
     );
     expect(g.map((x) => x.key)).toEqual(['e2', 'e1']);
+  });
+});
+
+describe('trends [T-07]', () => {
+  const seq = (id: string, statuses: string[], ms = 1000) =>
+    statuses.map((status, i) =>
+      row({ testCaseId: id, status, at: 1000 + i, durationMs: ms, runId: `${id}${i}` }),
+    );
+
+  it('flags a test that flips between pass and fail, not one that broke once', () => {
+    const rows = [
+      ...seq('flaky', ['passed', 'failed', 'passed', 'passed', 'failed']),
+      ...seq('broken', ['passed', 'passed', 'failed', 'failed', 'failed']),
+      ...seq('good', ['passed', 'passed', 'passed']),
+    ];
+    expect(flakyTests(rows)).toEqual([{ testCaseId: 'flaky', flips: 3, results: 5 }]);
+  });
+
+  it('lists the slowest tests by average duration', () => {
+    const rows = [
+      ...seq('a', ['passed', 'passed'], 5000),
+      ...seq('b', ['passed'], 900),
+      ...seq('c', ['passed'], 2000),
+    ];
+    expect(slowestTests(rows, 2).map((s) => [s.testCaseId, s.avgMs])).toEqual([
+      ['a', 5000],
+      ['c', 2000],
+    ]);
   });
 });
