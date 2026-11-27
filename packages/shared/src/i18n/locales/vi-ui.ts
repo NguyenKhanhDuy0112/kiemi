@@ -910,6 +910,20 @@ export const viUi = {
     testFailed: 'Không kết nối được: {{reason}}',
     lastOk: 'Lần thử cuối: đạt',
     lastFailed: 'Lần thử cuối: lỗi — {{reason}}',
+    fix: {
+      button: 'Đề xuất sửa',
+      category: {
+        realBug: 'Bug thật',
+        uiChanged: 'Giao diện đã đổi',
+        data: 'Dữ liệu',
+        environment: 'Môi trường',
+        flaky: 'Chập chờn',
+      },
+      also: 'Sửa luôn {{count}} bước khác dùng cùng phần tử',
+      apply: 'Áp dụng đề xuất',
+      done: 'Đã áp dụng',
+      applied: 'Đã sửa {{count}} bước và lưu test.',
+    },
     chat: {
       title: 'Trợ lý Kiemi',
       off: 'Trợ lý AI đang tắt cho dự án này. Bật và nhập khóa API ở Cài đặt → Trợ lý AI.',

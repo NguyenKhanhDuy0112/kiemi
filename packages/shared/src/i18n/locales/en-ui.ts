@@ -911,6 +911,20 @@ export const enUi = {
     testFailed: 'Could not connect: {{reason}}',
     lastOk: 'Last test: passed',
     lastFailed: 'Last test: failed — {{reason}}',
+    fix: {
+      button: 'Suggest a fix',
+      category: {
+        realBug: 'Real bug',
+        uiChanged: 'UI changed',
+        data: 'Data',
+        environment: 'Environment',
+        flaky: 'Flaky',
+      },
+      also: 'Also fix {{count}} other steps that use the same element',
+      apply: 'Apply suggestion',
+      done: 'Applied',
+      applied: 'Fixed {{count}} step(s) and saved the test.',
+    },
     chat: {
       title: 'Kiemi Assistant',
       off: 'The AI assistant is off for this project. Turn it on and enter the API key in Settings → AI assistant.',
