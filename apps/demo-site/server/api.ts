@@ -55,7 +55,7 @@ function send(
   res: ServerResponse,
   status: number,
   body: unknown,
-  headers: Record<string, string> = {},
+  headers: Record<string, string | string[]> = {},
 ) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', ...headers });
   res.end(JSON.stringify(body));
@@ -86,6 +86,16 @@ export async function handleRequest(
   }
 
   // HTTP Basic auth area (demo / demo-pass) [W-01].
+  // Reflected text: `/echo` prints the query raw (XSS hole), `/echo-safe` escapes it [R-12].
+  if (path === '/echo' || path === '/echo-safe') {
+    const q = url.searchParams.get('q') ?? '';
+    const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+    res.end(
+      `<!doctype html><meta charset="utf-8"><title>Kết quả tìm kiếm</title><h1>Kết quả cho: <span id="echo">${path === '/echo' ? q : esc(q)}</span></h1>`,
+    );
+    return true;
+  }
   if (path === '/secure/basic') {
     const given = /^Basic (.+)$/i.exec(req.headers.authorization ?? '')?.[1];
     const [user, pass] = Buffer.from(given ?? '', 'base64')
@@ -124,7 +134,11 @@ export async function handleRequest(
       200,
       { user: publicUser(result.user) },
       {
-        'set-cookie': `${COOKIE}=${result.token}; Path=/; HttpOnly; SameSite=Lax`,
+        'set-cookie': [
+          `${COOKIE}=${result.token}; Path=/; HttpOnly; SameSite=Lax`,
+          // Deliberately weak cookie: readable by scripts [R-12].
+          `session_hint=${result.token.slice(0, 8)}; Path=/; SameSite=Lax`,
+        ],
       },
     );
     return true;
@@ -330,6 +344,22 @@ export async function handleRequest(
   }
   if (path === '/api/me' && method === 'GET') {
     send(res, 200, { user: publicUser(me) });
+    return true;
+  }
+  // Profiles: `/api/profile/<user>` hands out anyone's data to any logged-in user (IDOR hole);
+  // `/api/profile-safe/<user>` only shows your own [R-12].
+  const profile = path.match(/^\/api\/(profile|profile-safe)\/([^/]+)$/);
+  if (profile?.[2] && method === 'GET') {
+    const who = decodeURIComponent(profile[2]);
+    const target = store.userByName(who);
+    if (!target || (profile[1] === 'profile-safe' && target.username !== me.username)) {
+      send(res, profile[1] === 'profile-safe' ? 403 : 404, { error: 'Không có quyền' });
+      return true;
+    }
+    send(res, 200, {
+      ...publicUser(target),
+      salary: target.role === 'ketoan' ? 25000000 : 15000000,
+    });
     return true;
   }
   if (path === '/api/requests' && method === 'GET') {

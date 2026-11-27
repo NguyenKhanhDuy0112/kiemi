@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M15** (nhánh `milestone/m15-v12-remaining`): M15-07 → M15-12 (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
+**M15** (nhánh `milestone/m15-v12-remaining`): M15-08 → M15-12 (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
 
 ## Lưu ý cho task sau
+- M15-07 xong: `crawl` chỉ GET, dùng tab riêng chung phiên đăng nhập, bỏ link chứa `logout/delete/xoa…` (tham số `skip`); dev server demo trả 200 cho đường dẫn không có → liên kết chết trong demo dùng `/api/...` để ra 404. `securityScan` từ chối môi trường `production`/được bảo vệ (PROTECTED_ENVIRONMENT); XSS thử bằng marker `window.__kiemiXss`; chưa thử XSS lưu trữ (POST) và chưa dùng giá trị R-04 từ FormSpec (nhập danh sách `reflect` tay).
 - M15-06 xong: R-06 = `stripClientValidation` (gỡ required/maxlength/pattern…, đổi type email/number về text) rồi điền sai + Gửi + kiểm thông báo của máy chủ; R-13 chỉ thêm `assertLeaveWarning` (bắn `beforeunload`) — Back/Refresh sau submit và 2 tab ghép từ `navigate`/`openIn`/`assertCount` có sẵn (chưa có mẫu riêng). Tab đi qua cả ô readonly (là điểm dừng Tab).
 - M15-05 xong: 3 action kiểm tra trang gom MỌI lỗi vào `details.problems` (không dừng ở lỗi đầu). `assertLayout` đổi viewport rồi trả lại; chỉ xét khung chính (chưa vào iframe), so chồng lấn O(n²) trên lá có chữ nên chậm với trang >2000 phần tử. `assertI18n` phát hiện khóa dịch bằng mẫu `a.b.c` (có thể báo nhầm với tên miền/số phiên bản).
 - M15-04 xong: `network` (offline qua `context.setOffline`, chậm qua CDP `Network.emulateNetworkConditions` — chỉ Chromium, áp cho trang hiện tại), `permission` (grant = Playwright; deny/reset qua CDP `Browser.setPermission`, chưa kiểm chứng tác dụng của deny bằng e2e), `clipboard` (tự cấp quyền đọc/ghi), `assertRequest` (log request mỗi run tối đa 5000, body cắt 20k ký tự; chưa che bí mật trong body log). Thêm tham số mới vào câu mô tả → thêm vào `SENTENCE_PARAMS`.

@@ -1522,6 +1522,11 @@ export const enUi = {
       label: 'Check the leave-page warning',
       sentence: 'Leaving the page warns: {{expected}}',
     },
+    crawl: { label: 'Crawl the site for problems', sentence: 'Crawl the site from {{start}}' },
+    securityScan: {
+      label: 'Basic security check',
+      sentence: 'Basic security check (non-destructive)',
+    },
     assertSeo: { label: 'Check SEO / meta', sentence: 'Check the SEO of the page' },
     assertI18n: {
       label: 'Check the translation of the page',

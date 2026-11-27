@@ -42,6 +42,7 @@ import { queryDbAction } from './query-db';
 import { saveSessionAction, useSessionAction } from './saved-login';
 import { scrollAction } from './scroll';
 import { selectAction } from './select';
+import { crawlAction, securityScanAction } from './site-audit';
 import { switchSessionAction } from './switch-session';
 import {
   assertTabCountAction,
@@ -96,6 +97,8 @@ export const builtinActions: ActionDefinition[] = [
   assertFieldUiAction,
   assertTabOrderAction,
   assertLeaveWarningAction,
+  crawlAction,
+  securityScanAction,
   assertSeoAction,
   assertI18nAction,
   assertLayoutAction,

@@ -186,7 +186,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M15-04** Trình duyệt: giả lập mạng, quyền, clipboard, request mạng [Y-02, Y-03, Y-04, Y-05]
 - [x] **M15-05** SEO/meta, đa ngôn ngữ web cần test, vỡ bố cục [Y-06, Y-07, Y-09]
 - [x] **M15-06** Field nâng cao: validate phía server, UI của field, hành vi Back/Refresh [R-06, R-08, R-13]
-- [ ] **M15-07** Crawl toàn site + bảo mật cơ bản không phá hoại (IDOR, XSS phản hồi, cookie) [R-11, R-12]
+- [x] **M15-07** Crawl toàn site + bảo mật cơ bản không phá hoại (IDOR, XSS phản hồi, cookie) [R-11, R-12]
 - [ ] **M15-08** Dữ liệu: hàm ngày nghiệp vụ, sinh tổ hợp pairwise [P-07, P-08]
 - [ ] **M15-09** Kiểm tra nâng cao: thời gian phản hồi, đối chiếu UI = API = DB, thao tác lặp nhanh, chuyển trạng thái [Q-05, Q-07, Q-08, Q-10]
 - [ ] **M15-10** Web thực tế: client cert, Shadow DOM, In/PDF, session hết hạn [W-02, W-05, W-07, W-08]

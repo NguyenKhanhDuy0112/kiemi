@@ -364,3 +364,80 @@ describe('form behaviour [R-06, R-08, R-13]', () => {
     expect(r2.steps.at(-1)?.error?.details?.problems).toHaveLength(3);
   });
 });
+
+describe('site crawl and basic security [R-11, R-12]', () => {
+  const login = (user: string) => [
+    step('goto', { url: '/login.html' }),
+    step('fill', { target: { css: '#username' }, value: user }),
+    step('fill', { target: { css: '#password' }, value: '123456' }),
+    step('click', { target: { role: 'button', name: 'Đăng nhập' } }),
+  ];
+  const long = { request: { options: { defaultStepTimeoutMs: 20000 } } };
+
+  it('crawls a clean site without problems', async () => {
+    const r = await e.run(
+      [step('goto', { url: '/crawl-start.html?clean=1' }), step('crawl', { maxPages: 5 })],
+      long,
+    );
+    expect(bad(summary(r))).toEqual([]);
+  });
+
+  it('lists the dead link, the broken image and the script error, and skips logout', async () => {
+    const r = await e.run(
+      [step('goto', { url: '/crawl-start.html' }), step('crawl', { maxPages: 10 })],
+      long,
+    );
+    const err = r.steps.at(-1)?.error;
+    expect(err?.code).toBe('ASSERTION_FAILED');
+    const all = String(err?.details?.actual);
+    expect(all).toMatch(/api\/khong-co/);
+    expect(all).toMatch(/anh-hong\.png/);
+    expect(all).toMatch(/Lỗi script cố ý/);
+    expect(all).not.toMatch(/logout/);
+  });
+
+  it('finds the IDOR hole, the script-readable cookie and the reflected script', async () => {
+    const r = await e.run(
+      [
+        ...login('nhanvien'),
+        step('securityScan', {
+          needLogin: ['/api/me'],
+          otherPeople: ['/api/profile/ketoan'],
+          reflect: ['/echo?q='],
+        }),
+      ],
+      long,
+    );
+    const problems = (r.steps.at(-1)?.error?.details?.problems ?? []) as string[];
+    const all = problems.join('|');
+    expect(all).toMatch(/session_hint.*no HttpOnly/);
+    expect(all).toMatch(/\/api\/profile\/ketoan shows another person/);
+    expect(all).toMatch(/\/echo\?q=: the page runs a script/);
+    expect(all).not.toMatch(/api\/me opens without/);
+    expect(all).not.toMatch(/demo_session/);
+  });
+
+  it('passes on the safe endpoints', async () => {
+    const r = await e.run(
+      [
+        ...login('nhanvien'),
+        step('securityScan', {
+          cookies: false,
+          needLogin: ['/api/me'],
+          otherPeople: ['/api/profile-safe/ketoan'],
+          reflect: ['/echo-safe?q='],
+        }),
+      ],
+      long,
+    );
+    expect(bad(summary(r))).toEqual([]);
+  });
+
+  it('refuses to run on a protected environment', async () => {
+    const r = await e.run([step('goto', { url: '/login.html' }), step('securityScan', {})], {
+      ...long,
+      env: { type: 'production', name: 'Prod' },
+    } as never);
+    expect(r.steps.at(-1)?.error?.code).toBe('PROTECTED_ENVIRONMENT');
+  });
+});

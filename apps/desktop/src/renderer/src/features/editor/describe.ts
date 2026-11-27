@@ -121,6 +121,7 @@ export const SENTENCE_PARAMS = [
   'locale',
   'expected',
   'widths',
+  'start',
 ] as const;
 
 /** A step as plain text (reports, select boxes): `Bấm vào nút “Lưu”`. */

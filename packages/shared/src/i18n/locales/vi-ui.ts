@@ -1524,6 +1524,11 @@ export const viUi = {
       label: 'Kiểm tra cảnh báo khi rời trang',
       sentence: 'Rời trang có cảnh báo: {{expected}}',
     },
+    crawl: { label: 'Quét toàn site tìm lỗi', sentence: 'Quét site từ {{start}}' },
+    securityScan: {
+      label: 'Kiểm tra bảo mật cơ bản',
+      sentence: 'Kiểm tra bảo mật cơ bản (không phá hoại)',
+    },
     assertSeo: { label: 'Kiểm tra SEO / meta', sentence: 'Kiểm tra SEO của trang' },
     assertI18n: {
       label: 'Kiểm tra bản dịch của trang',

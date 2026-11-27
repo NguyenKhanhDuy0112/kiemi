@@ -152,6 +152,10 @@ export class DemoStore {
     this.sessions.delete(token);
   }
 
+  userByName(username: string): User | null {
+    return USERS.find((u) => u.username === username) ?? null;
+  }
+
   userByToken(token: string | undefined): User | null {
     if (!token) return null;
     const username = this.sessions.get(token);
