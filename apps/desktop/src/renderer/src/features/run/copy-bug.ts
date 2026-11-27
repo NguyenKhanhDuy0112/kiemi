@@ -7,8 +7,8 @@ import { buildBugReport, mismatchOf } from './bug-report';
 
 type Tx = (key: string, vars?: Record<string, unknown>, fallback?: string) => string;
 
-/** Copies a Markdown bug report for the failed step to the clipboard [X-02]. */
-export async function copyBugReport(input: {
+/** Markdown bug report of the failed step [X-02]. */
+export function bugMarkdown(input: {
   doc: TestCase;
   stepId: string;
   error: RunError;
@@ -16,12 +16,12 @@ export async function copyBugReport(input: {
   screenshots?: string[] | undefined;
   sharedNames?: ReadonlyMap<string, string>;
   tx: Tx;
-}): Promise<void> {
+}): string {
   const { doc, tx } = input;
   const rows = flatten(doc).filter((r) => !r.no.startsWith('C'));
   const at = rows.findIndex((r) => r.step.id === input.stepId);
   const upTo = at < 0 ? rows : rows.slice(0, at + 1);
-  const md = buildBugReport({
+  return buildBugReport({
     testName: doc.name,
     environment: input.environmentName ?? null,
     steps: upTo.map((r) => stepText(r.step, doc.elements, tx, input.sharedNames)),
@@ -39,6 +39,12 @@ export async function copyBugReport(input: {
       screenshots: tx('ui.bug.screenshots'),
     },
   });
+}
+
+/** Copies a Markdown bug report for the failed step to the clipboard [X-02]. */
+export async function copyBugReport(input: Parameters<typeof bugMarkdown>[0]): Promise<void> {
+  const { tx } = input;
+  const md = bugMarkdown(input);
   try {
     await navigator.clipboard.writeText(md);
     toast.success(tx('ui.bug.copied'));

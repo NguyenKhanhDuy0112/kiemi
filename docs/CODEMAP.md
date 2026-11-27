@@ -49,6 +49,7 @@
 - Độ phủ phần tử (CV-03): `engine/src/forms/interactive.ts` (`scanInteractive`), lệnh `scanElements` qua `record-core`/`recorder-manager`, router `recorder.scanElements`, `schema/src/element-coverage.ts` (`elementCoverage`, `usedStrategies`), UI `features/test-coverage/elements-panel.tsx`
 - Mock API (X-07): `engine/src/actions/mock-api.ts` (`mockApi`: respond/error/timeout/empty/off, theo ngữ cảnh phiên)
 - Email/OTP (X-06): `engine/src/actions/read-mail.ts` (`readMail`: Mailpit `/api/v1`, Mailtrap + token secret; regex nhóm 1 → biến)
+- Tạo issue (X-02): `schema/src/issue-tracker.ts` (`issueRequest`, `issueLink`, 5 tracker), tracker lưu như kênh thông báo (`notify_channels`, kind jira|redmine|azure|gitlab|github, token mã hóa), `main/issues/create.ts` + router `issues.create`, nút `features/run/create-issue-button.tsx`
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)

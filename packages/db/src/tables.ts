@@ -19,6 +19,7 @@ import type {
   TestCase,
   TestPlan,
 } from '@kiemi/schema';
+import { NOTIFY_KINDS } from '@kiemi/schema';
 import { blob, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 /**
@@ -423,7 +424,7 @@ export const notifyChannels = sqliteTable(
     ...base,
     projectId: text('project_id').notNull(),
     name: text('name').notNull(),
-    kind: text('kind', { enum: ['slack', 'teams', 'gchat', 'telegram', 'email'] }).notNull(),
+    kind: text('kind', { enum: NOTIFY_KINDS }).notNull(),
     enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
     sendWhen: text('send_when', { enum: ['always', 'failed'] })
       .notNull()

@@ -1,5 +1,11 @@
 import type { NotifyChannelForSend, Services } from '@kiemi/db';
-import { type RunSummary, shouldNotify, summaryText, webhookRequest } from '@kiemi/schema';
+import {
+  isTracker,
+  type RunSummary,
+  shouldNotify,
+  summaryText,
+  webhookRequest,
+} from '@kiemi/schema';
 import { describeRunError, plainTranslator, vi } from '@kiemi/shared';
 import nodemailer from 'nodemailer';
 
@@ -11,7 +17,7 @@ export interface NotifyTransport {
   fetch(
     url: string,
     init: { method: 'POST'; headers: Record<string, string>; body: string; signal: AbortSignal },
-  ): Promise<{ ok: boolean; status: number }>;
+  ): Promise<{ ok: boolean; status: number; body?: unknown }>;
   sendMail(
     smtp: { host: string; port: number; secure: boolean; user: string; pass: string },
     mail: { from: string; to: string; subject: string; text: string },
@@ -19,7 +25,12 @@ export interface NotifyTransport {
 }
 
 export const realTransport: NotifyTransport = {
-  fetch: (url, init) => fetch(url, init),
+  fetch: async (url, init) => {
+    const res = await fetch(url, init);
+    // Trackers answer with the new issue; chat webhooks answer with nothing useful.
+    const body = await res.json().catch(() => undefined);
+    return { ok: res.ok, status: res.status, body };
+  },
   async sendMail(smtp, mail) {
     const transport = nodemailer.createTransport({
       host: smtp.host,
@@ -64,6 +75,8 @@ export async function sendToChannel(
       );
       return { ok: true, message: 'Đã gửi email' };
     }
+    if (isTracker(ch.kind))
+      return { ok: true, message: 'Đã lưu — dùng nút “Tạo issue” ở bước lỗi để gửi thử' };
     const req = webhookRequest(ch.kind, ch.secret, ch.config, summary);
     if (!req) return { ok: false, message: 'Kênh chưa cấu hình' };
     const res = await transport.fetch(req.url, {
@@ -132,7 +145,7 @@ export async function notifyRun(
     const summary = summarizeRun(services, runId);
     await Promise.all(
       channels
-        .filter((c) => shouldNotify(c.when, summary))
+        .filter((c) => !isTracker(c.kind) && shouldNotify(c.when, summary))
         .map(async (c) => {
           const r = await sendToChannel(c, summary, transport);
           try {

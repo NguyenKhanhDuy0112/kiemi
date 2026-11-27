@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M15** (nhánh `milestone/m15-v12-remaining`): M15-12a → M15-12c (M15-11 và M15-12 đã chia nhỏ trong ROADMAP vì mỗi cái >8 file) (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
+**M15** (nhánh `milestone/m15-v12-remaining`): kiểm tra app thật → mở PR M15 (M15-11 và M15-12 đã chia nhỏ trong ROADMAP vì mỗi cái >8 file) (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
 
 ## Lưu ý cho task sau
+- M15-12a xong: tracker dùng lại bảng/UI kênh thông báo (Cài đặt → Thông báo); `notifyRun` bỏ qua kênh tracker; nút 'Tạo issue' ở bước lỗi (màn kết quả) gửi Markdown như 'Copy báo cáo bug' (chưa đính kèm ảnh chụp — chỉ nằm trong thư mục kết quả) và copy link issue vào clipboard. Chưa có nút 'Gửi thử' thật cho tracker; chưa thử trên Jira/Redmine/Azure thật (chỉ test yêu cầu HTTP).
 - M15-12b xong: chỉ API hộp thư thử (Mailpit/Mailtrap), KHÔNG làm IMAP (cần thêm thư viện → phải có ADR). `readMail` chờ tới hết thời gian bước (đặt timeout bước ≥ 15 giây khi mail đến chậm); `onlyNew` chỉ lấy mail đến sau khi bước bắt đầu (sai số đồng hồ 1,5 giây). Mailtrap: `url` = `https://mailtrap.io/api/accounts/<id>/inboxes/<inbox>`.
 - M15-12c xong (làm trước 12a/12b): `mockApi` dùng `context.route` — áp cho mọi tab của phiên, gỡ bằng `mode: off` cùng url+method; địa chỉ `/api/x` khớp mọi host, glob/regex vẫn dùng được. Chỉ thấy request đi qua trình duyệt (không phải bước `api`).
 - M15-11d xong: quét 1 màn hình nhìn thấy (không cuộn), đợi 2,5 giây cho trang tải; khớp phần tử ↔ locator của MỌI test theo role+tên/label/text/placeholder/testId/`#id` (css phức tạp không khớp). Chưa cộng thành phần này vào điểm tổng hợp và chưa lưu kết quả quét.

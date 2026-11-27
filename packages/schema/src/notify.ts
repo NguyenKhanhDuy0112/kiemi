@@ -1,6 +1,15 @@
 import { z } from 'zod';
+import { isTracker, TRACKER_KINDS } from './issue-tracker';
 
-export const NOTIFY_KINDS = ['slack', 'teams', 'gchat', 'telegram', 'email'] as const;
+/** Channels that announce results, then the issue trackers a bug can be filed in [X-03, X-02]. */
+export const NOTIFY_KINDS = [
+  'slack',
+  'teams',
+  'gchat',
+  'telegram',
+  'email',
+  ...TRACKER_KINDS,
+] as const;
 export const NotifyKindSchema = z.enum(NOTIFY_KINDS);
 export type NotifyKind = z.infer<typeof NotifyKindSchema>;
 
@@ -15,6 +24,10 @@ export const NotifyConfigSchema = z.object({
   username: z.string().max(200).default(''),
   from: z.string().max(200).default(''),
   to: z.string().max(1000).default(''),
+  /** Issue trackers [X-02]: site address, project, Jira issue type. */
+  baseUrl: z.string().max(300).default(''),
+  project: z.string().max(200).default(''),
+  issueType: z.string().max(60).default(''),
 });
 export type NotifyConfig = z.infer<typeof NotifyConfigSchema>;
 
@@ -95,6 +108,7 @@ export interface HttpRequestSpec {
 /** Address the secret must have for a kind; `null` = fine. Telegram's secret is the bot token. */
 export function checkSecret(kind: NotifyKind, secret: string): string | null {
   if (kind === 'email') return null;
+  if (isTracker(kind)) return secret.trim() ? null : 'Thiếu mã truy cập (token)';
   if (kind === 'telegram')
     return /^\d+:[\w-]{20,}$/.test(secret) ? null : 'Mã bot Telegram không đúng dạng 123456:ABC…';
   try {
@@ -151,7 +165,7 @@ export function webhookRequest(
           disable_web_page_preview: true,
         }),
       };
-    case 'email':
+    default:
       return null;
   }
 }

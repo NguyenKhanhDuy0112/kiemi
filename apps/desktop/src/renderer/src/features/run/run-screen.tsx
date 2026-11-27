@@ -37,7 +37,8 @@ import { toast } from 'sonner';
 import { childLists } from '../editor/doc-model';
 import { StepSentence } from '../editor/step-sentence';
 import { EnvironmentPill } from '../environments/environment-badge';
-import { copyBugReport } from './copy-bug';
+import { bugMarkdown, copyBugReport } from './copy-bug';
+import { CreateIssueButton } from './create-issue-button';
 import { FixLog } from './fix-log';
 import { FixStepPanel } from './fix-step-panel';
 import { FormMatrixView } from './form-matrix';
@@ -529,6 +530,22 @@ export function RunScreen({ runId }: { runId: string }) {
               onToggleBreakpoint={(stepId) => toggleBreakpoint(current.testCaseId, stepId, runId)}
               fixStepId={single && view.paused ? (fixPick ?? view.paused.stepId) : undefined}
               onSelectStep={single && view.paused ? setFixPick : undefined}
+              onBuildIssue={(stepId) => {
+                const doc = docs[current.testCaseId];
+                const error = current.steps[stepId]?.error;
+                if (!doc || !error) return null;
+                return {
+                  title: tx('ui.bug.title', { test: doc.name }),
+                  body: bugMarkdown({
+                    doc,
+                    stepId,
+                    error,
+                    environmentName: detail?.environmentName,
+                    sharedNames,
+                    tx,
+                  }),
+                };
+              }}
               onCopyBug={(stepId) => {
                 const doc = docs[current.testCaseId];
                 const error = current.steps[stepId]?.error;
@@ -596,6 +613,7 @@ function CaseView({
   onToggleBreakpoint,
   onRunTo,
   onCopyBug,
+  onBuildIssue,
   fixStepId,
   onSelectStep,
   onShot,
@@ -611,6 +629,7 @@ function CaseView({
   onRunTo: ((stepId: string) => void) | undefined;
   /** "Copy báo cáo bug" of a failed step [X-02]. */
   onCopyBug: (stepId: string) => void;
+  onBuildIssue: (stepId: string) => { title: string; body: string } | null;
   /** Step shown in the "Sửa bước" panel, and how to open another one [FX-02]. */
   fixStepId: string | undefined;
   onSelectStep: ((stepId: string) => void) | undefined;
@@ -735,6 +754,7 @@ function CaseView({
                   >
                     <Bug /> {tx('ui.bug.copy')}
                   </Button>
+                  <CreateIssueButton build={() => onBuildIssue(step.id)} />
                 </div>
               )}
               {r?.artifacts.some((a) => a.kind === 'screenshot') && (

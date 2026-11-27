@@ -15,6 +15,7 @@ import {
 } from './routers/data';
 import { dbQueryRouter } from './routers/db-query';
 import { formulasRouter } from './routers/formulas';
+import { issuesRouter } from './routers/issues';
 import { manualRouter } from './routers/manual';
 import { notifyRouter } from './routers/notify';
 import { permissionsRouter } from './routers/permissions';
@@ -47,6 +48,7 @@ export const rootRouter = router({
   forms: formsRouter,
   coverage: coverageRouter,
   dashboard: dashboardRouter,
+  issues: issuesRouter,
   formulas: formulasRouter,
   manual: manualRouter,
   permissions: permissionsRouter,

@@ -167,6 +167,38 @@ export function NotifySection() {
               onChange={(e) => patchConfig({ chatId: e.target.value })}
             />
           )}
+          {fieldsOf(draft.kind).includes('tracker') && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Input
+                value={draft.config.baseUrl}
+                placeholder={tx('ui.notify.baseUrl')}
+                aria-label={tx('ui.notify.baseUrl')}
+                onChange={(e) => patchConfig({ baseUrl: e.target.value })}
+              />
+              <Input
+                value={draft.config.project}
+                placeholder={tx(`ui.notify.project.${draft.kind}`)}
+                aria-label={tx(`ui.notify.project.${draft.kind}`)}
+                onChange={(e) => patchConfig({ project: e.target.value })}
+              />
+              {draft.kind === 'jira' && (
+                <>
+                  <Input
+                    value={draft.config.issueType}
+                    placeholder={tx('ui.notify.issueType')}
+                    aria-label={tx('ui.notify.issueType')}
+                    onChange={(e) => patchConfig({ issueType: e.target.value })}
+                  />
+                  <Input
+                    value={draft.config.username}
+                    placeholder={tx('ui.notify.trackerUser')}
+                    aria-label={tx('ui.notify.trackerUser')}
+                    onChange={(e) => patchConfig({ username: e.target.value })}
+                  />
+                </>
+              )}
+            </div>
+          )}
           {fieldsOf(draft.kind).includes('smtp') && (
             <div className="grid gap-2 sm:grid-cols-2">
               <Input

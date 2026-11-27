@@ -13,6 +13,7 @@ export * from './form-matrix';
 export * from './form-spec';
 export * from './form-steps';
 export * from './formulas';
+export * from './issue-tracker';
 export * from './json-schema';
 export * from './locator';
 export * from './manual-case';
