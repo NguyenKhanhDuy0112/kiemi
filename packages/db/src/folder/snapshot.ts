@@ -23,6 +23,7 @@ export function readSnapshot(services: Services, projectId: string): ProjectSnap
       testPlans: p.testPlans ?? [],
       permissionMatrices: p.permissionMatrices ?? [],
       requirements: p.requirements ?? [],
+      notes: p.notes ?? '',
     },
     products: services.products.list(projectId).map((x) => ({
       id: x.id,
@@ -175,7 +176,8 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
       !same(project.manualCases ?? [], s.project.manualCases ?? []) ||
       !same(project.testPlans ?? [], s.project.testPlans ?? []) ||
       !same(project.permissionMatrices ?? [], s.project.permissionMatrices ?? []) ||
-      !same(project.requirements ?? [], s.project.requirements ?? [])
+      !same(project.requirements ?? [], s.project.requirements ?? []) ||
+      (project.notes ?? '') !== (s.project.notes ?? '')
     )
       services.projects.repo.update(projectId, {
         name: s.project.name,
@@ -190,6 +192,7 @@ export function applySnapshot(services: Services, input: ProjectSnapshot): void 
         testPlans: s.project.testPlans ?? [],
         permissionMatrices: s.project.permissionMatrices ?? [],
         requirements: s.project.requirements ?? [],
+        notes: s.project.notes ?? '',
       });
 
     /** Generic reconcile of one table. `values` = columns from the file. */

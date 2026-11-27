@@ -492,4 +492,42 @@ CREATE INDEX "test_versions_test_idx" ON "test_versions" ("test_case_id");`,
     name: 'project-coverage-history',
     sql: `ALTER TABLE "projects" ADD COLUMN "coverage_history" TEXT;`,
   },
+  {
+    id: 29,
+    name: 'ai-settings',
+    sql: `CREATE TABLE "ai_settings" (
+  "id" TEXT PRIMARY KEY,
+  "workspace_id" TEXT NOT NULL,
+  "created_at" INTEGER NOT NULL,
+  "updated_at" INTEGER NOT NULL,
+  "deleted_at" INTEGER,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "project_id" TEXT NOT NULL,
+  "enabled" INTEGER NOT NULL DEFAULT 0,
+  "kind" TEXT NOT NULL DEFAULT 'claude',
+  "model" TEXT NOT NULL,
+  "task_models" TEXT,
+  "base_url" TEXT,
+  "local_only" INTEGER NOT NULL DEFAULT 0,
+  "ciphertext" BLOB,
+  "last_ok" INTEGER,
+  "last_message" TEXT,
+  "last_at" INTEGER
+);
+CREATE UNIQUE INDEX "ai_settings_project_idx" ON "ai_settings" ("project_id");`,
+  },
+  {
+    id: 30,
+    name: 'ai-limits-usage',
+    sql: `ALTER TABLE "ai_settings" ADD COLUMN "limit_tokens" INTEGER;
+ALTER TABLE "ai_settings" ADD COLUMN "price_in" REAL;
+ALTER TABLE "ai_settings" ADD COLUMN "price_out" REAL;
+ALTER TABLE "ai_settings" ADD COLUMN "usage" TEXT;
+ALTER TABLE "ai_settings" ADD COLUMN "audit" TEXT;`,
+  },
+  {
+    id: 31,
+    name: 'project-notes',
+    sql: `ALTER TABLE "projects" ADD COLUMN "notes" TEXT;`,
+  },
 ];

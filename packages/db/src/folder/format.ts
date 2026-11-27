@@ -91,6 +91,8 @@ export const ProjectFileSchema = z.object({
   permissionMatrices: PermissionMatricesSchema.default([]),
   /** Requirements / tickets [T-04]. */
   requirements: RequirementsSchema.default([]),
+  /** Notes the AI assistant reads every session [AI-20]. */
+  notes: z.string().max(20000).default(''),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -209,6 +211,7 @@ export interface ProjectSnapshot {
     testPlans: TestPlan[];
     permissionMatrices: PermissionMatrix[];
     requirements: Requirement[];
+    notes: string;
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];

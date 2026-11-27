@@ -1,9 +1,11 @@
 import {
   type ActionRegistry,
+  capturePageContext,
   type InteractiveScan,
   type LaunchBrowserOptions,
   type LaunchedBrowser,
   launchBrowser,
+  type PageContext,
   proxyFor,
   type RunOptions,
   type RunRequest,
@@ -78,6 +80,18 @@ export function createRecordSession(post: (msg: WorkerToHost) => void, deps: Rec
           // The page may be closed or navigating: report nothing.
         }
         post({ type: 'scanElementsResult', requestId, scan });
+      })();
+    } else if (c.kind === 'pageContext') {
+      const requestId = c.requestId;
+      void (async () => {
+        let context: PageContext | null = null;
+        try {
+          const page = await livePage?.();
+          if (page) context = await capturePageContext(page);
+        } catch {
+          // The page may be closed or navigating: report nothing.
+        }
+        post({ type: 'pageContextResult', requestId, context });
       })();
     } else if (c.kind === 'scanForms') {
       const requestId = c.requestId;

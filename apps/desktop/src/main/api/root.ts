@@ -1,3 +1,4 @@
+import { aiRouter } from './routers/ai';
 import { appRouter } from './routers/app';
 import { coverageRouter } from './routers/coverage';
 import { dashboardRouter } from './routers/dashboard';
@@ -54,6 +55,7 @@ export const rootRouter = router({
   permissions: permissionsRouter,
   reports: reportsRouter,
   notify: notifyRouter,
+  ai: aiRouter,
   dbQuery: dbQueryRouter,
   savedLogins: savedLoginsRouter,
   updates: updatesRouter,

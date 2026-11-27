@@ -199,12 +199,19 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M15-12c** Mock API [X-07]
 
 ## M16 — Trợ lý Kiemi (AI, tùy chọn)
-- [ ] **M16-01** ADR + `packages/ai` (main process): adapter Claude/OpenAI-compatible/Ollama, API key trong Secret, bật/tắt theo dự án [AI-01]
-- [ ] **M16-02** Bảo vệ dữ liệu, duyệt qua diff + Zod, chi phí, hàng rào hành động [AI-02, AI-03, AI-04, AI-21]
-- [ ] **M16-03** Gói kiến thức Kiemi sinh lúc build + công cụ tra cứu dự án + ngữ cảnh trang + ghi chú dự án [AI-15, AI-16, AI-17, AI-20]
-- [ ] **M16-04** Panel chat + thiết kế test bằng hội thoại + gợi ý case còn thiếu/nghiệp vụ [AI-13, AI-18, AI-19, AI-08]
-- [ ] **M16-05** Phân loại nguyên nhân fail + tự sửa selector + "Đề xuất sửa" trên màn Chạy [AI-10, AI-09, FX-12]
-- [ ] **M16-06** Mô tả tiếng Việt → step, tài liệu → test, viết bug & tóm tắt đợt test [AI-05, AI-06, AI-11]
+- [x] **M16-01a** ADR 0024 + `packages/ai`: adapter Claude/OpenAI-compatible/Ollama dùng `fetch` [AI-01]
+- [x] **M16-01b** Lưu cấu hình AI theo dự án (bật/tắt, model theo tác vụ, API key mã hóa) + Cài đặt UI + nút thử kết nối [AI-01]
+- [x] **M16-02a** `packages/ai`: che secret/PII, cổng gọi AI (local-only, cache, giới hạn tháng), duyệt qua Zod + diff từng phần, hàng rào hành động + nhật ký [AI-02, AI-03, AI-04, AI-21]
+- [x] **M16-02b** Nối vào main: lưu tổng tháng/cache/nhật ký AI, router `ai.preview|usage`, màn "Xem dữ liệu sẽ gửi", giới hạn tháng + giá trong Cài đặt [AI-02, AI-04, AI-21]
+- [x] **M16-03a** Gói kiến thức sinh từ registry + kiểm tra step AI tạo (chỉ trong danh mục) [AI-15]
+- [x] **M16-03b** Công cụ tra cứu dự án (chỉ đọc) + ghi chú dự án `notes.md` [AI-16, AI-20]
+- [x] **M16-03c** Ngữ cảnh trang đang mở: cây truy cập, form, ảnh (theo AI-02), pickElement/highlight [AI-17]
+- [x] **M16-04a** Bộ máy chat ở main: prompt hệ thống, vòng lặp công cụ, kiểm đề xuất (test/bảng case/ghi chú), router `ai.chat` [AI-13, AI-18]
+- [x] **M16-04b** Panel chat mọi màn hình + 'Xem dữ liệu sẽ gửi' + thẻ đề xuất (diff, chấp nhận từng phần → lưu) + bảng case cạnh chat [AI-13, AI-18, AI-02, AI-03]
+- [x] **M16-04c** Gợi ý case còn thiếu / nghiệp vụ bổ sung (độ phủ, lịch sử fail, yêu cầu chưa có test) [AI-19, AI-08]
+- [x] **M16-05a** Chẩn đoán lỗi (5 nhóm) + đề xuất sửa dạng diff + áp dụng (kể cả các bước cùng phần tử), router `ai.diagnose|applyFix` [AI-10, AI-09]
+- [x] **M16-05b** Nút 'Đề xuất sửa' trên màn kết quả/bước lỗi: giải thích + diff + 1 nút áp dụng [FX-12]
+- [x] **M16-06** Mô tả tiếng Việt → step, tài liệu → test, viết bug & tóm tắt lần chạy [AI-05, AI-06, AI-11]
 
 ## Sau v1.2 (v1.x)
 N-14 (ký code Windows + notarize macOS, khi có chứng chỉ).

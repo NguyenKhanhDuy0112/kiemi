@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { SuggestFixButton } from '../ai/suggest-fix-button';
 import { childLists } from '../editor/doc-model';
 import { StepSentence } from '../editor/step-sentence';
 import { EnvironmentPill } from '../environments/environment-badge';
@@ -530,6 +531,7 @@ export function RunScreen({ runId }: { runId: string }) {
               onToggleBreakpoint={(stepId) => toggleBreakpoint(current.testCaseId, stepId, runId)}
               fixStepId={single && view.paused ? (fixPick ?? view.paused.stepId) : undefined}
               onSelectStep={single && view.paused ? setFixPick : undefined}
+              environmentName={detail?.environmentName}
               onBuildIssue={(stepId) => {
                 const doc = docs[current.testCaseId];
                 const error = current.steps[stepId]?.error;
@@ -614,6 +616,7 @@ function CaseView({
   onRunTo,
   onCopyBug,
   onBuildIssue,
+  environmentName,
   fixStepId,
   onSelectStep,
   onShot,
@@ -630,6 +633,7 @@ function CaseView({
   /** "Copy báo cáo bug" of a failed step [X-02]. */
   onCopyBug: (stepId: string) => void;
   onBuildIssue: (stepId: string) => { title: string; body: string } | null;
+  environmentName?: string | null | undefined;
   /** Step shown in the "Sửa bước" panel, and how to open another one [FX-02]. */
   fixStepId: string | undefined;
   onSelectStep: ((stepId: string) => void) | undefined;
@@ -755,6 +759,12 @@ function CaseView({
                     <Bug /> {tx('ui.bug.copy')}
                   </Button>
                   <CreateIssueButton build={() => onBuildIssue(step.id)} />
+                  <SuggestFixButton
+                    testCaseId={c.testCaseId}
+                    stepId={step.id}
+                    error={r.error}
+                    environmentName={environmentName}
+                  />
                 </div>
               )}
               {r?.artifacts.some((a) => a.kind === 'screenshot') && (
