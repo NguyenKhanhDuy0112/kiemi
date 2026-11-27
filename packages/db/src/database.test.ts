@@ -41,6 +41,7 @@ describe('database & migrations [M2-01]', () => {
         'suite_items',
         'suites',
         'test_cases',
+        'test_versions',
         'variables',
         'workspaces',
       ].sort(),

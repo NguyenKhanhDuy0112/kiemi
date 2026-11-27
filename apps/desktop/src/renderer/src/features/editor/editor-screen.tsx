@@ -18,6 +18,7 @@ import { EditorRunButton } from '../run/editor-run-button';
 import { duplicateStep, findStep, savedVariables } from './doc-model';
 import { useEditorStore } from './editor-store';
 import { DataTab, EnvironmentsTab, SessionsTab, VariablesTab } from './editor-tabs';
+import { HistoryButton } from './history-dialog';
 import { PropsPanel } from './props-panel';
 import { QualityButton } from './quality-button';
 import { AddStepMenu, StepTable, useDeleteStep } from './step-table';
@@ -293,6 +294,7 @@ export function EditorScreen({ testId }: { testId: string }) {
                 <TooltipContent>{tx('ui.editor.redo')}</TooltipContent>
               </Tooltip>
               <QualityButton doc={doc} />
+              <HistoryButton testId={testId} doc={doc} />
               <EditorMoreMenu testId={testId} doc={doc} beforeCreate={doSave} />
               <span data-tour="record" className="inline-flex">
                 <RecordButton

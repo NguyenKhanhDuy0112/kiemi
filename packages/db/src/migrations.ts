@@ -470,4 +470,21 @@ CREATE INDEX "notify_channels_project_idx" ON "notify_channels" ("project_id");`
     name: 'project-requirements',
     sql: `ALTER TABLE "projects" ADD COLUMN "requirements" TEXT;`,
   },
+  {
+    id: 27,
+    name: 'test-versions',
+    sql: `CREATE TABLE "test_versions" (
+  "id" TEXT PRIMARY KEY,
+  "workspace_id" TEXT NOT NULL,
+  "created_at" INTEGER NOT NULL,
+  "updated_at" INTEGER NOT NULL,
+  "deleted_at" INTEGER,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "test_case_id" TEXT NOT NULL,
+  "saved_version" INTEGER NOT NULL,
+  "name" TEXT NOT NULL,
+  "content" TEXT NOT NULL
+);
+CREATE INDEX "test_versions_test_idx" ON "test_versions" ("test_case_id");`,
+  },
 ];

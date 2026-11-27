@@ -33,3 +33,22 @@ describe('environment client certificates [W-02]', () => {
     ]);
   });
 });
+
+describe('test version history [T-05]', () => {
+  it('keeps the replaced content, lists it newest first and restores it', () => {
+    const { services, defaultProjectId: p } = createMemoryServices();
+    const t = services.testCases.create({ projectId: p, name: 'A' });
+    const step = (id: string) => ({ id, action: 'goto', params: { url: '/' } });
+    services.testCases.save(t.id, { ...t.content, steps: [step('s1')] });
+    services.testCases.save(t.id, { ...t.content, steps: [step('s1'), step('s2')] });
+    // Saving the same content again keeps nothing new.
+    services.testCases.save(t.id, { ...t.content, steps: [step('s1'), step('s2')] });
+    const h = services.testCases.history(t.id);
+    expect(h.map((x) => x.steps)).toEqual([1, 0]);
+    const first = h[1];
+    if (!first) throw new Error('no version');
+    const row = services.testCases.restore(t.id, first.id);
+    expect(row.content.steps).toHaveLength(0);
+    expect(services.testCases.history(t.id)[0]?.steps).toBe(2);
+  });
+});

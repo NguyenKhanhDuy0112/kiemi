@@ -24,6 +24,7 @@ export * from './requirements';
 export * from './run-result';
 export * from './step';
 export * from './test-case';
+export * from './test-diff';
 export * from './test-lint';
 export * from './test-plan';
 export * from './version';

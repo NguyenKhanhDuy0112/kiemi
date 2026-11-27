@@ -191,7 +191,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M15-09** Kiểm tra nâng cao: thời gian phản hồi, đối chiếu UI = API = DB, thao tác lặp nhanh, chuyển trạng thái [Q-05, Q-07, Q-08, Q-10]
 - [x] **M15-10** Web thực tế: client cert, Shadow DOM, In/PDF, session hết hạn [W-02, W-05, W-07, W-08]
 - [x] **M15-11a** Yêu cầu/ticket gắn vào test + độ phủ yêu cầu [T-04, CV-05]
-- [ ] **M15-11b** Lịch sử phiên bản test + so sánh 2 phiên bản [T-05]
+- [x] **M15-11b** Lịch sử phiên bản test + so sánh 2 phiên bản [T-05]
 - [ ] **M15-11c** Xu hướng pass theo thời gian, test chập chờn/chậm nhất + điểm độ phủ tổng hợp trên dashboard [T-07, CV-09]
 - [ ] **M15-11d** Độ phủ phần tử tương tác, tô màu trên ảnh trang [CV-03]
 - [ ] **M15-12a** Tạo issue Jira/Redmine/Azure DevOps/GitLab/GitHub từ test lỗi [X-02]

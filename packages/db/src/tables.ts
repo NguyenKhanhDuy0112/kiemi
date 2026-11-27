@@ -401,6 +401,20 @@ export const settings = sqliteTable(
 );
 
 /** Where run results are announced: Slack, Teams, Google Chat, Telegram, email [X-03]. */
+/** Earlier saved versions of a test, newest last kept up to a limit [T-05] (migration 27). */
+export const testVersions = sqliteTable(
+  'test_versions',
+  {
+    ...base,
+    testCaseId: text('test_case_id').notNull(),
+    /** `version` the test row had when this content was the current one. */
+    savedVersion: integer('saved_version').notNull(),
+    name: text('name').notNull(),
+    content: json<TestCase>('content').notNull(),
+  },
+  (t) => [index('test_versions_test_idx').on(t.testCaseId)],
+);
+
 export const notifyChannels = sqliteTable(
   'notify_channels',
   {
@@ -489,5 +503,6 @@ export const ALL_TABLES = {
   settings,
   savedLogins,
   notifyChannels,
+  testVersions,
   sharedResources,
 } as const;

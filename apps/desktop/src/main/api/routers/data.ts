@@ -276,6 +276,16 @@ export const testCasesRouter = router({
     .mutation(({ ctx, input }) =>
       ctx.services.testCases.save(input.id, input.content, input.version),
     ),
+  /** Earlier saved versions, newest first [T-05]. */
+  history: publicProcedure
+    .input(z.object({ id }))
+    .query(({ ctx, input }) => ctx.services.testCases.history(input.id)),
+  versionContent: publicProcedure
+    .input(z.object({ versionId: id }))
+    .query(({ ctx, input }) => ctx.services.testCases.versionContent(input.versionId)),
+  restoreVersion: publicProcedure
+    .input(z.object({ id, versionId: id }))
+    .mutation(({ ctx, input }) => ctx.services.testCases.restore(input.id, input.versionId)),
   rename: publicProcedure
     .input(z.object({ id, name: z.string(), version }))
     .mutation(({ ctx, input }) =>

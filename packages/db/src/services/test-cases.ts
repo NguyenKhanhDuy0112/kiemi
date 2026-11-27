@@ -8,7 +8,7 @@ import {
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { DbError, newId, Repo, type RepoContext, validation } from '../repo';
-import { folders, testCases } from '../tables';
+import { folders, testCases, testVersions } from '../tables';
 import { ProductService } from './products';
 
 export const NewTestCaseSchema = z.object({
@@ -33,12 +33,17 @@ function callsShared(value: unknown, sharedId: string): boolean {
   return Object.values(o).some((v) => callsShared(v, sharedId));
 }
 
+/** Versions kept per test [T-05]. */
+const MAX_VERSIONS = 30;
+
 export class TestCaseService {
   readonly repo: Repo<typeof testCases>;
+  readonly versions: Repo<typeof testVersions>;
   readonly #ctx: RepoContext;
   constructor(ctx: RepoContext) {
     this.#ctx = ctx;
     this.repo = new Repo(ctx, testCases, 'test case');
+    this.versions = new Repo(ctx, testVersions, 'test version');
   }
 
   list(projectId: string, folderId?: string | null): TestCaseSummary[] {
@@ -165,7 +170,53 @@ export class TestCaseService {
       });
     }
     if (content.id !== id) content = { ...content, id };
-    return this.repo.update(id, this.#columns(content), expectedVersion);
+    const before = this.repo.get(id);
+    const saved = this.repo.update(id, this.#columns(content), expectedVersion);
+    this.#remember(before, content);
+    return saved;
+  }
+
+  /** Keeps the content that was just replaced, up to {@link MAX_VERSIONS} per test [T-05]. */
+  #remember(before: TestCaseRow, next: TestCase): void {
+    if (JSON.stringify(before.content) === JSON.stringify(next)) return;
+    this.versions.create({
+      testCaseId: before.id,
+      savedVersion: before.version,
+      name: before.name,
+      content: before.content,
+    });
+    const all = this.versions.list(eq(testVersions.testCaseId, before.id), testVersions.createdAt);
+    for (const old of all.slice(0, Math.max(0, all.length - MAX_VERSIONS)))
+      this.versions.remove(old.id);
+  }
+
+  /** Earlier versions of a test, newest first (without the content) [T-05]. */
+  history(
+    id: string,
+  ): { id: string; savedVersion: number; name: string; savedAt: Date; steps: number }[] {
+    return this.versions
+      .list(eq(testVersions.testCaseId, id), testVersions.createdAt)
+      .reverse()
+      .map((v) => ({
+        id: v.id,
+        savedVersion: v.savedVersion,
+        name: v.name,
+        savedAt: v.createdAt,
+        steps: v.content.steps.length,
+      }));
+  }
+
+  /** The content of one earlier version [T-05]. */
+  versionContent(versionId: string): TestCase {
+    return this.versions.get(versionId).content;
+  }
+
+  /** Puts an earlier version back as the current one (the current one is kept in the history) [T-05]. */
+  restore(id: string, versionId: string): TestCaseRow {
+    const v = this.versions.get(versionId);
+    if (v.testCaseId !== id)
+      throw new DbError('NOT_FOUND', 'That version belongs to another test', { id: versionId });
+    return this.save(id, v.content);
   }
 
   rename(id: string, name: string, expectedVersion?: number): TestCaseRow {
