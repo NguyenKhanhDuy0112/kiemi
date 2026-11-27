@@ -282,6 +282,19 @@ export const viUi = {
       trace: 'Ghi lại để xem từng thao tác (trace)',
       run: 'Chạy',
     },
+    matrix: {
+      open: 'Chạy ma trận…',
+      title: 'Chạy ma trận',
+      description:
+        'Chạy cùng một bộ test trên nhiều môi trường và nhiều trình duyệt, xem kết quả trong một bảng.',
+      environments: 'Môi trường',
+      browsers: 'Trình duyệt',
+      browser: { msedge: 'Microsoft Edge', chrome: 'Google Chrome', chromium: 'Chromium' },
+      count: 'Sẽ chạy {{count}} lần (môi trường × trình duyệt).',
+      run: 'Chạy ma trận',
+      summary: 'Đạt {{passed}}/{{total}} ô',
+      close: 'Đóng',
+    },
   },
   history: {
     emptyTitle: 'Chưa có lần chạy nào',

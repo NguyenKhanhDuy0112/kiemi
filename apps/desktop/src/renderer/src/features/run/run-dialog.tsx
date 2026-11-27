@@ -24,10 +24,11 @@ import { trpc } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
 import { useQuery } from '@tanstack/react-query';
 import { TRPCClientError } from '@trpc/client';
-import { Play } from 'lucide-react';
+import { Grid3x3, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useProtectedConfirm } from './confirm-protected';
+import { MatrixDialog } from './matrix-dialog';
 import { type RunPrefs, useRunStore } from './run-store';
 
 /** Name of the protected environment when main asks for a confirmation. */
@@ -126,6 +127,7 @@ export function RunDialog({
   const [shots, setShots] = useState<'onFailure' | 'always' | 'off'>('onFailure');
   const [video, setVideo] = useState(false);
   const [trace, setTrace] = useState(false);
+  const [matrix, setMatrix] = useState(false);
 
   // Fresh form from the remembered options each time it opens.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset only when the dialog opens.
@@ -179,126 +181,141 @@ export function RunDialog({
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{tx('ui.run.dialog.title')}</DialogTitle>
-          <DialogDescription>{tx('ui.run.dialog.description')}</DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-col gap-4">
-          {row(
-            'run-env',
-            tx('ui.run.dialog.environment'),
-            <Select value={env} onValueChange={setEnv}>
-              <SelectTrigger id="run-env" className="w-56">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={DEFAULT_ENV}>{envs.data?.[0]?.name ?? '—'}</SelectItem>
-                {(envs.data ?? []).slice(1).map((e) => (
-                  <SelectItem key={e.id} value={e.id}>
-                    {e.name}
-                  </SelectItem>
-                ))}
-                <SelectItem value={NO_ENV}>{tx('ui.run.noEnvironment')}</SelectItem>
-              </SelectContent>
-            </Select>,
-          )}
-          {single &&
-            testCase &&
-            testCase.steps.length > 1 &&
-            row(
-              'run-start',
-              tx('ui.run.dialog.startAt'),
-              <Select
-                value={startAt || '__start__'}
-                onValueChange={(v) => setStartAt(v === '__start__' ? '' : v)}
-              >
-                <SelectTrigger id="run-start" className="w-56">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{tx('ui.run.dialog.title')}</DialogTitle>
+            <DialogDescription>{tx('ui.run.dialog.description')}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            {row(
+              'run-env',
+              tx('ui.run.dialog.environment'),
+              <Select value={env} onValueChange={setEnv}>
+                <SelectTrigger id="run-env" className="w-56">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__start__">{tx('ui.run.dialog.fromStart')}</SelectItem>
-                  {testCase.steps.slice(1).map((s, i) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {`${i + 2}. ${s.name ?? tx(`ui.steps.${s.action}.label`, undefined, s.action)}`}
+                  <SelectItem value={DEFAULT_ENV}>{envs.data?.[0]?.name ?? '—'}</SelectItem>
+                  {(envs.data ?? []).slice(1).map((e) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.name}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={NO_ENV}>{tx('ui.run.noEnvironment')}</SelectItem>
+                </SelectContent>
+              </Select>,
+            )}
+            {single &&
+              testCase &&
+              testCase.steps.length > 1 &&
+              row(
+                'run-start',
+                tx('ui.run.dialog.startAt'),
+                <Select
+                  value={startAt || '__start__'}
+                  onValueChange={(v) => setStartAt(v === '__start__' ? '' : v)}
+                >
+                  <SelectTrigger id="run-start" className="w-56">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__start__">{tx('ui.run.dialog.fromStart')}</SelectItem>
+                    {testCase.steps.slice(1).map((s, i) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {`${i + 2}. ${s.name ?? tx(`ui.steps.${s.action}.label`, undefined, s.action)}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>,
+              )}
+            {row(
+              'run-slow',
+              tx('ui.run.dialog.slowMo'),
+              <Select value={String(slow)} onValueChange={(v) => setSlow(Number(v))}>
+                <SelectTrigger id="run-slow" className="w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SLOW.map((ms) => (
+                    <SelectItem key={ms} value={String(ms)}>
+                      {ms === 0
+                        ? tx('ui.run.dialog.slowMoOff')
+                        : tx('ui.run.dialog.slowMoValue', { seconds: ms / 1000 })}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>,
             )}
-          {row(
-            'run-slow',
-            tx('ui.run.dialog.slowMo'),
-            <Select value={String(slow)} onValueChange={(v) => setSlow(Number(v))}>
-              <SelectTrigger id="run-slow" className="w-56">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SLOW.map((ms) => (
-                  <SelectItem key={ms} value={String(ms)}>
-                    {ms === 0
-                      ? tx('ui.run.dialog.slowMoOff')
-                      : tx('ui.run.dialog.slowMoValue', { seconds: ms / 1000 })}
+            {row(
+              'run-shots',
+              tx('ui.run.dialog.screenshots'),
+              <Select value={shots} onValueChange={(v) => setShots(v as typeof shots)}>
+                <SelectTrigger id="run-shots" className="w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="onFailure">
+                    {tx('ui.run.dialog.screenshotsOnFailure')}
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>,
-          )}
-          {row(
-            'run-shots',
-            tx('ui.run.dialog.screenshots'),
-            <Select value={shots} onValueChange={(v) => setShots(v as typeof shots)}>
-              <SelectTrigger id="run-shots" className="w-56">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="onFailure">
-                  {tx('ui.run.dialog.screenshotsOnFailure')}
-                </SelectItem>
-                <SelectItem value="always">{tx('ui.run.dialog.screenshotsAlways')}</SelectItem>
-                <SelectItem value="off">{tx('ui.run.dialog.screenshotsOff')}</SelectItem>
-              </SelectContent>
-            </Select>,
-          )}
-          {row(
-            'run-show',
-            tx('ui.run.dialog.showBrowser'),
-            <Switch id="run-show" checked={showBrowser} onCheckedChange={setShowBrowser} />,
-          )}
-          {single &&
-            row(
-              'run-pause',
-              tx('ui.run.dialog.stepByStep'),
-              <Switch id="run-pause" checked={pauseAtStart} onCheckedChange={setPauseAtStart} />,
+                  <SelectItem value="always">{tx('ui.run.dialog.screenshotsAlways')}</SelectItem>
+                  <SelectItem value="off">{tx('ui.run.dialog.screenshotsOff')}</SelectItem>
+                </SelectContent>
+              </Select>,
             )}
-          {!single &&
-            row(
-              'run-stop',
-              tx('ui.run.dialog.stopOnFailure'),
-              <Switch id="run-stop" checked={stopOnFailure} onCheckedChange={setStopOnFailure} />,
-              tx('ui.run.dialog.stopOnFailureHint'),
+            {row(
+              'run-show',
+              tx('ui.run.dialog.showBrowser'),
+              <Switch id="run-show" checked={showBrowser} onCheckedChange={setShowBrowser} />,
             )}
-          {row(
-            'run-video',
-            tx('ui.run.dialog.video'),
-            <Switch id="run-video" checked={video} onCheckedChange={setVideo} />,
-          )}
-          {row(
-            'run-trace',
-            tx('ui.run.dialog.trace'),
-            <Switch id="run-trace" checked={trace} onCheckedChange={setTrace} />,
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {tx('common.cancel')}
-          </Button>
-          <Button onClick={() => void submit()}>
-            <Play /> {tx('ui.run.dialog.run')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            {single &&
+              row(
+                'run-pause',
+                tx('ui.run.dialog.stepByStep'),
+                <Switch id="run-pause" checked={pauseAtStart} onCheckedChange={setPauseAtStart} />,
+              )}
+            {!single &&
+              row(
+                'run-stop',
+                tx('ui.run.dialog.stopOnFailure'),
+                <Switch id="run-stop" checked={stopOnFailure} onCheckedChange={setStopOnFailure} />,
+                tx('ui.run.dialog.stopOnFailureHint'),
+              )}
+            {row(
+              'run-video',
+              tx('ui.run.dialog.video'),
+              <Switch id="run-video" checked={video} onCheckedChange={setVideo} />,
+            )}
+            {row(
+              'run-trace',
+              tx('ui.run.dialog.trace'),
+              <Switch id="run-trace" checked={trace} onCheckedChange={setTrace} />,
+            )}
+          </div>
+          <DialogFooter>
+            {!single && (
+              <Button variant="outline" className="sm:mr-auto" onClick={() => setMatrix(true)}>
+                <Grid3x3 /> {tx('ui.run.matrix.open')}
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+              {tx('common.cancel')}
+            </Button>
+            <Button onClick={() => void submit()}>
+              <Play /> {tx('ui.run.dialog.run')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <MatrixDialog
+        open={matrix}
+        target={target}
+        onOpenChange={(o) => {
+          setMatrix(o);
+          if (!o) onOpenChange(false);
+        }}
+      />
+    </>
   );
 }

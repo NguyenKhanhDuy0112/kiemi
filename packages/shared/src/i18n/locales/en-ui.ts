@@ -282,6 +282,19 @@ export const enUi = {
       trace: 'Record a replay of every action (trace)',
       run: 'Run',
     },
+    matrix: {
+      open: 'Run matrix…',
+      title: 'Run matrix',
+      description:
+        'Run one suite on several environments and browsers and read the results in one table.',
+      environments: 'Environment',
+      browsers: 'Browser',
+      browser: { msedge: 'Microsoft Edge', chrome: 'Google Chrome', chromium: 'Chromium' },
+      count: 'Will run {{count}} times (environments × browsers).',
+      run: 'Run matrix',
+      summary: '{{passed}}/{{total}} cells passed',
+      close: 'Close',
+    },
   },
   history: {
     emptyTitle: 'No runs yet',

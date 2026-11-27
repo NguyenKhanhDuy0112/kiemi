@@ -177,7 +177,10 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M14-09** Rà soát `QC-COVERAGE.md` (không còn ❌ ở dòng v1.1), user guide, chuẩn bị phát hành v1.1 (changeset; version + tag do chủ dự án)
 
 ## M15 — v1.2 (các mục còn lại)
-- [ ] **M15-01** Dự án & môi trường: chạy ma trận, dashboard theo cấp, template dự án, phiên bản sản phẩm [O-09, O-10, O-12, O-13, R-15]
+- [x] **M15-01a** Chạy ma trận: suite × môi trường × trình duyệt, bảng kết quả [O-09]
+- [ ] **M15-01b** Dashboard theo cấp: workspace → dự án → sản phẩm → môi trường [O-10]
+- [ ] **M15-01c** Mẫu dự án theo loại + nhân bản dự án [R-15, O-12]
+- [ ] **M15-01d** Phiên bản sản phẩm: test plan gắn release, báo cáo theo release [O-13]
 - [ ] **M15-02** Sửa dữ liệu tại chỗ khi data-driven [FX-10]
 - [ ] **M15-03** Kiểm tra chéo: realtime không tải lại, so sánh 2 môi trường, điểm kiểm tra lan truyền [V-04, V-06, V-07]
 - [ ] **M15-04** Trình duyệt: giả lập mạng, quyền, clipboard, request mạng [Y-02, Y-03, Y-04, Y-05]

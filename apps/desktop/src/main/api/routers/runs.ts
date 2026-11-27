@@ -10,7 +10,7 @@ import {
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { resolveInside } from '../../results/artifact-path';
-import { StartRunInputSchema } from '../../run/start-input';
+import { StartMatrixInputSchema, StartRunInputSchema } from '../../run/start-input';
 import { publicProcedure, router } from '../trpc';
 
 const runId = z.object({ runId: z.string().min(1) });
@@ -20,6 +20,11 @@ export const runsRouter = router({
   start: publicProcedure
     .input(StartRunInputSchema)
     .mutation(({ ctx, input }) => ctx.runs.start(input)),
+
+  /** Matrix run: suite × environments × browsers [O-09]. */
+  startMatrix: publicProcedure
+    .input(StartMatrixInputSchema)
+    .mutation(({ ctx, input }) => ctx.runs.startMatrix(input)),
 
   cancel: publicProcedure
     .input(runId)

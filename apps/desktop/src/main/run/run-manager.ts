@@ -24,7 +24,12 @@ import { translations } from '@kiemi/shared';
 import { v7 as uuidv7 } from 'uuid';
 import { type OpenTunnel, prepareNetwork, type TunnelLike, usedProducts } from '../tunnel/network';
 import type { EditCommand, HostToWorker, WorkerToHost } from './protocol';
-import { type StartRunInput, StartRunInputSchema } from './start-input';
+import {
+  type StartMatrixInput,
+  StartMatrixInputSchema,
+  type StartRunInput,
+  StartRunInputSchema,
+} from './start-input';
 
 export type { StartRunInput } from './start-input';
 
@@ -350,7 +355,7 @@ export class RunManager {
         requests,
         launch: {
           settings: {
-            browser: settings.browser,
+            browser: opts.browser ?? settings.browser,
             // Debugging needs a visible browser [S-03].
             headless,
             ...(opts.slowMoMs ? { slowMoMs: opts.slowMoMs } : {}),
@@ -368,6 +373,43 @@ export class RunManager {
       secrets,
     );
     return { runId: run.id };
+  }
+
+  /**
+   * Matrix run [O-09]: one run per environment × browser, started one after another.
+   * Protected environments are checked first so nothing starts half-way.
+   */
+  startMatrix(raw: StartMatrixInput): {
+    cells: { environmentId: string; browser: 'msedge' | 'chrome' | 'chromium'; runId: string }[];
+  } {
+    const input = StartMatrixInputSchema.parse(raw);
+    if (input.confirmProtected !== true) {
+      for (const id of input.environmentIds) {
+        const { env } = this.#d.services.environments.forRun(id);
+        if (env.protected)
+          throw new DbError('CONFIRM_REQUIRED', `Environment "${env.name}" is protected`, {
+            environment: env.name,
+            environmentId: env.id,
+            type: env.type,
+          });
+      }
+    }
+    const cells: {
+      environmentId: string;
+      browser: 'msedge' | 'chrome' | 'chromium';
+      runId: string;
+    }[] = [];
+    for (const environmentId of input.environmentIds)
+      for (const browser of input.browsers) {
+        const { runId } = this.start({
+          target: input.target,
+          environmentId,
+          options: { ...input.options, browser },
+          ...(input.confirmProtected ? { confirmProtected: true } : {}),
+        });
+        cells.push({ environmentId, browser, runId });
+      }
+    return { cells };
   }
 
   /** Stop button: the engine still runs cleanup steps, then the run ends `cancelled`. */

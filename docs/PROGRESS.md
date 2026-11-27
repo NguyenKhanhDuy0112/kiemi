@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M14** xong trên nhánh `milestone/m14-team-qa` (M14-01 → M14-09; kiểm tra app thật đạt: case thủ công, đợt test, xuất Excel/PDF, mẫu CSDL chạy Đạt). Chờ PR merge. Phát hành v1.1: còn `pnpm changeset version` + tag (changeset `qa-team-workflow` đã có) và `docs/RELEASE-CHECKLIST.md` mục C/D (CLI, Query DB với DB thật, PDF trên bản đóng gói).
+**M15** (nhánh `milestone/m15-v12-remaining`): M15-01b → M15-12 (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
 
 ## Lưu ý cho task sau
+- M15-01a xong: `RunOptions.browser` (ghi đè trình duyệt 1 lần chạy), `RunManager.startMatrix` → mỗi ô môi trường×trình duyệt là 1 run riêng (kiểm môi trường được bảo vệ trước khi chạy ô nào), tRPC `runs.startMatrix`; UI `features/run/matrix-dialog.tsx` (mở từ Tùy chọn chạy của suite/tag) + `matrix.ts` thuần. Bảng chỉ sống khi hộp thoại mở (run vẫn nằm ở Lịch sử, chưa lưu nhóm ma trận vào DB); các ô chạy song song nên nặng máy khi nhiều ô.
 - Kiểm tra app thật M14 (script ngoài repo, `_electron.launch --user-data-dir`): sửa lỗi tìm được — câu mô tả bước 'Hỏi CSDL' hiện `{{connection}}` thô vì thiếu `connection`/`sql` trong `SENTENCE_PARAMS` (describe.ts). Khi thêm action mới có chuỗi 'sentence', thêm tên tham số vào danh sách đó.
 - M14-08c xong: `startDemoSite().dbPath` / `startSampleSite({dbPath}).dbPath` (SQLite thật, đồng bộ sau mọi thay đổi đơn nghỉ; app dùng `userData/sample-site.db`). Mẫu #6 chỉ cài khi có `dbPath` (`installSamples(services, url, dbPath)`, `ApiContext.sampleSiteDb`); `syncSampleEnvironment(…, dbPath)` đổi đường dẫn khi khác. Mẫu #6 so khớp bằng `SELECT … WHERE code=? AND owner=? AND status=?` + `expectRows:1` (không cần đường dẫn biến).
 - M14-08b xong: `createDbClient(drivers?)` (mỗi lần hỏi mở 1 kết nối rồi đóng; `readOnly` → SQLite mở readonly, pg `BEGIN READ ONLY`+ROLLBACK, MySQL `SET SESSION TRANSACTION READ ONLY`; SQL Server chỉ dựa vào `checkSql`). Cổng ở `worker-core` nên app và CLI cùng dùng. Test pg/mysql/tedious bằng `vi.mock`, SQLite thật. UI: mục 'Cơ sở dữ liệu' ở màn Môi trường, nút 'Thử kết nối' = `SELECT 1`. M14-08c: demo-site cần DB SQLite thật (ghi đơn nghỉ khi tạo/duyệt) + mẫu L-03 #6; đường dẫn file DB của demo-site phải đưa vào env của mẫu (khác nhau mỗi lần chạy → cập nhật như `syncSampleEnvironment`).
@@ -152,3 +153,4 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 | 2026-11-26 | M10-08 | xong | Phạm vi sửa phần tử (chỉ test này / mọi nơi) + danh sách test bị ảnh hưởng; test `levels.test.ts` |
 | 2026-11-26 | M10-09, M10-10 | xong | Sửa và chạy lại từ Kết quả; nhật ký sửa + Hoàn tác + đề nghị chạy lại từ đầu; test `fix-diff.test.ts` |
 | 2026-11-26 | M10-11 | xong | Demo-site ca lỗi + e2e luồng sửa khi fail (7 test); cả M10: lint + typecheck + test pass; app thật OK |
+| 2026-11-27 | M15-01a | Xong — chạy ma trận (suite × môi trường × trình duyệt) [O-09]; chia M15-01 thành a–d | test `startMatrix` + `matrix.test.ts` |
