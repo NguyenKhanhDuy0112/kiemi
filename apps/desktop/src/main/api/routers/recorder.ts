@@ -1,6 +1,6 @@
 import { FIELD_SPEC_TEMPLATE, formFromTable, readExcel, writeExcel } from '@kiemi/db';
 import { formSpecsFromSchema, inferForm } from '@kiemi/engine';
-import { LocatorSchema } from '@kiemi/schema';
+import { elementCoverage, LocatorSchema, usedStrategies } from '@kiemi/schema';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { generateFormTests } from '../../forms/generate-tests';
@@ -56,6 +56,26 @@ export const recorderRouter = router({
       .filter((s) => s.controls.length > 0)
       .map((s, i) => inferForm(s, `form-${stamp}-${i + 1}`));
   }),
+
+  /** Interactive elements of the page now open, marked by whether any test of the project uses them [CV-03]. */
+  scanElements: publicProcedure
+    .input(recordingId.extend({ projectId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const scan = await manager(ctx).scanElements(input.recordingId);
+      if (!scan) return null;
+      const s = ctx.services;
+      const used = s.testCases
+        .list(input.projectId)
+        .flatMap((t) => usedStrategies(s.testCases.get(t.id).content));
+      const cov = elementCoverage(scan.elements, used);
+      return {
+        screenshot: scan.screenshot,
+        width: scan.width,
+        height: scan.height,
+        coveredPercent: cov.coveredPercent,
+        items: cov.items.map((i) => ({ ...i.element, covered: i.covered })),
+      };
+    }),
 
   /** ✓ / ✕ on a suggested check [M-01]. */
   suggestion: publicProcedure

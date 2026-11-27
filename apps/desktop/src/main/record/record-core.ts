@@ -1,5 +1,6 @@
 import {
   type ActionRegistry,
+  type InteractiveScan,
   type LaunchBrowserOptions,
   type LaunchedBrowser,
   launchBrowser,
@@ -10,6 +11,7 @@ import {
   type ScannedForm,
   SessionPages,
   scanForms,
+  scanInteractive,
   toRunError,
 } from '@kiemi/engine';
 import { type Recorder, type RecorderOptions, startRecorder } from '@kiemi/recorder';
@@ -65,6 +67,18 @@ export function createRecordSession(post: (msg: WorkerToHost) => void, deps: Rec
         .highlight(c.locator)
         .catch(() => ({ count: 0 }))
         .then((result) => post({ type: 'highlightResult', requestId: c.requestId, result }));
+    } else if (c.kind === 'scanElements') {
+      const requestId = c.requestId;
+      void (async () => {
+        let scan: InteractiveScan | null = null;
+        try {
+          const page = await livePage?.();
+          if (page) scan = await scanInteractive(page);
+        } catch {
+          // The page may be closed or navigating: report nothing.
+        }
+        post({ type: 'scanElementsResult', requestId, scan });
+      })();
     } else if (c.kind === 'scanForms') {
       const requestId = c.requestId;
       void (async () => {

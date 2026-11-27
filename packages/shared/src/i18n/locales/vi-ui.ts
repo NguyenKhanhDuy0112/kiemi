@@ -744,6 +744,16 @@ export const viUi = {
     restored: 'Đã khôi phục bản cũ.',
     kind: { added: 'Thêm', removed: 'Xóa', changed: 'Sửa', moved: 'Đổi chỗ' },
   },
+  elementCoverage: {
+    title: 'Độ phủ phần tử trên trang',
+    hint: 'Mở một trang, Kiemi liệt kê nút, ô nhập, liên kết, menu và tô màu: xanh = đã có test thao tác hoặc kiểm tra, đỏ = chưa test nào đụng tới.',
+    scan: 'Quét trang',
+    summary: 'Đã phủ {{covered}}/{{total}} phần tử ({{percent}}%)',
+    none: 'Không đọc được trang (đã đóng hoặc đang chuyển trang).',
+    covered: 'Đã có test',
+    uncovered: 'Chưa có test',
+    kind: { button: 'Nút', field: 'Ô nhập', link: 'Liên kết', menu: 'Menu' },
+  },
   requirements: {
     title: 'Độ phủ yêu cầu',
     hint: 'Mỗi dòng một yêu cầu: MÃ | tên | đường dẫn (không bắt buộc). Gắn test vào yêu cầu bằng thẻ req:MÃ.',

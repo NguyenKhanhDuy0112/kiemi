@@ -1,6 +1,7 @@
 import type {
   DownloadProgress,
   EngineEvent,
+  InteractiveScan,
   LaunchSettingsInput,
   RunRequest,
   SavedLogin,
@@ -57,6 +58,7 @@ export type RecordCommand =
   | { kind: 'pick'; requestId: string }
   | { kind: 'highlight'; requestId: string; locator: Locator }
   | { kind: 'scanForms'; requestId: string }
+  | { kind: 'scanElements'; requestId: string }
   | { kind: 'suggestion'; id: string; accept: boolean };
 
 /**
@@ -131,5 +133,6 @@ export type WorkerToHost =
   | { type: 'pickResult'; requestId: string; locator: Locator | null }
   | { type: 'highlightResult'; requestId: string; result: HighlightResult }
   | { type: 'scanResult'; requestId: string; forms: ScannedForm[] }
+  | { type: 'scanElementsResult'; requestId: string; scan: InteractiveScan | null }
   /** Recording ended; the browser is closed. */
   | { type: 'recordDone'; steps: Step[] };

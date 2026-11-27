@@ -745,6 +745,16 @@ export const enUi = {
     restored: 'Older version restored.',
     kind: { added: 'Added', removed: 'Removed', changed: 'Edited', moved: 'Moved' },
   },
+  elementCoverage: {
+    title: 'Element coverage of a page',
+    hint: 'Open a page: Kiemi lists its buttons, fields, links and menus and paints them — green = a test acts on or checks it, red = no test touches it.',
+    scan: 'Scan the page',
+    summary: '{{covered}}/{{total}} elements covered ({{percent}}%)',
+    none: 'The page could not be read (closed or changing).',
+    covered: 'Covered',
+    uncovered: 'Not covered',
+    kind: { button: 'Button', field: 'Field', link: 'Link', menu: 'Menu' },
+  },
   requirements: {
     title: 'Requirement coverage',
     hint: 'One requirement per line: KEY | title | link (optional). Link a test to a requirement with the tag req:KEY.',

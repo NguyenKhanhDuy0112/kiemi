@@ -5,6 +5,7 @@ export * from './coverage-score';
 export * from './dashboard';
 export * from './dataset';
 export * from './design-labels';
+export * from './element-coverage';
 export * from './env';
 export * from './field-rules';
 export * from './form-cases';

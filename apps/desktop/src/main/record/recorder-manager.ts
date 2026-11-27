@@ -1,5 +1,11 @@
 import type { Services } from '@kiemi/db';
-import { mainAppUrl, type RunRequest, type SavedLogin, type ScannedForm } from '@kiemi/engine';
+import {
+  type InteractiveScan,
+  mainAppUrl,
+  type RunRequest,
+  type SavedLogin,
+  type ScannedForm,
+} from '@kiemi/engine';
 import type { HighlightResult, StepChange, Suggestion } from '@kiemi/recorder';
 import {
   CURRENT_SCHEMA_VERSION,
@@ -287,6 +293,18 @@ export class RecorderManager {
     return done;
   }
 
+  /** Interactive elements + screenshot of the page open in the browser [CV-03]. */
+  scanElements(recordingId: string): Promise<InteractiveScan | null> {
+    const a = this.#get(recordingId);
+    if (!a) return Promise.resolve(null);
+    const requestId = uuidv7();
+    const done = new Promise<InteractiveScan | null>((resolve) =>
+      a.waiting.set(requestId, (v) => resolve(v as InteractiveScan | null)),
+    );
+    this.#send(a, { kind: 'scanElements', requestId });
+    return done;
+  }
+
   /** ✓ / ✕ on a suggested check [M-01]. */
   suggestion(recordingId: string, id: string, accept: boolean): boolean {
     const a = this.#get(recordingId);
@@ -434,6 +452,10 @@ export class RecorderManager {
         return;
       case 'scanResult':
         a.waiting.get(m.requestId)?.(m.forms);
+        a.waiting.delete(m.requestId);
+        return;
+      case 'scanElementsResult':
+        a.waiting.get(m.requestId)?.(m.scan);
         a.waiting.delete(m.requestId);
         return;
       case 'highlightResult':

@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { scanInteractive } from '../forms/interactive';
 import { type E2E, startE2E, step, summary } from './helpers';
 
 /** M15-03 [V-04, V-06, V-07]: realtime without reload, noted values, propagation. */
@@ -646,5 +647,23 @@ describe('printing and expired sessions [W-07, W-08]', () => {
       request: { options: { defaultStepTimeoutMs: 2000 } },
     });
     expect(bad(summary(r)).length).toBeGreaterThan(0);
+  });
+});
+
+describe('interactive element scan [CV-03]', () => {
+  it('lists the visible buttons and fields with their boxes and a screenshot', async () => {
+    const page = await e.browser.newPage();
+    try {
+      await page.goto(`${e.site.url}/server-form.html`);
+      const scan = await scanInteractive(page);
+      const names = scan.elements.map((x) => `${x.kind}:${x.name}`);
+      expect(names).toContain('button:Gửi đơn');
+      expect(names).toContain('button:Duyệt');
+      expect(scan.elements.some((x) => x.kind === 'field' && x.id === 'code')).toBe(true);
+      expect(scan.elements.every((x) => x.rect.width > 1)).toBe(true);
+      expect(scan.screenshot.length).toBeGreaterThan(1000);
+    } finally {
+      await page.close();
+    }
   });
 });
