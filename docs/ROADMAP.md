@@ -190,8 +190,13 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M15-08** Dữ liệu: hàm ngày nghiệp vụ, sinh tổ hợp pairwise [P-07, P-08]
 - [x] **M15-09** Kiểm tra nâng cao: thời gian phản hồi, đối chiếu UI = API = DB, thao tác lặp nhanh, chuyển trạng thái [Q-05, Q-07, Q-08, Q-10]
 - [x] **M15-10** Web thực tế: client cert, Shadow DOM, In/PDF, session hết hạn [W-02, W-05, W-07, W-08]
-- [ ] **M15-11** Team: yêu cầu/ticket + độ phủ yêu cầu, lịch sử phiên bản test, xu hướng/flaky, độ phủ phần tử, điểm độ phủ [T-04, T-05, T-07, CV-03, CV-05, CV-09]
-- [ ] **M15-12** Tích hợp: tạo issue Jira/Redmine/Azure DevOps/GitLab/GitHub, Email/OTP, Mock API [X-02, X-06, X-07]
+- [ ] **M15-11a** Yêu cầu/ticket gắn vào test + độ phủ yêu cầu [T-04, CV-05]
+- [ ] **M15-11b** Lịch sử phiên bản test + so sánh 2 phiên bản [T-05]
+- [ ] **M15-11c** Xu hướng pass theo thời gian, test chập chờn/chậm nhất + điểm độ phủ tổng hợp trên dashboard [T-07, CV-09]
+- [ ] **M15-11d** Độ phủ phần tử tương tác, tô màu trên ảnh trang [CV-03]
+- [ ] **M15-12a** Tạo issue Jira/Redmine/Azure DevOps/GitLab/GitHub từ test lỗi [X-02]
+- [ ] **M15-12b** Email/OTP trong test [X-06]
+- [ ] **M15-12c** Mock API [X-07]
 
 ## M16 — Trợ lý Kiemi (AI, tùy chọn)
 - [ ] **M16-01** ADR + `packages/ai` (main process): adapter Claude/OpenAI-compatible/Ollama, API key trong Secret, bật/tắt theo dự án [AI-01]

@@ -7,7 +7,7 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M15** (nhánh `milestone/m15-v12-remaining`): M15-11 → M15-12 (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
+**M15** (nhánh `milestone/m15-v12-remaining`): M15-11a → M15-12c (M15-11 và M15-12 đã chia nhỏ trong ROADMAP vì mỗi cái >8 file) (M14 đã merge, PR #7). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
 
 ## Lưu ý cho task sau
 - M15-10 xong: W-05 không cần code mới (locator Playwright xuyên Shadow DOM mở, kể cả lồng; shadow đóng thì không được). W-02: chưa có e2e mutual-TLS thật (chỉ test hàm + DB); file chứng chỉ để nguyên đường dẫn trên máy. W-07: `printToFile` dùng `page.pdf()` → chỉ chạy được khi trình duyệt headless. W-08: `sessionGuard` chỉ hành động SAU KHI một bước lỗi và trang đang là trang đăng nhập; quay lại địa chỉ cuối không phải trang đăng nhập rồi thử lại bước (tối đa 2 lần); bước đăng nhập lại hiện ở báo cáo với nhãn `N↻`.
