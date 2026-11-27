@@ -460,4 +460,9 @@ CREATE INDEX "notify_channels_project_idx" ON "notify_channels" ("project_id");`
     name: 'run-case-observations',
     sql: `ALTER TABLE "run_cases" ADD COLUMN "observations" TEXT;`,
   },
+  {
+    id: 25,
+    name: 'environment-client-certs',
+    sql: `ALTER TABLE "environments" ADD COLUMN "client_certs" TEXT;`,
+  },
 ];

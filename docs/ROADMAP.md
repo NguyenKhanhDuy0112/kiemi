@@ -189,7 +189,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M15-07** Crawl toàn site + bảo mật cơ bản không phá hoại (IDOR, XSS phản hồi, cookie) [R-11, R-12]
 - [x] **M15-08** Dữ liệu: hàm ngày nghiệp vụ, sinh tổ hợp pairwise [P-07, P-08]
 - [x] **M15-09** Kiểm tra nâng cao: thời gian phản hồi, đối chiếu UI = API = DB, thao tác lặp nhanh, chuyển trạng thái [Q-05, Q-07, Q-08, Q-10]
-- [ ] **M15-10** Web thực tế: client cert, Shadow DOM, In/PDF, session hết hạn [W-02, W-05, W-07, W-08]
+- [x] **M15-10** Web thực tế: client cert, Shadow DOM, In/PDF, session hết hạn [W-02, W-05, W-07, W-08]
 - [ ] **M15-11** Team: yêu cầu/ticket + độ phủ yêu cầu, lịch sử phiên bản test, xu hướng/flaky, độ phủ phần tử, điểm độ phủ [T-04, T-05, T-07, CV-03, CV-05, CV-09]
 - [ ] **M15-12** Tích hợp: tạo issue Jira/Redmine/Azure DevOps/GitLab/GitHub, Email/OTP, Mock API [X-02, X-06, X-07]
 

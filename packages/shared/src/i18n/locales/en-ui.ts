@@ -1089,6 +1089,16 @@ export const enUi = {
       origin: 'Only for this site (optional)',
       remove: 'Remove HTTP login',
     },
+    certs: {
+      title: 'Client certificate',
+      hint: 'For sites that ask for a certificate to let you in (mutual TLS). Give one PFX file, or a certificate file and a key file; the certificate password comes from a secret.',
+      origin: 'Site that asks for the certificate',
+      pfx: 'PFX / PKCS#12 file (path)',
+      cert: 'PEM certificate file',
+      key: 'PEM key file',
+      passphrase: 'Secret holding the certificate password (if any)',
+      add: 'Add certificate',
+    },
     localeHint:
       'How “1.250” reads: 1250 (Vietnam) or 1.25 (English). Used by number checks and formatNumber/formatMoney.',
     localeVi: 'Vietnam (1.250.000 ₫)',
@@ -1245,6 +1255,7 @@ export const enUi = {
     tags: 'smoke, leave',
     session: 'manager',
     baseUrl: 'https://uat.example.com',
+    certOrigin: 'https://bank.example.com',
     httpAuthOrigin: 'https://intranet.company.local',
     sshHost: 'bastion.example.com',
   },
@@ -1530,6 +1541,14 @@ export const enUi = {
     assertLeaveWarning: {
       label: 'Check the leave-page warning',
       sentence: 'Leaving the page warns: {{expected}}',
+    },
+    printToFile: {
+      label: 'Print to a PDF file',
+      sentence: 'Print the page to a PDF file saved in {{into}}',
+    },
+    sessionGuard: {
+      label: 'Log in again when the session ends',
+      sentence: 'When {{loginUrl}} shows up, run {{shared}} and carry on',
     },
     timed: {
       label: 'Measure response time',

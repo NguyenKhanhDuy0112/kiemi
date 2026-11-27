@@ -64,6 +64,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { ClientCertsForm } from './client-certs';
 import { DbConnectionsForm } from './db-connections';
 import { EnvironmentPill } from './environment-badge';
 import { HttpAuthForm } from './http-auth';
@@ -803,6 +804,12 @@ function EnvironmentDetails({ id, onChanged }: { id: string; onChanged: () => vo
           value={e.httpAuth}
           secretNames={e.secrets.map((s) => s.name)}
           onSave={(httpAuth) => void update({ httpAuth })}
+        />
+        <ClientCertsForm
+          key={JSON.stringify(e.clientCerts ?? null)}
+          value={e.clientCerts}
+          secretNames={e.secrets.map((s) => s.name)}
+          onSave={(clientCerts) => void update({ clientCerts })}
         />
         <DbConnectionsForm
           key={JSON.stringify(e.dbConnections ?? null)}

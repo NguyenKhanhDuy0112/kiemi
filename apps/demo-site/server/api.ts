@@ -229,6 +229,11 @@ export async function handleRequest(
     send(res, 200, { orders: store.orders });
     return true;
   }
+  if (path === '/api/expire' && method === 'POST') {
+    store.expireSessions(); // as when a session times out [W-08]
+    send(res, 200, { ok: true });
+    return true;
+  }
   if (path === '/api/chat' && method === 'GET') {
     send(res, 200, { messages: store.chat, realtime: store.chatRealtime });
     return true;

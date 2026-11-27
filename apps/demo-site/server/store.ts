@@ -148,6 +148,11 @@ export class DemoStore {
     return { token, user };
   }
 
+  /** Ends every login at once, like a session timeout [W-08]. */
+  expireSessions(): void {
+    this.sessions.clear();
+  }
+
   logout(token: string): void {
     this.sessions.delete(token);
   }

@@ -31,6 +31,8 @@ export default defineConfig({
         promo: page('promo.html'),
         chat: page('chat.html'),
         audit: page('audit.html'),
+        print: page('print.html'),
+        shadow: page('shadow.html'),
         crawlStart: page('crawl-start.html'),
         crawlBad: page('crawl-bad.html'),
         serverForm: page('server-form.html'),

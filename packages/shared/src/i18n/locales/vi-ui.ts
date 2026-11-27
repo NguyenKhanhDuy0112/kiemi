@@ -1087,6 +1087,16 @@ export const viUi = {
       origin: 'Chỉ áp dụng cho trang (không bắt buộc)',
       remove: 'Bỏ đăng nhập HTTP',
     },
+    certs: {
+      title: 'Chứng chỉ máy khách (client certificate)',
+      hint: 'Dành cho trang yêu cầu chứng chỉ để vào (mutual TLS). Chọn 1 file PFX, hoặc file chứng chỉ + file khóa; mật khẩu của chứng chỉ lấy từ một bí mật.',
+      origin: 'Trang yêu cầu chứng chỉ',
+      pfx: 'File PFX / PKCS#12 (đường dẫn)',
+      cert: 'File chứng chỉ PEM',
+      key: 'File khóa PEM',
+      passphrase: 'Bí mật chứa mật khẩu chứng chỉ (nếu có)',
+      add: 'Thêm chứng chỉ',
+    },
     localeHint:
       'Cách đọc “1.250”: 1250 (Việt Nam) hay 1,25 (Anh/Mỹ). Dùng khi so sánh số và hàm formatNumber/formatMoney.',
     localeVi: 'Việt Nam (1.250.000 ₫)',
@@ -1241,6 +1251,7 @@ export const viUi = {
     tags: 'smoke, nghỉ phép',
     session: 'quanly',
     baseUrl: 'https://uat.congty.vn',
+    certOrigin: 'https://bank.congty.vn',
     httpAuthOrigin: 'https://intranet.congty.local',
     sshHost: 'bastion.congty.vn',
   },
@@ -1532,6 +1543,11 @@ export const viUi = {
     assertLeaveWarning: {
       label: 'Kiểm tra cảnh báo khi rời trang',
       sentence: 'Rời trang có cảnh báo: {{expected}}',
+    },
+    printToFile: { label: 'In ra file PDF', sentence: 'In trang ra file PDF, lưu vào {{into}}' },
+    sessionGuard: {
+      label: 'Tự đăng nhập lại khi hết phiên',
+      sentence: 'Khi gặp trang {{loginUrl}} thì chạy {{shared}} rồi làm tiếp',
     },
     timed: {
       label: 'Đo thời gian phản hồi',

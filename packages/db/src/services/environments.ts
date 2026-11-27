@@ -1,5 +1,6 @@
 import {
   type AppCell,
+  ClientCertsSchema,
   DbConnectionsSchema,
   type Env,
   EnvColorSchema,
@@ -42,6 +43,7 @@ export const EnvironmentInputSchema = z.object({
   httpAuth: HttpAuthSchema.nullish(),
   /** Databases a test can query [X-05]. */
   dbConnections: DbConnectionsSchema.nullish(),
+  clientCerts: ClientCertsSchema.nullish(),
   /**
    * Shortcuts for the DEFAULT product's cell (v1.0 callers: samples, bundles):
    * written into `environment_products`, not into the environment row [O-02].
@@ -126,6 +128,7 @@ export class EnvironmentService {
         locale: p.data.locale ?? null,
         httpAuth: p.data.httpAuth ?? null,
         dbConnections: p.data.dbConnections ?? null,
+        clientCerts: p.data.clientCerts ?? null,
         sortOrder: this.list(p.data.projectId).length,
       });
       const { baseUrl, proxy, ssh } = p.data;
@@ -263,6 +266,7 @@ export class EnvironmentService {
         locale: src.locale,
         httpAuth: src.httpAuth,
         dbConnections: src.dbConnections,
+        clientCerts: src.clientCerts,
       });
       this.setVariables(copy.id, this.variables(environmentId));
       this.setSecretNames(copy.id, this.secretNames(environmentId));
@@ -448,6 +452,7 @@ export class EnvironmentService {
       ...(row.locale ? { locale: row.locale } : {}),
       ...(row.httpAuth ? { httpAuth: row.httpAuth } : {}),
       ...(row.dbConnections?.length ? { dbConnections: row.dbConnections } : {}),
+      ...(row.clientCerts?.length ? { clientCerts: row.clientCerts } : {}),
       ...(main?.url ? { baseUrl: main.url } : {}),
       apps,
       ...(first ? { defaultProduct: first.key } : {}),

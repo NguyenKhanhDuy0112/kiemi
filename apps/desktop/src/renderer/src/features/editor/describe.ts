@@ -122,6 +122,7 @@ export const SENTENCE_PARAMS = [
   'expected',
   'widths',
   'start',
+  'loginUrl',
   'maxSeconds',
   'times',
   'status',

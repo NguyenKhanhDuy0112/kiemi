@@ -37,12 +37,14 @@ import { assertI18nAction, assertLayoutAction, assertSeoAction } from './page-au
 import { pickDateAction, pickDateRangeAction } from './pick-date';
 import { pickOptionAction } from './pick-option';
 import { pressAction } from './press';
+import { printToFileAction } from './print';
 import { propagateAction } from './propagate';
 import { assertButtonsAction, assertLayersAction, rapidClickAction, timedAction } from './quality';
 import { queryDbAction } from './query-db';
 import { saveSessionAction, useSessionAction } from './saved-login';
 import { scrollAction } from './scroll';
 import { selectAction } from './select';
+import { sessionGuardAction } from './session-guard';
 import { crawlAction, securityScanAction } from './site-audit';
 import { switchSessionAction } from './switch-session';
 import {
@@ -115,6 +117,8 @@ export const builtinActions: ActionDefinition[] = [
   extractAction,
   extractTableAction,
   downloadAction,
+  printToFileAction,
+  sessionGuardAction,
   generateFileAction,
   callAction,
   waitUntilAction,

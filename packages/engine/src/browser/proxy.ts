@@ -9,6 +9,15 @@ export interface ContextProxy {
   password?: string;
 }
 
+/** One entry of Playwright's `newContext({ clientCertificates })` [W-02]. */
+export interface ClientCertificate {
+  origin: string;
+  certPath?: string;
+  keyPath?: string;
+  pfxPath?: string;
+  passphrase?: string;
+}
+
 /** Playwright `newContext({ httpCredentials })` settings. */
 export interface ContextHttpCredentials {
   username: string;
@@ -36,6 +45,32 @@ export function httpAuthFor(
     password,
     ...(auth.origin ? { origin: auth.origin } : {}),
   };
+}
+
+/** Client certificates of an environment for Playwright, with passphrases from its secrets [W-02]. */
+export function clientCertsFor(
+  env: Env | undefined,
+  secrets: Secrets = {},
+): ClientCertificate[] | undefined {
+  const list = env?.clientCerts;
+  if (!list?.length) return undefined;
+  return list.map((c) => {
+    const passphrase = c.passphraseSecret === undefined ? undefined : secrets[c.passphraseSecret];
+    if (c.passphraseSecret !== undefined && passphrase === undefined) {
+      throw new EngineError(
+        'PROXY_SECRET_MISSING',
+        `Secret "${c.passphraseSecret}" for the client certificate is missing`,
+        { secret: c.passphraseSecret },
+      );
+    }
+    return {
+      origin: c.origin,
+      ...(c.pfxPath
+        ? { pfxPath: c.pfxPath }
+        : { certPath: c.certPath as string, keyPath: c.keyPath as string }),
+      ...(passphrase === undefined ? {} : { passphrase }),
+    };
+  });
 }
 
 /**

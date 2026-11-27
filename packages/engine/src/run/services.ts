@@ -95,6 +95,8 @@ export interface RunServices {
   readonly diagnostics: readonly Diagnostic[];
   /** Values noted by `observe`, returned in the run result [V-06]. */
   readonly observations: Record<string, string>;
+  /** Re-login when the session expires, armed by `sessionGuard` [W-08]. */
+  readonly guard: { current?: SessionGuardRule };
   /** Requests the pages sent, newest last, for `assertRequest` [Y-05]. */
   readonly requests: SentRequest[];
   /** Base folder for relative upload paths [A-11]. */
@@ -116,4 +118,25 @@ export interface SentRequest {
   /** Request body as text (cut at 20 000 characters). */
   body: string;
   at: number;
+}
+
+/** "When the login page shows up, run this shared login step and carry on" [W-08]. */
+export interface SessionGuardRule {
+  /** Text of the login page address, or `/regex/`. */
+  loginUrl: string;
+  shared: string;
+  args: Record<string, unknown>;
+}
+
+/** Does the address belong to the login page? */
+export function isLoginUrl(rule: SessionGuardRule, url: string): boolean {
+  const m = /^\/(.+)\/([a-z]*)$/.exec(rule.loginUrl);
+  if (m?.[1]) {
+    try {
+      return new RegExp(m[1], m[2]).test(url);
+    } catch {
+      return false;
+    }
+  }
+  return url.toLowerCase().includes(rule.loginUrl.toLowerCase());
 }

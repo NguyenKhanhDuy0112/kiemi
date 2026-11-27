@@ -526,3 +526,125 @@ describe('quality checks [Q-05, Q-07, Q-08, Q-10]', () => {
     expect(buggy.steps.at(-1)?.error?.message).toContain('should not be there');
   });
 });
+
+describe('web components with Shadow DOM [W-05]', () => {
+  it('finds, fills, clicks and reads inside open shadow roots, also nested ones', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/shadow.html' }),
+        step('fill', { target: { label: 'Họ tên' }, value: 'Nguyễn Văn An' }),
+        step('click', { target: { role: 'button', name: 'Lưu phiếu' } }),
+        step('assertText', { target: { css: '#shadow-result' }, value: 'Đã lưu Nguyễn Văn An' }),
+        step('click', { target: { css: '#inner-btn' } }),
+        step('assertText', { target: { css: '#shadow-result' }, value: 'Đã xác nhận (lồng)' }),
+        step('fill', { target: { placeholder: 'Nhập họ tên' }, value: 'Bình' }),
+        step('assertValue', { target: { css: 'kiemi-card #who' }, value: 'Bình' }),
+        step('assertText', { target: { text: 'Phiếu đăng ký' }, op: 'contains', value: 'Phiếu' }),
+      ],
+      quick,
+    );
+    expect(bad(summary(r))).toEqual([]);
+  });
+});
+
+describe('printing and expired sessions [W-07, W-08]', () => {
+  it('"In phiếu" gives a PDF file whose text can be checked', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/print.html' }),
+        step('printToFile', {
+          target: { role: 'button', name: 'In phiếu' },
+          into: 'phieu',
+          expectText: 'Phiếu thu số 0042',
+        }),
+        step('printToFile', { into: 'lai', expectText: '1.250.000' }),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 10000 } } },
+    );
+    expect(bad(summary(r))).toEqual([]);
+  });
+
+  it('fails when the printed page lacks the text', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/print.html' }),
+        step('printToFile', { into: 'p', expectText: 'Phiếu chi' }),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 10000 } } },
+    );
+    expect(r.steps.at(-1)?.error?.code).toBe('ASSERTION_FAILED');
+  });
+
+  const loginShared = {
+    id: 'dang-nhap',
+    name: 'Đăng nhập',
+    params: ['user'],
+    steps: [
+      {
+        id: 'l1',
+        action: 'goto',
+        params: { url: '/login.html' },
+        session: 'default',
+        enabled: true,
+        mode: 'hard',
+      },
+      {
+        id: 'l2',
+        action: 'fill',
+        params: { target: { css: '#username' }, value: '{{param.user}}' },
+        session: 'default',
+        enabled: true,
+        mode: 'hard',
+      },
+      {
+        id: 'l3',
+        action: 'fill',
+        params: { target: { css: '#password' }, value: '123456' },
+        session: 'default',
+        enabled: true,
+        mode: 'hard',
+      },
+      {
+        id: 'l4',
+        action: 'click',
+        params: { target: { role: 'button', name: 'Đăng nhập' } },
+        session: 'default',
+        enabled: true,
+        mode: 'hard',
+      },
+    ],
+  };
+  const expired = (guard: boolean) => [
+    step('call', { shared: 'dang-nhap', args: { user: 'nhanvien' } }),
+    ...(guard
+      ? [
+          step('sessionGuard', {
+            loginUrl: 'login.html',
+            shared: 'dang-nhap',
+            args: { user: 'nhanvien' },
+          }),
+        ]
+      : []),
+    step('goto', { url: '/requests.html' }),
+    step('api', { method: 'POST', url: '{{app}}/api/expire' }),
+    step('navigate', { to: 'reload' }),
+    step('click', { target: { role: 'button', name: 'Tải lại' } }),
+    step('assertText', { target: { css: 'h1' }, value: 'Danh sách đơn nghỉ' }),
+  ];
+
+  it('logs in again when the session ends in the middle of the test', async () => {
+    const r = await e.run(expired(true), {
+      sharedSteps: [loginShared] as never,
+      request: { options: { defaultStepTimeoutMs: 6000 } },
+    });
+    expect(bad(summary(r))).toEqual([]);
+  });
+
+  it('without the guard the same test fails on the login page', async () => {
+    const r = await e.run(expired(false), {
+      sharedSteps: [loginShared] as never,
+      request: { options: { defaultStepTimeoutMs: 2000 } },
+    });
+    expect(bad(summary(r)).length).toBeGreaterThan(0);
+  });
+});

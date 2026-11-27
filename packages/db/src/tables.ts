@@ -1,4 +1,5 @@
 import type {
+  ClientCert,
   DbConnection,
   FormSpec,
   Formulas,
@@ -229,6 +230,8 @@ export const environments = sqliteTable(
     httpAuth: json<HttpAuth>('http_auth'),
     /** Databases tests can query on this environment [X-05] (migration 23). */
     dbConnections: json<DbConnection[]>('db_connections'),
+    /** Client certificates for mutual-TLS sites [W-02] (migration 25). */
+    clientCerts: json<ClientCert[]>('client_certs'),
   },
   (t) => [index('environments_project_idx').on(t.projectId)],
 );

@@ -19,3 +19,17 @@ describe('run case observations [V-06]', () => {
     expect(services.runs.detail(run.id).cases[0]?.observations).toEqual({ gia: '100' });
   });
 });
+
+describe('environment client certificates [W-02]', () => {
+  it('are stored on the environment and given to runs', () => {
+    const { services, defaultProjectId: p } = createMemoryServices();
+    const env = services.environments.create({
+      projectId: p,
+      name: 'UAT',
+      clientCerts: [{ origin: 'https://bank.example.com', pfxPath: '/c/a.pfx' }],
+    });
+    expect(services.environments.forRun(env.id).env.clientCerts).toEqual([
+      { origin: 'https://bank.example.com', pfxPath: '/c/a.pfx' },
+    ]);
+  });
+});
