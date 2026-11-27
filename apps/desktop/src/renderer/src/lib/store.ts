@@ -32,6 +32,8 @@ interface AppState {
   /** Right detail panel (U-01). */
   detailOpen: boolean;
   paletteOpen: boolean;
+  /** Assistant chat panel [AI-13]. */
+  aiOpen: boolean;
   /** Recent and pinned projects [O-08]. */
   projectPrefs: ProjectPrefs;
   /** Recording to start as soon as this test is open in the editor (onboarding, S-08). */
@@ -45,6 +47,7 @@ interface AppState {
   openRun(id: string | null): void;
   toggleDetail(): void;
   setPaletteOpen(open: boolean): void;
+  setAiOpen(open: boolean): void;
   togglePinProject(id: string): void;
   setPendingRecord(p: { testId: string; url: string } | null): void;
   setThemeChoice(choice: ThemeChoice): void;
@@ -65,6 +68,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   openRunId: null,
   detailOpen: true,
   paletteOpen: false,
+  aiOpen: false,
   projectPrefs: loadPrefs(),
   pendingRecord: null,
   themeChoice: 'system',
@@ -84,6 +88,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   openRun: (openRunId) => set({ openRunId }),
   toggleDetail: () => set({ detailOpen: !get().detailOpen }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
+  setAiOpen: (aiOpen) => set({ aiOpen }),
   setPendingRecord: (pendingRecord) => set({ pendingRecord }),
   setThemeChoice: (themeChoice) => {
     const theme = resolve(themeChoice);

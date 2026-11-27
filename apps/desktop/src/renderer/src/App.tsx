@@ -5,6 +5,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@renderer/compone
 import { Skeleton } from '@renderer/components/ui/skeleton';
 import { Toaster } from '@renderer/components/ui/sonner';
 import { TooltipProvider } from '@renderer/components/ui/tooltip';
+import { ChatPanel } from '@renderer/features/ai/chat-panel';
 import { CurrentEnvironmentBadge } from '@renderer/features/environments/environment-badge';
 import { WelcomeDialog } from '@renderer/features/onboarding/welcome-dialog';
 import { ProtectedConfirmDialog } from '@renderer/features/run/confirm-protected';
@@ -17,7 +18,7 @@ import { useAppStore, watchSystemTheme } from '@renderer/lib/store';
 import { trpc } from '@renderer/lib/trpc';
 import { useTx } from '@renderer/lib/tx';
 import { useQuery } from '@tanstack/react-query';
-import { PanelRight } from 'lucide-react';
+import { PanelRight, Sparkles } from 'lucide-react';
 import { lazy, Suspense, useEffect } from 'react';
 
 /** Secondary screens load on first use: less code to parse at start-up (N-05). */
@@ -97,6 +98,8 @@ export function App() {
   const projectId = useAppStore((s) => s.projectId);
   const setProject = useAppStore((s) => s.setProject);
   const toggleDetail = useAppStore((s) => s.toggleDetail);
+  const aiOpen = useAppStore((s) => s.aiOpen);
+  const setAiOpen = useAppStore((s) => s.setAiOpen);
 
   useEffect(() => watchSystemTheme(), []);
   const reduceMotion = settings.data?.reduceMotion;
@@ -134,6 +137,17 @@ export function App() {
             <span data-testid="app-version" className="text-xs text-muted-foreground">
               {info.data ? tx('app.version', { version: info.data.version }) : tx('common.loading')}
             </span>
+            {projectId && (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={tx('ui.ai.chat.open')}
+                data-testid="ai-toggle"
+                onClick={() => setAiOpen(!aiOpen)}
+              >
+                <Sparkles />
+              </Button>
+            )}
             {view === 'tests' && !openRunId && (
               <Button
                 variant="ghost"
@@ -168,6 +182,7 @@ export function App() {
             ) : null}
           </Suspense>
         </SidebarInset>
+        {projectId && aiOpen && <ChatPanel />}
         <CommandPalette />
         <WelcomeDialog />
         <ProtectedConfirmDialog />

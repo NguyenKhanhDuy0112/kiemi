@@ -118,3 +118,17 @@ describe('assistant chat [AI-13, AI-18]', () => {
     expect(r.proposal).toEqual({ kind: 'cases', cases });
   });
 });
+
+describe('acceptTest [AI-03, AI-21]', () => {
+  it('creates the test only from steps inside the catalog and logs the approval', async () => {
+    const { acceptTest } = await import('./assistant');
+    const { services, p } = setup();
+    expect(() =>
+      acceptTest(services, p, 'Bad', [{ id: 'x', action: 'teleport', params: {} }]),
+    ).toThrow(/Unknown action/);
+    expect(services.testCases.list(p)).toHaveLength(0);
+    const { id } = acceptTest(services, p, 'Mở trang', [goto]);
+    expect(services.testCases.get(id).content.steps).toHaveLength(1);
+    expect(services.aiSettings.audit(p)[0]).toMatchObject({ action: 'save', allowed: true });
+  });
+});

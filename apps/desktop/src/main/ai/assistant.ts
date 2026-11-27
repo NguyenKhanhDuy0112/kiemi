@@ -1,5 +1,5 @@
 import { type AiMessage, type AiTask, parseProposal } from '@kiemi/ai';
-import type { Services } from '@kiemi/db';
+import { DbError, type Services } from '@kiemi/db';
 import { buildKnowledge, checkSteps, createDefaultRegistry, knowledgeText } from '@kiemi/engine';
 import { z } from 'zod';
 import { gatewayFor, guardAndLog } from './gateway';
@@ -44,6 +44,27 @@ export interface ChatResult {
   toolsUsed: string[];
   cached: boolean;
   usage: { inputTokens: number; outputTokens: number };
+}
+
+/**
+ * The person pressed "save as test" on a proposal: creates the test. Steps are checked
+ * again against the catalog, and the approval is logged [AI-03, AI-21].
+ */
+export function acceptTest(
+  services: Services,
+  projectId: string,
+  name: string,
+  steps: unknown,
+): { id: string } {
+  const problems = checkSteps(registry, steps);
+  if (problems.length)
+    throw new DbError('VALIDATION', problems.map((p) => `step ${p.at}: ${p.message}`).join('; '), {
+      entity: 'test case',
+    });
+  guardAndLog(services, projectId, { kind: 'save' }, { approved: true }, `test ${name}`);
+  const row = services.testCases.create({ projectId, name });
+  services.testCases.save(row.id, { ...row.content, steps }, row.version);
+  return { id: row.id };
 }
 
 const MAX_TOOL_ROUNDS = 4;

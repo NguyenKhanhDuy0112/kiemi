@@ -1,7 +1,7 @@
 import { createProvider, isLocal } from '@kiemi/ai';
 import { AI_TASKS, AiSettingsInputSchema } from '@kiemi/schema';
 import { z } from 'zod';
-import { chat } from '../../ai/assistant';
+import { acceptTest, chat } from '../../ai/assistant';
 import { gatewayFor } from '../../ai/gateway';
 import { proposeNote, runTool, saveNotes } from '../../ai/tools';
 import { publicProcedure, router } from '../trpc';
@@ -72,6 +72,19 @@ export const aiRouter = router({
         ...(input.task ? { task: input.task } : {}),
         ...(input.context ? { context: input.context } : {}),
       }),
+    ),
+
+  /** The person accepted a test proposal: creates the test (checked again) [AI-03]. */
+  acceptTest: publicProcedure
+    .input(
+      z.object({
+        projectId,
+        name: z.string().trim().min(1).max(300),
+        steps: z.array(z.record(z.string(), z.unknown())).min(1).max(200),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      acceptTest(ctx.services, input.projectId, input.name, input.steps),
     ),
 
   /** Notes the assistant reads every session [AI-20]. */
