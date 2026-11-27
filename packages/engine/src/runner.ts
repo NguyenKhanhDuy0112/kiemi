@@ -789,6 +789,8 @@ class Run {
     const page = await this.#pages.page(step.session);
     if (!isLoginUrl(rule, page.url())) return false;
     this.#log('warn', 'The session ended: logging in again', step.id);
+    // Read it before logging in: the login itself ends on a page that would overwrite it.
+    const back = this.#lastUrl.get(step.session);
     const login = StepSchema.parse({
       id: `relogin-${step.id}`,
       action: 'call',
@@ -804,7 +806,6 @@ class Run {
       result: outcome.result,
     });
     if (outcome.result.error) return false;
-    const back = this.#lastUrl.get(step.session);
     if (back) await page.goto(back, { waitUntil: 'load', timeout: 30_000 }).catch(() => undefined);
     return true;
   }
