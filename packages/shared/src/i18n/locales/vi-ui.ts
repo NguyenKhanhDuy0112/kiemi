@@ -731,6 +731,20 @@ export const viUi = {
     cms: 'Quản lý nội dung (CMS)',
     lms: 'Học trực tuyến (LMS)',
   },
+  requirements: {
+    title: 'Độ phủ yêu cầu',
+    hint: 'Mỗi dòng một yêu cầu: MÃ | tên | đường dẫn (không bắt buộc). Gắn test vào yêu cầu bằng thẻ req:MÃ.',
+    summary: 'Đã có test: {{covered}}% · đạt hết: {{passing}}%',
+    unknown: 'Có thẻ req: trỏ tới mã không có trong danh sách: {{keys}}',
+    example: 'HR-12 | Tạo đơn nghỉ phép | https://jira.congty.vn/HR-12',
+    add: 'Thêm yêu cầu',
+    state: {
+      none: 'Chưa có test',
+      untested: 'Test chưa chạy',
+      passing: 'Đang đạt',
+      failing: 'Có test lỗi',
+    },
+  },
   dashboard: {
     title: 'Tổng quan',
     workspace: 'Toàn bộ dự án',

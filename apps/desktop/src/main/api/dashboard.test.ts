@@ -61,3 +61,33 @@ describe('project templates router [R-15, O-12]', () => {
     expect(services.testCases.list(copy.id)).toHaveLength(services.testCases.list(p.id).length);
   });
 });
+
+describe('requirement coverage router [T-04, CV-05]', () => {
+  it('links tests by req: tag and uses their latest result', async () => {
+    const { services, defaultProjectId: p } = createMemoryServices();
+    const t = services.testCases.create({ projectId: p, name: 'Tạo đơn' });
+    services.testCases.save(t.id, { ...t.content, tags: ['req:HR-1'] });
+    services.projects.setRequirements(p, [
+      { key: 'HR-1', title: 'Tạo đơn' },
+      { key: 'HR-2', title: 'Duyệt' },
+    ]);
+    const run = services.runs.create({
+      projectId: p,
+      artifactDir: '/r',
+      target: { kind: 'test', testCaseId: t.id, name: 'x' },
+    });
+    const c = services.runs.addCase({ runId: run.id, testCaseId: t.id });
+    services.runs.finishCase(c.id, { status: 'passed', durationMs: 1 } as never);
+    services.runs.finish(run.id, 'passed');
+    const caller = createCaller({
+      appVersion: '1',
+      platform: 'darwin',
+      services,
+      defaultProjectId: p,
+      runs: createTestRunManager(services),
+    });
+    const cov = await caller.coverage.requirements({ projectId: p });
+    expect(cov.rows.map((r) => r.state)).toEqual(['passing', 'none']);
+    expect(cov.coveredPercent).toBe(50);
+  });
+});

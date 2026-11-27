@@ -20,6 +20,7 @@ export * from './observations';
 export * from './permission-matrix';
 export * from './popup';
 export * from './product';
+export * from './requirements';
 export * from './run-result';
 export * from './step';
 export * from './test-case';

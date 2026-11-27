@@ -1,4 +1,10 @@
-import { type CoverageTest, computeCoverage, signatureOf } from '@kiemi/schema';
+import {
+  type CoverageTest,
+  computeCoverage,
+  type ReqTest,
+  requirementCoverage,
+  signatureOf,
+} from '@kiemi/schema';
 import { z } from 'zod';
 import { publicProcedure, router } from '../trpc';
 
@@ -32,6 +38,28 @@ export const coverageRouter = router({
           .map((t) => [t.id, signatureOf(ctx.services.testCases.get(t.id).content)]),
       ),
     ),
+
+  /** Requirements with the tests linked by `req:<key>` and how they did [T-04, CV-05]. */
+  requirements: publicProcedure
+    .input(z.object({ projectId: z.string().min(1) }))
+    .query(({ ctx, input }) => {
+      const s = ctx.services;
+      const last = new Map<string, string>();
+      // Newest run first: the first status seen for a test is its latest.
+      for (const run of s.runs.history(input.projectId, { limit: 300 })) {
+        for (const c of s.runs.listCases(run.id)) {
+          if (!last.has(c.testCaseId) && ['passed', 'failed', 'error'].includes(c.status))
+            last.set(c.testCaseId, c.status);
+        }
+      }
+      const tests: ReqTest[] = s.testCases.list(input.projectId).map((t) => ({
+        id: t.id,
+        name: t.name,
+        tags: t.tags,
+        lastStatus: last.get(t.id) ?? null,
+      }));
+      return requirementCoverage(s.projects.requirements(input.projectId), tests);
+    }),
 
   get: publicProcedure.input(z.object({ projectId: z.string().min(1) })).query(({ ctx, input }) => {
     const s = ctx.services;

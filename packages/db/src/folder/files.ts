@@ -134,6 +134,7 @@ export function snapshotToFiles(s: ProjectSnapshot): FileMap {
       ...(Object.keys(s.project.formulas).length ? { formulas: sortKeys(s.project.formulas) } : {}),
       ...(s.project.manualCases.length ? { manualCases: s.project.manualCases } : {}),
       ...(s.project.testPlans.length ? { testPlans: s.project.testPlans } : {}),
+      ...(s.project.requirements.length ? { requirements: s.project.requirements } : {}),
       ...(s.project.permissionMatrices.length
         ? { permissionMatrices: s.project.permissionMatrices }
         : {}),
@@ -445,6 +446,7 @@ export function filesToSnapshot(files: FileMap): {
       manualCases: project.manualCases,
       testPlans: project.testPlans,
       permissionMatrices: project.permissionMatrices,
+      requirements: project.requirements,
     },
     products,
     folders: dedupedFolders,

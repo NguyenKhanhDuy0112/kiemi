@@ -23,6 +23,8 @@ import {
   PopupRulesSchema,
   ProductSchema,
   ProxySchema,
+  type Requirement,
+  RequirementsSchema,
   SharedStepSchema,
   SshSettingsSchema,
   type TestCase,
@@ -87,6 +89,8 @@ export const ProjectFileSchema = z.object({
   testPlans: TestPlansSchema.default([]),
   /** Permission matrices [Q-09]. */
   permissionMatrices: PermissionMatricesSchema.default([]),
+  /** Requirements / tickets [T-04]. */
+  requirements: RequirementsSchema.default([]),
 });
 
 export const ProductsFileSchema = z.object({ products: z.array(ProductSchema).default([]) });
@@ -204,6 +208,7 @@ export interface ProjectSnapshot {
     manualCases: ManualCase[];
     testPlans: TestPlan[];
     permissionMatrices: PermissionMatrix[];
+    requirements: Requirement[];
   };
   /** Ordered; never empty once read from the database. */
   products: ProductEntry[];

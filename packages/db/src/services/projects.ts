@@ -13,6 +13,8 @@ import {
   type PermissionMatrix,
   type PopupRule,
   PopupRulesSchema,
+  type Requirement,
+  RequirementsSchema,
   type TestPlan,
   TestPlansSchema,
   VariableNameSchema,
@@ -107,6 +109,15 @@ export class ProjectService {
     return this.repo.get(id).manualCases ?? [];
   }
   /** Test rounds per release [T-02]. */
+  /** Requirements / tickets of the project [T-04]. */
+  setRequirements(id: string, list: unknown) {
+    const p = RequirementsSchema.safeParse(list);
+    if (!p.success) throw validation('requirement', p.error.issues);
+    return this.repo.update(id, { requirements: p.data });
+  }
+  requirements(id: string): Requirement[] {
+    return this.repo.get(id).requirements ?? [];
+  }
   setTestPlans(id: string, plans: unknown) {
     const p = TestPlansSchema.safeParse(plans);
     if (!p.success) throw validation('test plans', p.error.issues);

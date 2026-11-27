@@ -12,6 +12,7 @@ import type {
   PermissionMatrix,
   PopupRule,
   ProxySettings,
+  Requirement,
   SharedStep,
   SshSettings,
   Step,
@@ -78,6 +79,8 @@ export const projects = sqliteTable(
     testPlans: json<TestPlan[]>('test_plans'),
     /** Role × function permission matrices [Q-09] (migration 21). */
     permissionMatrices: json<PermissionMatrix[]>('permission_matrices'),
+    /** Requirements / tickets tests are linked to [T-04] (migration 26). */
+    requirements: json<Requirement[]>('requirements'),
   },
   (t) => [index('projects_workspace_idx').on(t.workspaceId)],
 );

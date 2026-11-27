@@ -43,6 +43,7 @@
 - Dữ liệu (M15-08): `engine/src/vars/business-days.ts` (WORKDAYS/WORKDAY/ISWORKDAY/ENDOFMONTH|QUARTER|YEAR/DAYSBETWEEN/MONTHSBETWEEN/AGE/SENIORITY[MONTHS], ngày lễ qua biến `holidays` hoặc đối số cuối), `schema/src/combinations.ts` (đầy đủ/pairwise) + hộp thoại `features/editor/combinations-dialog.tsx`
 - Kiểm tra nâng cao (M15-09): `engine/src/actions/quality.ts` (`timed`, `assertLayers`, `rapidClick`, `assertButtons`); demo `server-form.html?guard=1|bug=edit`
 - Web thực tế 2 (M15-10): client cert `Env.clientCerts` (cột `environments.client_certs`, migration 25, `clientCertsFor` ở `engine/browser/proxy.ts`, UI `features/environments/client-certs.tsx`); `actions/print.ts` (`printToFile`); `actions/session-guard.ts` + `Runner.#handleExpiry` (tự đăng nhập lại); Shadow DOM chạy bằng bộ chọn có sẵn (demo `shadow.html`)
+- Yêu cầu/ticket (T-04, CV-05): `schema/src/requirements.ts` (`requirementCoverage`, thẻ `req:<mã>`), cột `projects.requirements` (migration 26) + project.json, router `coverage.requirements`, UI `features/test-coverage/requirements-panel.tsx`
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)

@@ -732,6 +732,20 @@ export const enUi = {
     cms: 'Content management (CMS)',
     lms: 'E-learning (LMS)',
   },
+  requirements: {
+    title: 'Requirement coverage',
+    hint: 'One requirement per line: KEY | title | link (optional). Link a test to a requirement with the tag req:KEY.',
+    summary: 'With tests: {{covered}}% · all passing: {{passing}}%',
+    unknown: 'Tags req: point to keys that are not in the list: {{keys}}',
+    example: 'HR-12 | Create leave request | https://jira.example.com/HR-12',
+    add: 'Add requirements',
+    state: {
+      none: 'No test yet',
+      untested: 'Tests not run',
+      passing: 'Passing',
+      failing: 'A test fails',
+    },
+  },
   dashboard: {
     title: 'Overview',
     workspace: 'All projects',

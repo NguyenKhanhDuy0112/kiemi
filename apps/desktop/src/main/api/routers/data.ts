@@ -30,6 +30,7 @@ import {
   PageDeclsSchema,
   PermissionMatricesSchema,
   PopupRulesSchema,
+  RequirementsSchema,
   TestPlansSchema,
 } from '@kiemi/schema';
 import { z } from 'zod';
@@ -72,6 +73,11 @@ export const projectsRouter = router({
     .input(z.object({ id, cases: ManualCasesSchema }))
     .mutation(({ ctx, input }) => ctx.services.projects.setManualCases(input.id, input.cases)),
   /** Test rounds per release [T-02]. */
+  setRequirements: publicProcedure
+    .input(z.object({ id, requirements: RequirementsSchema }))
+    .mutation(({ ctx, input }) =>
+      ctx.services.projects.setRequirements(input.id, input.requirements),
+    ),
   setTestPlans: publicProcedure
     .input(z.object({ id, plans: TestPlansSchema }))
     .mutation(({ ctx, input }) => ctx.services.projects.setTestPlans(input.id, input.plans)),
