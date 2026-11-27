@@ -7,9 +7,10 @@ M0 — Nền móng **xong**. M1 — Schema & Engine lõi **xong** (M1-01 → M1-
 (không có — M9-07 đã xong trọn vẹn; còn M9-08 → M9-11, chưa push vì milestone chưa xong)
 
 ## Tiếp theo
-**M16** (nhánh `milestone/m16-ai-assistant`): M16-02 → M16-06. M15 đã merge (PR #8). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
+**M16** (nhánh `milestone/m16-ai-assistant`): M16-02b → M16-06. M15 đã merge (PR #8). Phát hành v1.1 còn `pnpm changeset version` + tag và `docs/RELEASE-CHECKLIST.md` mục C/D.
 
 ## Lưu ý cho task sau
+- M16-02a xong: mọi lời gọi AI đi qua `createGateway` (`packages/ai/src/gateway.ts`): `preview()` = bản đã che, `ask()` kiểm local-only → cache → giới hạn → gọi. Cổng nhận `GatewayStore` (bộ nhớ cho test; 02b làm bản lưu đĩa). Giá tiền do dự án tự nhập (không đoán giá); chưa có tùy chọn 'không gửi ảnh/DOM' (thêm cờ ở 02b khi có chỗ đính kèm). `guardAction` chặn save/delete/runStep khi chưa duyệt, runBulk luôn, ghi vào nhật ký.
 - M16-01 xong: `packages/ai` (không thêm thư viện, `fetch` tiêm được để test; `AiError` không chứa khóa). Cấu hình: bảng `ai_settings` (migration 29, 1 dòng/dự án, khóa mã hóa, KHÔNG vào thư mục dự án), `AiSettingsService.forUse(projectId)` trả null khi AI tắt; router `ai.get|save|test`, UI `features/ai/ai-section.tsx` trong Cài đặt. M16-02: gọi AI qua một hàm trung gian ở main (che dữ liệu, `localOnly` đã có cờ + `isLocal`, ghi chi phí).
 - Kiểm tra app thật M15 (script ngoài repo, `_electron.launch`, build `electron-vite`): mở được Tổng quan, Độ phủ (có khối Yêu cầu + Phần tử), Đợt test; không có lỗi console. Chưa thử bằng tay: menu 'Dự án từ mẫu', 'Tạo issue', quét phần tử trên trang thật.
 - M15-12a xong: tracker dùng lại bảng/UI kênh thông báo (Cài đặt → Thông báo); `notifyRun` bỏ qua kênh tracker; nút 'Tạo issue' ở bước lỗi (màn kết quả) gửi Markdown như 'Copy báo cáo bug' (chưa đính kèm ảnh chụp — chỉ nằm trong thư mục kết quả) và copy link issue vào clipboard. Chưa có nút 'Gửi thử' thật cho tracker; chưa thử trên Jira/Redmine/Azure thật (chỉ test yêu cầu HTTP).

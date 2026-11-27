@@ -51,7 +51,10 @@ export type AiErrorCode =
   | 'AI_RATE_LIMIT'
   | 'AI_NETWORK'
   | 'AI_HTTP'
-  | 'AI_BAD_RESPONSE';
+  | 'AI_BAD_RESPONSE'
+  | 'AI_LOCAL_ONLY'
+  | 'AI_BUDGET'
+  | 'AI_BLOCKED';
 
 export class AiError extends Error {
   constructor(
