@@ -43,7 +43,7 @@ describe('knowledge pack [AI-15]', () => {
       {
         id: 'd',
         action: 'if',
-        params: { condition: { var: 'x' }, then: [{ id: 'e', action: 'nope', params: {} }] },
+        params: { condition: { var: 'x' }, steps: [{ id: 'e', action: 'nope', params: {} }] },
       },
     ]);
     expect(nested.some((p) => p.at === '1.1')).toBe(true);
