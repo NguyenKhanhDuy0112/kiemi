@@ -1531,6 +1531,22 @@ export const enUi = {
       label: 'Check the leave-page warning',
       sentence: 'Leaving the page warns: {{expected}}',
     },
+    timed: {
+      label: 'Measure response time',
+      sentence: 'The steps below finish within {{maxSeconds}} s',
+    },
+    assertLayers: {
+      label: 'Compare UI = API = DB',
+      sentence: 'UI, API and DB show the same value',
+    },
+    rapidClick: {
+      label: 'Click quickly several times',
+      sentence: 'Click {{target}} {{times}} times quickly',
+    },
+    assertButtons: {
+      label: 'Check buttons by status',
+      sentence: 'Buttons match status {{status}}',
+    },
     crawl: { label: 'Crawl the site for problems', sentence: 'Crawl the site from {{start}}' },
     securityScan: {
       label: 'Basic security check',

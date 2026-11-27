@@ -1533,6 +1533,16 @@ export const viUi = {
       label: 'Kiểm tra cảnh báo khi rời trang',
       sentence: 'Rời trang có cảnh báo: {{expected}}',
     },
+    timed: {
+      label: 'Đo thời gian phản hồi',
+      sentence: 'Các bước sau xong trong {{maxSeconds}} giây',
+    },
+    assertLayers: { label: 'Đối chiếu UI = API = DB', sentence: 'UI, API, DB cùng một giá trị' },
+    rapidClick: { label: 'Bấm nhanh nhiều lần', sentence: 'Bấm nhanh {{target}} {{times}} lần' },
+    assertButtons: {
+      label: 'Kiểm tra nút theo trạng thái',
+      sentence: 'Nút đúng theo trạng thái {{status}}',
+    },
     crawl: { label: 'Quét toàn site tìm lỗi', sentence: 'Quét site từ {{start}}' },
     securityScan: {
       label: 'Kiểm tra bảo mật cơ bản',

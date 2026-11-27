@@ -27,6 +27,11 @@
         </div>
         <button type="submit" class="btn primary" id="send">Gửi đơn</button>
       </form>
+      <section class="card" aria-label="Trạng thái đơn">
+        <p>Trạng thái: <strong id="order-status" data-testid="order-status">Chờ duyệt</strong></p>
+        <button type="button" class="btn" id="btn-edit">Sửa</button>
+        <button type="button" class="btn" id="btn-approve">Duyệt</button>
+      </section>
       <p id="server-error" class="error-text" role="alert" data-testid="server-error"></p>
       <p id="server-result" role="status" data-testid="server-result"></p>
       <ul id="orders" data-testid="orders"></ul>

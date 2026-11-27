@@ -441,3 +441,88 @@ describe('site crawl and basic security [R-11, R-12]', () => {
     expect(r.steps.at(-1)?.error?.code).toBe('PROTECTED_ENVIRONMENT');
   });
 });
+
+describe('quality checks [Q-05, Q-07, Q-08, Q-10]', () => {
+  const sendOrder = { role: 'button', name: 'Gửi đơn' } as const;
+
+  it('timed: passes within the limit, fails above it', async () => {
+    const ok = await e.run(
+      [
+        step('timed', {
+          maxSeconds: 5,
+          warnSeconds: 4,
+          steps: [{ id: 'a', action: 'goto', params: { url: '/chat.html' } }],
+        }),
+      ],
+      quick,
+    );
+    expect(bad(summary(ok))).toEqual([]);
+    const slow = await e.run(
+      [
+        step('timed', {
+          maxSeconds: 0.5,
+          steps: [{ id: 'w', action: 'wait', params: { seconds: 0.8 } }],
+        }),
+      ],
+      quick,
+    );
+    expect(slow.steps.at(-1)?.error?.message).toMatch(/more than the allowed 0.5 s/);
+  });
+
+  it('assertLayers names the layer that disagrees', async () => {
+    const ok = await e.run([
+      step('assertLayers', { ui: '99.000 ₫', api: '99000', db: '99000 ', as: 'number' }),
+    ]);
+    expect(bad(summary(ok))).toEqual([]);
+    const r = await e.run([step('assertLayers', { ui: '99000', api: '99000', db: '95000' })]);
+    expect(r.steps.at(-1)?.error?.details?.differs).toEqual(['db']);
+  });
+
+  it('three quick clicks on Save: a guarded page makes one record, an unguarded one makes three', async () => {
+    const run = (guard: boolean) =>
+      e.run(
+        [
+          step('goto', { url: `/server-form.html${guard ? '?guard=1' : ''}` }),
+          step('fill', { target: { css: '#code' }, value: 'DH1' }),
+          step('rapidClick', {
+            target: sendOrder,
+            times: 3,
+            expectCount: { target: { css: '#orders li' }, count: 1 },
+          }),
+        ],
+        { request: { options: { defaultStepTimeoutMs: 4000 } } },
+      );
+    expect(bad(summary(await run(true)))).toEqual([]);
+    const dup = await run(false);
+    expect(dup.steps.at(-1)?.error?.message).toMatch(/3 record\(s\), expected 1/);
+  });
+
+  it('buttons follow the status: an approved order has no Edit button', async () => {
+    const r = await e.run(
+      [
+        step('goto', { url: '/server-form.html' }),
+        step('assertButtons', {
+          status: 'Chờ duyệt',
+          enabled: [{ css: '#btn-edit' }, { css: '#btn-approve' }],
+        }),
+        step('click', { target: { css: '#btn-approve' } }),
+        step('assertButtons', {
+          status: 'Đã duyệt',
+          hidden: [{ css: '#btn-edit' }],
+          disabled: [{ css: '#btn-approve' }],
+        }),
+      ],
+      quick,
+    );
+    expect(bad(summary(r))).toEqual([]);
+    const buggy = await e.run(
+      [
+        step('goto', { url: '/server-form.html?bug=edit' }),
+        step('click', { target: { css: '#btn-approve' } }),
+        step('assertButtons', { status: 'Đã duyệt', hidden: [{ css: '#btn-edit' }] }),
+      ],
+      { request: { options: { defaultStepTimeoutMs: 1500 } } },
+    );
+    expect(buggy.steps.at(-1)?.error?.message).toContain('should not be there');
+  });
+});

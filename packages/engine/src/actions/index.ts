@@ -38,6 +38,7 @@ import { pickDateAction, pickDateRangeAction } from './pick-date';
 import { pickOptionAction } from './pick-option';
 import { pressAction } from './press';
 import { propagateAction } from './propagate';
+import { assertButtonsAction, assertLayersAction, rapidClickAction, timedAction } from './quality';
 import { queryDbAction } from './query-db';
 import { saveSessionAction, useSessionAction } from './saved-login';
 import { scrollAction } from './scroll';
@@ -97,6 +98,10 @@ export const builtinActions: ActionDefinition[] = [
   assertFieldUiAction,
   assertTabOrderAction,
   assertLeaveWarningAction,
+  timedAction,
+  assertLayersAction,
+  rapidClickAction,
+  assertButtonsAction,
   crawlAction,
   securityScanAction,
   assertSeoAction,

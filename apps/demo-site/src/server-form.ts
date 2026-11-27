@@ -26,8 +26,17 @@ async function paint(): Promise<void> {
 }
 await paint();
 
+const sendBtn = $<HTMLButtonElement>('#send');
+const guard = new URLSearchParams(location.search).get('guard') === '1';
+$('#btn-approve').addEventListener('click', () => {
+  $('#order-status').textContent = 'Đã duyệt';
+  if (!bugs.has('edit')) $('#btn-edit').hidden = true;
+  ($('#btn-approve') as HTMLButtonElement).disabled = true;
+});
+
 form.addEventListener('submit', (e) => {
   e.preventDefault();
+  if (guard) sendBtn.disabled = true;
   $('#server-error').textContent = '';
   void api<{ error?: string }>('/api/server-form', {
     method: 'POST',
@@ -39,6 +48,7 @@ form.addEventListener('submit', (e) => {
       return;
     }
     dirty = false;
+    sendBtn.disabled = false;
     $('#server-result').textContent = 'Đã lưu đơn';
     await paint();
   });
