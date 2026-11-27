@@ -706,6 +706,18 @@ export const enUi = {
       done: 'Added {{added}}, updated {{updated}} cases — press Save to keep them.',
     },
   },
+  templates: {
+    menu: 'Project from template',
+    cloneMenu: 'Duplicate this project',
+    cloneName: '{{name}} (copy)',
+    'admin-crud': 'Admin (CRUD)',
+    ecommerce: 'E-commerce',
+    hrm: 'HR / ERP / payroll',
+    finance: 'Finance / banking',
+    booking: 'Booking',
+    cms: 'Content management (CMS)',
+    lms: 'E-learning (LMS)',
+  },
   dashboard: {
     title: 'Overview',
     workspace: 'All projects',

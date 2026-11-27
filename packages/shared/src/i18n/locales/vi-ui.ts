@@ -705,6 +705,18 @@ export const viUi = {
       done: 'Đã thêm {{added}}, cập nhật {{updated}} case — bấm Lưu để giữ lại.',
     },
   },
+  templates: {
+    menu: 'Dự án từ mẫu',
+    cloneMenu: 'Nhân bản dự án này',
+    cloneName: '{{name}} (bản sao)',
+    'admin-crud': 'Trang quản trị (CRUD)',
+    ecommerce: 'Thương mại điện tử',
+    hrm: 'Nhân sự / ERP / lương',
+    finance: 'Tài chính / ngân hàng',
+    booking: 'Đặt chỗ / đặt lịch',
+    cms: 'Quản lý nội dung (CMS)',
+    lms: 'Học trực tuyến (LMS)',
+  },
   dashboard: {
     title: 'Tổng quan',
     workspace: 'Toàn bộ dự án',

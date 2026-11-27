@@ -1,5 +1,7 @@
 import {
   CellInputSchema,
+  cloneProject,
+  createProjectFromTemplate,
   DatasetInputSchema,
   ElementInputSchema,
   EnvironmentInputSchema,
@@ -10,6 +12,7 @@ import {
   importBundle,
   importTestCase,
   NewTestCaseSchema,
+  PROJECT_TEMPLATES,
   ProductInputSchema,
   ProjectInputSchema,
   SharedStepInputSchema,
@@ -88,6 +91,20 @@ export const projectsRouter = router({
   create: publicProcedure
     .input(ProjectInputSchema)
     .mutation(({ ctx, input }) => ctx.services.projects.create(input)),
+  /** Project types with a ready checklist [R-15]. */
+  templates: publicProcedure.query(() => PROJECT_TEMPLATES.map(({ key, name }) => ({ key, name }))),
+  createFromTemplate: publicProcedure
+    .input(z.object({ key: z.string().min(1), name: z.string().trim().min(1).max(200) }))
+    .mutation(({ ctx, input }) => {
+      const { projectId } = createProjectFromTemplate(ctx.services, input.key, input.name);
+      return ctx.services.projects.get(projectId);
+    }),
+  /** Copy of a project with its tests and settings [O-12]. */
+  clone: publicProcedure
+    .input(z.object({ id, name: z.string().trim().min(1).max(200) }))
+    .mutation(({ ctx, input }) =>
+      ctx.services.projects.get(cloneProject(ctx.services, input.id, input.name)),
+    ),
   update: publicProcedure
     .input(z.object({ id, version, patch: ProjectInputSchema.partial() }))
     .mutation(({ ctx, input }) =>

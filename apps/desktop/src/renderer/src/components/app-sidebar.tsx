@@ -6,6 +6,9 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@renderer/components/ui/dropdown-menu';
 import {
@@ -30,6 +33,7 @@ import {
   ChevronsUpDown,
   ClipboardCheck,
   ClipboardList,
+  Copy,
   Crosshair,
   FileText,
   FolderOpen,
@@ -38,6 +42,7 @@ import {
   Globe,
   History,
   LayoutDashboard,
+  LayoutTemplate,
   ListChecks,
   Pin,
   PinOff,
@@ -77,6 +82,7 @@ export function AppSidebar() {
   const prefs = useAppStore((s) => s.projectPrefs);
   const togglePin = useAppStore((s) => s.togglePinProject);
   const projects = useQuery(trpc.projects.list.queryOptions());
+  const templates = useQuery(trpc.projects.templates.queryOptions());
   const [dialog, setDialog] = useState<NameDialogState | null>(null);
   const current = projects.data?.find((p) => p.id === projectId);
   const folder = useProjectFolder(projectId, tx);
@@ -146,6 +152,65 @@ export function AppSidebar() {
                 >
                   <Plus /> {tx('ui.nav.newProject')}
                 </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <LayoutTemplate /> {tx('ui.templates.menu')}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {(templates.data ?? []).map((t) => (
+                      <DropdownMenuItem
+                        key={t.key}
+                        onSelect={() => {
+                          const label = tx(`ui.templates.${t.key}`);
+                          setDialog({
+                            title: label,
+                            initial: label,
+                            onSubmit: async (name) => {
+                              try {
+                                const p = await trpcClient.projects.createFromTemplate.mutate({
+                                  key: t.key,
+                                  name,
+                                });
+                                await qc.invalidateQueries({
+                                  queryKey: trpc.projects.list.queryKey(),
+                                });
+                                setProject(p.id);
+                              } catch (err) {
+                                toast.error(errorMessage(err, tx));
+                              }
+                            },
+                          });
+                        }}
+                      >
+                        {tx(`ui.templates.${t.key}`)}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                {current ? (
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      setDialog({
+                        title: tx('ui.templates.cloneMenu'),
+                        initial: tx('ui.templates.cloneName', { name: current.name }),
+                        onSubmit: async (name) => {
+                          try {
+                            const p = await trpcClient.projects.clone.mutate({
+                              id: current.id,
+                              name,
+                            });
+                            await qc.invalidateQueries({ queryKey: trpc.projects.list.queryKey() });
+                            setProject(p.id);
+                          } catch (err) {
+                            toast.error(errorMessage(err, tx));
+                          }
+                        },
+                      })
+                    }
+                  >
+                    <Copy /> {tx('ui.templates.cloneMenu')}
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem onSelect={() => void openProjectFolder(qc, tx, setProject)}>
                   <FolderSearch /> {tx('ui.projectFolder.open')}
                 </DropdownMenuItem>

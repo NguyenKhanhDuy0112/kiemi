@@ -179,7 +179,7 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 ## M15 — v1.2 (các mục còn lại)
 - [x] **M15-01a** Chạy ma trận: suite × môi trường × trình duyệt, bảng kết quả [O-09]
 - [x] **M15-01b** Dashboard theo cấp: workspace → dự án → sản phẩm → môi trường [O-10]
-- [ ] **M15-01c** Mẫu dự án theo loại + nhân bản dự án [R-15, O-12]
+- [x] **M15-01c** Mẫu dự án theo loại + nhân bản dự án [R-15, O-12]
 - [ ] **M15-01d** Phiên bản sản phẩm: test plan gắn release, báo cáo theo release [O-13]
 - [ ] **M15-02** Sửa dữ liệu tại chỗ khi data-driven [FX-10]
 - [ ] **M15-03** Kiểm tra chéo: realtime không tải lại, so sánh 2 môi trường, điểm kiểm tra lan truyền [V-04, V-06, V-07]

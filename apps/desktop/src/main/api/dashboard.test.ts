@@ -43,3 +43,21 @@ describe('dashboard router [O-10]', () => {
     expect(pd.groups).toHaveLength(1);
   });
 });
+
+describe('project templates router [R-15, O-12]', () => {
+  it('lists templates, creates from one and clones', async () => {
+    const { services, defaultProjectId } = createMemoryServices();
+    const c = createCaller({
+      appVersion: '1',
+      platform: 'darwin',
+      services,
+      defaultProjectId,
+      runs: createTestRunManager(services),
+    });
+    expect((await c.projects.templates()).map((t) => t.key)).toContain('hrm');
+    const p = await c.projects.createFromTemplate({ key: 'hrm', name: 'Lương' });
+    expect(services.testCases.list(p.id).length).toBeGreaterThan(5);
+    const copy = await c.projects.clone({ id: p.id, name: 'Lương 2' });
+    expect(services.testCases.list(copy.id)).toHaveLength(services.testCases.list(p.id).length);
+  });
+});
