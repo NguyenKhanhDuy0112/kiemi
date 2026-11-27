@@ -1,6 +1,7 @@
 import { createProvider, isLocal } from '@kiemi/ai';
 import { AI_TASKS, AiSettingsInputSchema } from '@kiemi/schema';
 import { z } from 'zod';
+import { chat } from '../../ai/assistant';
 import { gatewayFor } from '../../ai/gateway';
 import { proposeNote, runTool, saveNotes } from '../../ai/tools';
 import { publicProcedure, router } from '../trpc';
@@ -49,6 +50,29 @@ export const aiRouter = router({
         estimatedTokens: out.estimatedTokens,
       };
     }),
+
+  /** One chat message; the answer may carry a proposal that the panel shows for approval [AI-13]. */
+  chat: publicProcedure
+    .input(
+      z.object({
+        projectId,
+        history: z
+          .array(
+            z.object({ role: z.enum(['user', 'assistant']), content: z.string().max(100_000) }),
+          )
+          .max(40),
+        message: z.string().min(1).max(20_000),
+        task: z.enum(AI_TASKS).optional(),
+        /** Text of the page open in the browser (from `recorder.pageContext`). */
+        context: z.string().max(60_000).optional(),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      chat(ctx.services, input.projectId, input.history, input.message, {
+        ...(input.task ? { task: input.task } : {}),
+        ...(input.context ? { context: input.context } : {}),
+      }),
+    ),
 
   /** Notes the assistant reads every session [AI-20]. */
   notes: publicProcedure

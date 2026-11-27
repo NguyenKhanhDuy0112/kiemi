@@ -206,7 +206,9 @@ Mỗi task: làm trong 1 phiên, tham chiếu ID trong `SPEC.md`. Tick `[x]` khi
 - [x] **M16-03a** Gói kiến thức sinh từ registry + kiểm tra step AI tạo (chỉ trong danh mục) [AI-15]
 - [x] **M16-03b** Công cụ tra cứu dự án (chỉ đọc) + ghi chú dự án `notes.md` [AI-16, AI-20]
 - [x] **M16-03c** Ngữ cảnh trang đang mở: cây truy cập, form, ảnh (theo AI-02), pickElement/highlight [AI-17]
-- [ ] **M16-04** Panel chat + thiết kế test bằng hội thoại + gợi ý case còn thiếu/nghiệp vụ [AI-13, AI-18, AI-19, AI-08]
+- [x] **M16-04a** Bộ máy chat ở main: prompt hệ thống, vòng lặp công cụ, kiểm đề xuất (test/bảng case/ghi chú), router `ai.chat` [AI-13, AI-18]
+- [ ] **M16-04b** Panel chat mọi màn hình + 'Xem dữ liệu sẽ gửi' + thẻ đề xuất (diff, chấp nhận từng phần → lưu) + bảng case cạnh chat [AI-13, AI-18, AI-02, AI-03]
+- [ ] **M16-04c** Gợi ý case còn thiếu / nghiệp vụ bổ sung (độ phủ, lịch sử fail, yêu cầu chưa có test) [AI-19, AI-08]
 - [ ] **M16-05** Phân loại nguyên nhân fail + tự sửa selector + "Đề xuất sửa" trên màn Chạy [AI-10, AI-09, FX-12]
 - [ ] **M16-06** Mô tả tiếng Việt → step, tài liệu → test, viết bug & tóm tắt đợt test [AI-05, AI-06, AI-11]
 
