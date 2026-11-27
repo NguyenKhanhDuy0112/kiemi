@@ -228,6 +228,9 @@ export const enUi = {
     recorded: 'Added {{count}} steps before the failed one. Press "Save and retry" to save.',
     saveAndRetry: 'Save and retry',
     saveFix: 'Save changes',
+    rowTitle: 'Data of row {{row}}',
+    rowApply: 'Apply data',
+    rowSaved: 'Data fixed — press Retry to go on',
     fixApplied: 'Saved — the step will run with the new version.',
     fixNotSaved: 'Could not save to the test, but this run still uses the new version.',
     status: {

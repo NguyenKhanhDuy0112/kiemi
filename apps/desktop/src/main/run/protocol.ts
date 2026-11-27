@@ -26,6 +26,8 @@ export interface EditCommand {
   elements?: TestCase['elements'] | undefined;
   /** Steps to run next to `stepId` in this run only. */
   insert?: { stepId: string; where: 'before' | 'after'; steps: Step[] } | undefined;
+  /** The data row of the case, a cell fixed while waiting [FX-10]. */
+  row?: { runCaseId: string; values: Record<string, string> } | undefined;
   /** The project's popup rules, changed while waiting [FX-06]. */
   popupRules?: PopupRule[] | undefined;
 }

@@ -203,3 +203,40 @@ describe('fixing a failed step with the browser kept open', () => {
     expect(summary(result as never)).toEqual(['1 passed', '2 skipped', '3 passed']);
   });
 });
+
+describe('fixing a data cell while the run waits [FX-10]', () => {
+  it('a wrong cell fails the step; the corrected row is used on retry and by later steps', async () => {
+    const dbg = new DebugController({ pauseOnFail: true });
+    const page = `data:text/html,${encodeURIComponent('<meta charset="utf-8"><p id="out">Xin chào An</p>')}`;
+    const done = e.run(
+      [
+        { id: 'open', action: 'goto', params: { url: page } },
+        {
+          id: 'check',
+          action: 'assertText',
+          params: { target: { css: '#out' }, op: 'equals', value: 'Xin chào {{row.name}}' },
+          timeoutMs: 1500,
+        },
+        {
+          id: 'again',
+          action: 'assertText',
+          params: { target: { css: '#out' }, op: 'contains', value: '{{row.name}}' },
+        },
+      ],
+      {
+        debugger: dbg,
+        request: {
+          dataset: { id: 'd', name: 'd', columns: ['name'], rows: [{ name: 'Bình' }] },
+          rowIndex: 0,
+          runId: 'case-1',
+        },
+      },
+    );
+    const failed = await untilFailed(dbg, done);
+    expect(failed.step.stepId).toBe('check');
+    dbg.editRow('case-1', { name: 'An' });
+    dbg.decide('retry');
+    const result = await done;
+    expect(summary(result as never)).toEqual(['1 passed', '2 passed', '3 passed']);
+  });
+});

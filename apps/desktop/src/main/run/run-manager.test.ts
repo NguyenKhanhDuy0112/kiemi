@@ -168,6 +168,27 @@ describe('RunManager [M4-01, N-05]', () => {
     ]);
   });
 
+  it('fixes a data cell of a waiting case and keeps it in the test [FX-10]', async () => {
+    const { services, caller, testId } = setup(
+      [{ id: 's1', action: 'pause', params: { ms: 400 } }],
+      {
+        dataset: { source: 'table', columns: ['name'], rows: [{ name: 'An' }, { name: 'Bình' }] },
+      },
+    );
+    const { runId } = await caller.runs.start({ target: { kind: 'test', testCaseId: testId } });
+    const [first] = services.runs.listCases(runId);
+    if (!first) throw new Error('no case');
+    expect(await caller.runs.rowOf({ runId, runCaseId: first.id })).toMatchObject({
+      columns: ['name'],
+      row: { name: 'An' },
+      rowIndex: 0,
+    });
+    await caller.runs.saveRow({ runId, runCaseId: first.id, values: { name: 'Cường' } });
+    const src = services.testCases.get(testId).content.dataset;
+    expect(src?.source === 'table' && src.rows).toEqual([{ name: 'Cường' }, { name: 'Bình' }]);
+    await caller.runs.cancel({ runId });
+  });
+
   it('stops on cancel, still running cleanup', async () => {
     const { caller, testId } = setup([{ id: 's1', action: 'pause', params: { ms: 5000 } }], {
       cleanup: [{ id: 'c1', action: 'note', params: { value: 'cleanup' } }],

@@ -232,6 +232,12 @@ class Run {
     return this.#maskDeep(error) as RunError;
   }
 
+  /** A data cell fixed while the run waited: later steps (and the retry) see the new values [FX-10]. */
+  #applyRowEdit(): void {
+    const row = this.#opts.debugger?.rowEdit?.(this.#req.runId);
+    if (row) this.#vars.setRow(row);
+  }
+
   #log(level: LogLevel, message: string, stepId?: string): void {
     const at = this.#now().toISOString();
     const runId = this.#req.runId;
@@ -534,6 +540,7 @@ class Run {
   ): Promise<Outcome> {
     // Edited while the run waited on an earlier step [FX-02].
     step = this.#opts.debugger?.stepEdit?.(step.id) ?? step;
+    this.#applyRowEdit();
     if (!step.enabled) return { result: this.#skipped(step), stop: false };
     if (signal.aborted) {
       return {
@@ -636,6 +643,7 @@ class Run {
         if (dbg.hasInserted?.(step.id, 'before'))
           return { result: this.#skipped(step), stop: false, redo: true };
         step = dbg.stepEdit?.(step.id) ?? step;
+        this.#applyRowEdit();
         continue;
       }
       if (decision === 'skip') {

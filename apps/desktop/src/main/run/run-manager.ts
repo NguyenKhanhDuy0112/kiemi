@@ -108,6 +108,8 @@ interface ActiveRun {
   /** Artifact sub-folder of each case, relative to the run folder ('' = the run folder). */
   caseDirs: Map<string, string>;
   steps: Map<string, StepInfo>;
+  /** Data row of each case (inline table or saved dataset), to fix a cell while waiting [FX-10]. */
+  rows: Map<string, { testCaseId: string; rowIndex: number; dataset: Dataset }>;
   /** Pick / Highlight answers still awaited from the engine process [FX-03]. */
   waiting: Map<string, { resolve: (value: unknown) => void; fallback: unknown }>;
 }
@@ -270,6 +272,7 @@ export class RunManager {
       openCases: new Set(),
       caseDirs: new Map(),
       steps: new Map(),
+      rows: new Map(),
       waiting: new Map(),
     };
     this.#runs.set(run.id, active);
@@ -303,6 +306,12 @@ export class RunManager {
         return;
       }
       active.openCases.add(c.id);
+      if (p.dataset && p.rowIndex !== undefined)
+        active.rows.set(c.id, {
+          testCaseId: p.testCase.id,
+          rowIndex: p.rowIndex,
+          dataset: p.dataset,
+        });
       active.caseDirs.set(c.id, dir);
       planned.push(base);
       requests.push({
@@ -442,6 +451,48 @@ export class RunManager {
     const active = this.#runs.get(runId);
     if (!active || active.finished || !active.worker) return false;
     active.worker.send(cmd);
+    return true;
+  }
+
+  /** The data row a case runs with, to show it for fixing [FX-10]. */
+  rowOf(
+    runId: string,
+    runCaseId: string,
+  ): { columns: string[]; row: Record<string, string>; rowIndex: number } | null {
+    const r = this.#runs.get(runId)?.rows.get(runCaseId);
+    const row = r?.dataset.rows[r.rowIndex];
+    return r && row ? { columns: r.dataset.columns, row: { ...row }, rowIndex: r.rowIndex } : null;
+  }
+
+  /**
+   * Fixes a cell: the waiting case uses the new row on retry, and the stored
+   * data (the test's table, or the saved dataset — on this environment's own
+   * rows when it has some) is changed so the next run starts right [FX-10].
+   */
+  saveRow(runId: string, runCaseId: string, values: Record<string, string>): boolean {
+    const active = this.#runs.get(runId);
+    const r = active?.rows.get(runCaseId);
+    if (!active || !r) return false;
+    const s = this.#d.services;
+    const row = { ...(r.dataset.rows[r.rowIndex] ?? {}), ...values };
+    r.dataset.rows[r.rowIndex] = row;
+    this.control(runId, { type: 'edit', row: { runCaseId, values: row } });
+    if (r.dataset.id === 'table') {
+      const tc = s.testCases.get(r.testCaseId);
+      const src = tc.content.dataset;
+      if (src?.source === 'table' && src.rows[r.rowIndex]) {
+        const rows = src.rows.map((x, i) => (i === r.rowIndex ? row : x));
+        s.testCases.save(tc.id, { ...tc.content, dataset: { ...src, rows } });
+      }
+    } else {
+      const env = s.runs.get(runId).environmentId;
+      const ds = s.datasets.get(r.dataset.id);
+      const own = env ? ds.envRows?.[env] : undefined;
+      const edit = (rows: Record<string, string>[]) =>
+        rows.map((x, i) => (i === r.rowIndex ? row : x));
+      if (env && own) s.datasets.setEnvironmentRows(ds.id, env, edit(own));
+      else s.datasets.update(ds.id, { rows: edit(ds.rows) });
+    }
     return true;
   }
 

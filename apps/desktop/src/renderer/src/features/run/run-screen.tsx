@@ -557,6 +557,7 @@ export function RunScreen({ runId }: { runId: string }) {
         {single && view.paused && current && docs[current.testCaseId] && (
           <FixStepPanel
             runId={runId}
+            runCaseId={view.paused.runCaseId}
             testCaseId={current.testCaseId}
             doc={docs[current.testCaseId] as TestCase}
             version={tests[testIds.indexOf(current.testCaseId)]?.data?.version ?? 0}

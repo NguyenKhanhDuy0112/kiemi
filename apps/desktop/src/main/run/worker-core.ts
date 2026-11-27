@@ -178,6 +178,7 @@ export function createEngineWorker(post: (msg: WorkerToHost) => void, deps: Work
         case 'edit':
           if (msg.step) debug.editStep(msg.step);
           if (msg.elements) debug.editElements(msg.elements);
+          if (msg.row) debug.editRow(msg.row.runCaseId, msg.row.values);
           if (msg.popupRules) debug.editPopupRules(msg.popupRules);
           if (msg.insert) debug.insert(msg.insert.stepId, msg.insert.where, msg.insert.steps);
           return;

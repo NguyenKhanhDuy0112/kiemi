@@ -228,6 +228,9 @@ export const viUi = {
     recorded: 'Đã thêm {{count}} bước vào trước bước lỗi. Bấm "Lưu và thử lại" để lưu.',
     saveAndRetry: 'Lưu và thử lại',
     saveFix: 'Lưu thay đổi',
+    rowTitle: 'Dữ liệu dòng {{row}}',
+    rowApply: 'Áp dụng dữ liệu',
+    rowSaved: 'Đã sửa dữ liệu — bấm Thử lại để chạy tiếp',
     fixApplied: 'Đã lưu — bước sẽ chạy bản mới.',
     fixNotSaved: 'Chưa lưu được vào test, nhưng lần chạy này vẫn dùng bản mới.',
     status: {

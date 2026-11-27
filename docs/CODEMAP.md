@@ -34,6 +34,7 @@
 - demo-site DB: `server/db.ts` (`DemoDb` ghi đơn nghỉ vào SQLite thật; `DemoSite.dbPath`/`SampleSite.dbPath`), mẫu L-03 #6 trong `main/samples/samples.ts` (kết nối `donNghi`)
 - Dashboard theo cấp (O-10): `schema/src/dashboard.ts` (`statsOf`/`groupStats`), router `routers/dashboard.ts` (workspace→dự án→sản phẩm→môi trường), UI `features/dashboard/`
 - Mẫu dự án (R-15) + nhân bản (O-12): `db/src/templates.ts` (`PROJECT_TEMPLATES`, `createProjectFromTemplate`, `cloneProject`), tRPC `projects.templates|createFromTemplate|clone`, menu ở `app-sidebar.tsx`
+- Sửa dữ liệu khi chờ (FX-10): `edit.row {runCaseId, values}` → `DebugController.editRow/rowEdit` → `VariableStore.setRow`; `RunManager.rowOf/saveRow` (ghi lại bảng của test hoặc dataset đã lưu); UI `features/run/fix-row-panel.tsx`
 - `features/plans/` → màn Đợt test (T-02): `plans-screen.tsx`, `plan-edit.ts` · logic tổng hợp ở `schema/src/test-plan.ts`
 - `features/forms/` → màn Biểu mẫu: đặc tả field (R-01), suy từ trang/OpenAPI (`infer-panel.tsx`, R-02)
 - `features/elements/` → kho phần tử + `shared-library.tsx` (thư viện workspace, O-07)
