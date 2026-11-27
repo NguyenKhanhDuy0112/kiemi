@@ -17,3 +17,4 @@ export * from './run/services';
 export * from './run/target';
 export * from './runner';
 export * from './vars';
+export * from './knowledge';
